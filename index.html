@@ -886,4 +886,58 @@
                     a = document.createElement('a');
                 a.download = 'wex-tier.png';
                 a.href = canvas.toDataURL('image/png');
-                a.click(); } catch (e) { alert('Ошибка при создании
+                a.click(); } catch (e) { alert('Ошибка при создании PNG'); }
+            btn.textContent = '📥 PNG';
+            btn.disabled = false; };
+        document.getElementById('exportBtn').onclick = () => { const blob = new Blob([JSON.stringify(get(1), null,
+                2)], { type: 'application/json' }); const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'wex-tier.json';
+            a.click(); };
+        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+        document.getElementById('importFile').onchange = function() { const file = this.files[0]; if (!file)
+            return; const reader = new FileReader();
+            reader.onload = (e) => { try { const d = JSON.parse(e.target.result); if (Array.isArray(
+                        d)) { pushH(1);
+                        data1 = d;
+                        set(1, data1);
+                        renderAll();
+                        alert('✅ Тир-лист загружен!'); } else { alert('Неверный формат файла'); } } catch (
+                    ex) { alert('Ошибка чтения файла'); } };
+            reader.readAsText(file);
+            this.value = ''; };
+        document.getElementById('shareBtn').onclick = () => { const compressed = LZString
+                .compressToEncodedURIComponent(JSON.stringify(get(1))); const url = location.origin + location
+                .pathname + '?data=' + compressed;
+            navigator.clipboard.writeText(url).then(() => alert('🔗 Ссылка скопирована! Отправьте её другу.'), () =>
+                alert('Ссылка:\n' + url)); };
+        document.getElementById('compareBtn').onclick = () => { compare = !compare; if (compare) { set(1, data1);
+                set(2, data2); }
+            renderAll(); };
+        document.getElementById('addTierBtn').onclick = () => { if (!editing) return; const letters =
+                'EFGHIJKLMNOPQRSTUVWXYZ'; const exist = get(1).map(t => t.tier); let next = 'E'; for (const l of
+                letters) { if (!exist.includes(l)) { next = l; break; } }
+            pushH(1);
+            get(1).push({ tier: next, label: next, items: [] });
+            set(1, get(1));
+            renderAll(); };
+        document.getElementById('resetAllLink').onclick = function(e) { e.preventDefault(); if (confirm(
+                    'Удалить ВСЕ сохранённые данные? Это нельзя отменить.')) { localStorage.clear();
+                data1 = defaultData();
+                data2 = defaultData();
+                hist1 = [];
+                hist2 = [];
+                document.body.classList.remove('light-theme');
+                renderAll(); } };
+        window.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'z') { e.preventDefault();
+                document.getElementById('undoBtn').click(); } });
+        if (localStorage.getItem('wt_theme') === 'light') { document.body.classList.add('light-theme'); }
+        const params = new URLSearchParams(location.search);
+        if (params.has('data')) { try { const d = JSON.parse(LZString.decompressFromEncodedURIComponent(params.get(
+                    'data'))); if (Array.isArray(d)) { data1 = d;
+                    set(1, data1); } } catch (e) {}
+            history.replaceState({}, '', location.pathname); }
+        renderAll();
+    </script>
+</body>
+</html>
