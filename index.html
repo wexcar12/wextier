@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEX-TIER — Создай свой музыкальный тир-лист</title>
+    <meta name="description" content="Бесплатный конструктор музыкальных тир-листов. Перетаскивай обложки, делись с друзьями, сравнивай свои топы треков.">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <style>
+        :root {
+            --bg: #0b0b12;
+            --glass: rgba(20, 20, 35, 0.6);
+            --text: #e8e8f0;
+            --gold: #f5c842;
+            --blur: 20px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            background-image: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 0;
+            pointer-events: none;
+        }
+        body > * { position: relative; z-index: 1; }
+
+        /* === HEADER === */
+        .header {
+            text-align: center;
+            padding: 30px 20px 10px;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(245,200,66,0.5), 0 4px 10px black;
+            user-select: none;
+        }
+        .subtitle {
+            font-size: 1rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* === КНОПКИ === */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            margin: 15px auto 25px;
+            max-width: 1100px;
+            background: rgba(18,18,28,0.7);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(40,40,60,0.8);
+            color: #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: rgba(60,60,90,0.9); transform: translateY(-1px); }
+        .btn:active { transform: scale(0.96); }
+        .btn.primary { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 600; }
+        .btn.danger { background: #6b2020; border-color: #9b3a3a; }
+        .btn.hidden { display: none; }
+
+        /* === КОНТЕЙНЕР СРАВНЕНИЯ === */
+        .compare-wrap {
+            display: flex;
+            gap: 20px;
+            max-width: 1550px;
+            margin: 0 auto 30px;
+            padding: 0 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .column {
+            flex: 1;
+            min-width: 380px;
+            max-width: 750px;
+        }
+        .column-title {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--gold);
+            opacity: 0.85;
+            letter-spacing: 1px;
+        }
+
+        /* === ТИР-РЯД === */
+        .tier-row {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 8px;
+            background: var(--glass);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-height: 80px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s ease both;
+            position: relative;
+            overflow: visible;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tier-label {
+            width: 75px;
+            min-width: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 2rem;
+            color: #111;
+            border-radius: 16px 0 0 16px;
+            cursor: pointer;
+            user-select: none;
+            letter-spacing: 1px;
+        }
+        .s { background: #ff7f7f; } .a { background: #ffbf7f; }
+        .b { background: #ffdf7f; } .c { background: #bfff7f; }
+        .d { background: #7fffff; } .e { background: #bfbfff; }
+        .f { background: #df7fff; } .g { background: #ff9fcf; }
+
+        .tier-items {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            flex: 1;
+            min-height: 60px;
+        }
+        .item {
+            position: relative;
+            border-radius: 10px;
+            padding: 3px;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #ff6b6b);
+            background-size: 400% 400%;
+            animation: borderFlow 4s ease infinite;
+        }
+        @keyframes borderFlow {
+            0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+        }
+        .item a {
+            display: block;
+            border-radius: 7px;
+            overflow: hidden;
+            background: #15151f;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+        .item img {
+            display: block;
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 7px;
+        }
+        .item.dragging { opacity: 0.4; transform: scale(0.9); }
+
+        .del-btn, .del-tier {
+            position: absolute;
+            top: -8px; right: -8px;
+            width: 22px; height: 22px;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 3;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .del-tier { width: 26px; height: 26px; font-size: 15px; z-index: 5; }
+        .editing .del-btn, .editing .del-tier { display: flex; }
+
+        .add-btn {
+            display: none;
+            width: 38px; height: 38px;
+            border: 2px dashed rgba(255,255,255,0.25);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #aaa;
+            font-size: 1.4rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            margin-left: 2px;
+        }
+        .editing .add-btn { display: flex; }
+        .add-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(245,200,66,0.1); }
+
+        /* === МОДАЛКА === */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .modal-box {
+            background: #1e1e2e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 370px;
+            color: #ddd;
+        }
+        .modal-box h3 { color: var(--gold); margin-bottom: 14px; }
+        .modal-box select, .modal-box input {
+            width: 100%;
+            padding: 9px;
+            margin-bottom: 10px;
+            background: #2a2a3a;
+            border: 1px solid #444;
+            color: #ddd;
+            border-radius: 6px;
+        }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+
+        /* === FOOTER === */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 0.8rem;
+        }
+        .footer a { color: var(--gold); text-decoration: none; }
+
+        @media (max-width: 850px) {
+            .compare-wrap { flex-direction: column; align-items: center; }
+            .column { min-width: 100%; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="logo">🎵 WEX-TIER</div>
+    <div class="subtitle">Создай свой музыкальный тир-лист • Перетаскивай • Делись</div>
+</header>
+
+<div class="toolbar" id="toolbar">
+    <button class="btn" id="editBtn">✎ Редактировать</button>
+    <button class="btn" id="undoBtn">↩ Отменить</button>
+    <button class="btn danger hidden" id="resetBtn">↺ Сбросить всё</button>
+    <button class="btn" id="themeBtn">🌓 Тема</button>
+    <button class="btn" id="pngBtn">📥 Скачать PNG</button>
+    <button class="btn" id="exportBtn">💾 Экспорт</button>
+    <button class="btn" id="importBtn">📂 Импорт</button>
+    <button class="btn" id="shareBtn">🔗 Поделиться</button>
+    <button class="btn" id="compareBtn">👥 Сравнение</button>
+    <button class="btn hidden" id="addTierBtn">➕ Новый тир</button>
+    <input type="file" id="importFile" accept=".json" style="display:none;">
+</div>
+
+<div class="compare-wrap" id="compareWrap">
+    <div class="column" id="col1">
+        <div class="column-title">📋 Тир-лист 1</div>
+        <div id="list1"></div>
+    </div>
+    <div class="column" id="col2" style="display:none;">
+        <div class="column-title">📋 Тир-лист 2</div>
+        <div id="list2"></div>
+    </div>
+</div>
+
+<div class="modal" id="addModal">
+    <div class="modal-box">
+        <h3>Добавить трек</h3>
+        <select id="svc"><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option></select>
+        <input type="text" id="trackUrl" placeholder="Ссылка на трек">
+        <input type="text" id="coverUrl" placeholder="Ссылка на обложку (если не подгрузилась)">
+        <div class="modal-actions">
+            <button class="btn" id="cancelAdd">Отмена</button>
+            <button class="btn primary" id="okAdd">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    © WEX-TIER — сделано с ❤️ | <a href="#" id="resetAllLink">Сбросить все данные</a>
+</footer>
+
+<script>
+// ===== ДАННЫЕ =====
+const defaultData = () => [
+    { tier:"S", label:"S", items:[
+        { img:"https://i.scdn.co/image/ab67616d0000b273e2e352d89826aef6dbd5b8e0", url:"https://youtu.be/dQw4w9WgXcQ", svc:"youtube" },
+        { img:"https://i.scdn.co/image/ab67616d0000b273b2d42e7d6b28e95c4b6e0cf1", url:"https://youtu.be/kJQP7kiw5Fk", svc:"youtube" }
+    ]},
+    { tier:"A", label:"A", items:[
+        { img:"https://i.scdn.co/image/ab67616d0000b2739e2f95ae77cf436017ada9cb", url:"https://youtu.be/fJ9rUzIMcZQ", svc:"youtube" }
+    ]},
+    { tier:"B", label:"B", items:[
+        { img:"https://i.scdn.co/image/ab67616d0000b273c6e0948bbb0681ff29cdbae8", url:"https://youtu.be/9bZkp7q19f0", svc:"youtube" }
+    ]},
+    { tier:"C", label:"C", items:[
+        { img:"https://i.scdn.co/image/ab67616d0000b273c8b444df094279e7b0a4a4c6", url:"https://youtu.be/OPf0YbXqDm0", svc:"youtube" }
+    ]},
+    { tier:"D", label:"D", items:[] }
+];
+
+let data1 = load('w1') || defaultData();
+let data2 = load('w2') || defaultData();
+let hist1=[], hist2=[];
+let editing=false, compare=false;
+let dragItem=null, addTier=null, addList=1;
+
+function load(k){ try{const d=localStorage.getItem(k); return d?JSON.parse(d):null}catch(e){return null} }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+function get(n){ return n===1?data1:data2; }
+function set(n,v){ if(n===1)data1=v; else data2=v; save(n===1?'w1':'w2',v); }
+function hist(n){ return n===1?hist1:hist2; }
+function pushH(n){ const h=hist(n); h.push(JSON.parse(JSON.stringify(get(n)))); if(h.length>50)h.shift(); }
+
+// ===== ОТРИСОВКА =====
+function renderAll(){
+    render(1);
+    if(compare) render(2);
+    updateUI();
+}
+function render(n){
+    const el = document.getElementById(n===1?'list1':'list2');
+    if(!el) return;
+    const data = get(n);
+    el.innerHTML = '';
+    data.forEach((t,ti)=>{
+        const row = document.createElement('div');
+        row.className = 'tier-row';
+        const lbl = document.createElement('div');
+        lbl.className = `tier-label ${t.tier.toLowerCase()}`;
+        lbl.textContent = t.label;
+        lbl.ondblclick = ()=>{
+            if(!editing) return;
+            const inp = document.createElement('input');
+            inp.value = t.label;
+            inp.style.cssText = 'width:90%;background:transparent;border:1px solid #000;text-align:center;font-weight:900;font-size:1.2rem;';
+            lbl.textContent=''; lbl.appendChild(inp); inp.focus(); inp.select();
+            const done=()=>{ t.label=inp.value.trim()||t.label; pushH(n); set(n,data); renderAll(); };
+            inp.onblur=done; inp.onkeypress=e=>{if(e.key==='Enter')inp.blur();};
+        };
+        row.appendChild(lbl);
+        const items = document.createElement('div');
+        items.className = 'tier-items';
+        t.items.forEach((item,ii)=>{
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.draggable = true;
+            div.dataset.ti=ti; div.dataset.ii=ii; div.dataset.list=n;
+            const a = document.createElement('a');
+            a.href=item.url; a.target='_blank'; a.rel='noopener';
+            const img = document.createElement('img');
+            img.src=item.img; img.alt=''; img.ondragstart=e=>e.preventDefault();
+            a.appendChild(img); div.appendChild(a);
+            const del = document.createElement('button');
+            del.className='del-btn'; del.textContent='×';
+            del.onclick=e=>{ e.stopPropagation(); e.preventDefault(); pushH(n); t.items.splice(ii,1); set(n,data); renderAll(); };
+            div.appendChild(del);
+            div.ondragstart=function(e){ if(!editing){e.preventDefault();return;} dragItem=this; this.classList.add('dragging'); e.dataTransfer.setData('text',''); };
+            div.ondragend=function(){ this.classList.remove('dragging'); dragItem=null; };
+            items.appendChild(div);
+        });
+        const add = document.createElement('button');
+        add.className='add-btn'; add.textContent='+';
+        add.onclick=()=>{ addTier=ti; addList=n; document.getElementById('addModal').classList.add('open'); };
+        items.appendChild(add);
+        items.ondragover=e=>{e.preventDefault(); items.classList.add('drag-over');};
+        items.ondragleave=()=>items.classList.remove('drag-over');
+        items.ondrop=function(e){
+            e.preventDefault(); items.classList.remove('drag-over');
+            if(!dragItem||!editing) return;
+            const ft=+dragItem.dataset.ti, fi=+dragItem.dataset.ii, fl=+dragItem.dataset.list;
+            if(fl!==n) return;
+            pushH(n);
+            const m = data[ft].items.splice(fi,1)[0];
+            data[ti].items.push(m);
+            set(n,data); renderAll();
+        };
+        row.appendChild(items);
+        if(t.items.length===0){
+            const dt = document.createElement('button');
+            dt.className='del-tier'; dt.textContent='×';
+            dt.onclick=e=>{ e.stopPropagation(); pushH(n); data.splice(ti,1); set(n,data); renderAll(); };
+            row.appendChild(dt);
+        }
+        el.appendChild(row);
+    });
+}
+
+function updateUI(){
+    document.body.classList.toggle('editing',editing);
+    document.getElementById('editBtn').textContent = editing?'✓ Готово':'✎ Редактировать';
+    document.getElementById('editBtn').classList.toggle('primary',editing);
+    document.getElementById('resetBtn').classList.toggle('hidden',!editing);
+    document.getElementById('addTierBtn').classList.toggle('hidden',!editing);
+    document.getElementById('col2').style.display = compare?'block':'none';
+}
+
+// ===== ОБРАБОТЧИКИ =====
+document.getElementById('editBtn').onclick=()=>{editing=!editing;renderAll();};
+document.getElementById('undoBtn').onclick=()=>{
+    const n=compare?2:1; const h=hist(n); if(!h.length) return;
+    set(n,h.pop()); renderAll();
+};
+document.getElementById('resetBtn').onclick=()=>{ if(confirm('Сбросить всё?')){data1=defaultData();data2=defaultData();hist1=[];hist2=[];set(1,data1);set(2,data2);renderAll();}};
+document.getElementById('themeBtn').onclick=()=>{document.body.classList.toggle('light-theme');localStorage.setItem('wt_theme',document.body.classList.contains('light-theme')?'light':'dark');};
+document.getElementById('pngBtn').onclick=async()=>{
+    const c=await html2canvas(document.getElementById('list1'),{backgroundColor:null,scale:2});
+    const a=document.createElement('a'); a.download='wex-tier.png'; a.href=c.toDataURL(); a.click();
+};
+document.getElementById('exportBtn').onclick=()=>{
+    const b=new Blob([JSON.stringify(get(1),null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='wex-tier.json'; a.click();
+};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=function(){
+    const f=this.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=e=>{ try{const d=JSON.parse(e.target.result); if(Array.isArray(d)){data1=d;set(1,data1);renderAll();}}catch(ex){alert('Ошибка формата');}};
+    r.readAsText(f);
+};
+document.getElementById('shareBtn').onclick=()=>{
+    const c=LZString.compressToEncodedURIComponent(JSON.stringify(get(1)));
+    navigator.clipboard.writeText(location.origin+location.pathname+'?data='+c).then(()=>alert('🔗 Ссылка скопирована!'));
+};
+document.getElementById('compareBtn').onclick=()=>{compare=!compare;if(compare){set(1,data1);set(2,data2);}renderAll();};
+document.getElementById('addTierBtn').onclick=()=>{
+    const letters='EFGHIJKLMNOPQRSTUVWXYZ'; const exist=get(1).map(t=>t.tier); let nx='E';
+    for(const l of letters){if(!exist.includes(l)){nx=l;break;}}
+    pushH(1); get(1).push({tier:nx,label:nx,items:[]}); set(1,get(1)); renderAll();
+};
+document.getElementById('cancelAdd').onclick=()=>document.getElementById('addModal').classList.remove('open');
+document.getElementById('okAdd').onclick=()=>{
+    const svc=document.getElementById('svc').value;
+    const url=document.getElementById('trackUrl').value.trim();
+    let img=document.getElementById('coverUrl').value.trim();
+    if(!url){alert('Вставьте ссылку');return;}
+    if(!img) img='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="%23333" width="64" height="64"/><text fill="%23aaa" x="32" y="36" text-anchor="middle" font-size="14">?</text></svg>';
+    pushH(addList); get(addList)[addTier].items.push({img,url,svc}); set(addList,get(addList));
+    document.getElementById('addModal').classList.remove('open'); renderAll();
+};
+document.getElementById('resetAllLink').onclick=e=>{e.preventDefault(); if(confirm('Удалить ВСЕ данные?')){localStorage.clear();data1=defaultData();data2=defaultData();hist1=[];hist2=[];renderAll();}};
+window.onkeydown=e=>{if(e.ctrlKey&&e.key==='z'){e.preventDefault();document.getElementById('undoBtn').click();}};
+window.onclick=e=>{if(e.target===document.getElementById('addModal'))document.getElementById('addModal').classList.remove('open');};
+
+// ===== СТАРТ =====
+if(localStorage.getItem('wt_theme')==='light') document.body.classList.add('light-theme');
+// Загрузка из шары
+const p=new URLSearchParams(location.search);
+if(p.has('data')){
+    try{ const d=JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data'))); if(Array.isArray(d)){data1=d;set(1,data1);} }catch(e){}
+    history.replaceState({},'',location.pathname);
+}
+renderAll();
+</script>
+</body>
+</html>
