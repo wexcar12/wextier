@@ -26,7 +26,8 @@
             --input-border: #444;
             --item-bg: #15151f;
             --toolbar-bg: rgba(18,18,28,0.7);
-            --neon-glow: 0 0 10px rgba(245,200,66,0.8);
+            --neon-glow: 0 0 15px rgba(245,200,66,0.9);
+            --neon-enabled: 0;
         }
         body.light-theme {
             --bg: #e8e8f0;
@@ -66,6 +67,16 @@
             pointer-events: none;
         }
         body>* { position:relative; z-index:1; }
+        
+        /* Частицы */
+        #particlesCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
         .header { text-align:center; padding:30px 20px 10px; }
         .logo {
             font-size: 3rem;
@@ -74,12 +85,14 @@
             color: var(--gold);
             text-shadow: 0 0 30px rgba(245,200,66,0.5), 0 4px 10px black;
             animation: pulse 2s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
         }
         @keyframes pulse {
             0%,100% { text-shadow:0 0 20px rgba(245,200,66,0.4); }
             50% { text-shadow:0 0 40px rgba(245,200,66,0.9), 0 0 80px rgba(245,200,66,0.4); }
         }
-        .subtitle { font-size:1rem; color:var(--text-secondary); margin-top:4px; }
+        .subtitle { font-size:1rem; color:var(--text-secondary); margin-top:4px; position:relative; z-index:2; }
         .toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -93,6 +106,8 @@
             -webkit-backdrop-filter: blur(18px);
             border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.06);
+            position: relative;
+            z-index: 2;
         }
         .btn {
             padding: 8px 16px;
@@ -110,6 +125,7 @@
         .btn.danger { background:#6b2020; border-color:#9b3a3a; color:#fff; }
         .btn.hidden { display:none !important; }
         .btn.active-filter { background:var(--gold); color:#111; border-color:var(--gold); }
+        
         .compare-wrap {
             display: flex;
             gap: 20px;
@@ -118,6 +134,8 @@
             padding: 0 10px;
             flex-wrap: wrap;
             justify-content: center;
+            position: relative;
+            z-index: 2;
         }
         .column { flex:1; min-width:380px; max-width:750px; }
         .column-title {
@@ -128,6 +146,21 @@
             opacity:0.85;
             letter-spacing:1px;
         }
+        
+        /* Неон-эффекты */
+        body.neon-active .tier-row {
+            box-shadow: var(--neon-glow), 0 8px 28px rgba(0,0,0,0.5) !important;
+        }
+        body.neon-active .tier-label {
+            box-shadow: var(--neon-glow) !important;
+        }
+        body.neon-active .item {
+            box-shadow: var(--neon-glow) !important;
+        }
+        body.neon-active .logo {
+            text-shadow: var(--neon-glow), 0 4px 10px black !important;
+        }
+        
         .tier-row {
             display: flex;
             align-items: stretch;
@@ -142,6 +175,8 @@
             animation: slideUp 0.4s ease both;
             position: relative;
             overflow: visible;
+            transition: box-shadow 0.3s;
+            z-index: 2;
         }
         @keyframes slideUp {
             from { opacity:0; transform:translateY(18px); }
@@ -161,6 +196,7 @@
             user-select: none;
             letter-spacing: 1px;
             background: #ff7f7f;
+            transition: box-shadow 0.3s;
         }
         .tier-items {
             display: flex;
@@ -173,20 +209,47 @@
             transition: background 0.2s;
         }
         .tier-items.drag-over { background:rgba(245,200,66,0.15); border-radius:0 16px 16px 0; }
+        
+        /* Стили обложек */
         .item {
             position: relative;
             border-radius: 10px;
+            transition: transform 0.15s, opacity 0.15s, box-shadow 0.3s;
+        }
+        /* Градиент */
+        .item.style-gradient {
             padding: 3px;
             background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #ff6b6b);
             background-size: 400% 400%;
             animation: borderFlow 4s ease infinite;
-            transition: transform 0.15s, opacity 0.15s;
         }
         @keyframes borderFlow {
             0% { background-position:0% 50%; }
             50% { background-position:100% 50%; }
             100% { background-position:0% 50%; }
         }
+        /* Тень */
+        .item.style-shadow {
+            padding: 0;
+            background: transparent;
+            animation: none;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+        }
+        /* Рамка */
+        .item.style-border {
+            padding: 3px;
+            background: #555;
+            animation: none;
+        }
+        /* Круглые */
+        .item.style-circle a,
+        .item.style-circle img {
+            border-radius: 50% !important;
+        }
+        .item.style-circle {
+            border-radius: 50%;
+        }
+        
         .item a {
             display: block;
             border-radius: 7px;
@@ -205,6 +268,7 @@
             pointer-events: none;
         }
         .item.dragging { opacity:0.35; transform:scale(0.9); }
+        
         .del-btn, .del-tier {
             position: absolute;
             top: -8px; right: -8px;
@@ -222,6 +286,7 @@
         }
         .del-tier { width:26px; height:26px; font-size:15px; z-index:5; }
         .editing .del-btn, .editing .del-tier { display:flex; }
+        
         .add-btn {
             display: none;
             width: 38px; height: 38px;
@@ -238,6 +303,7 @@
         }
         .editing .add-btn { display:flex; }
         .add-btn:hover { border-color:var(--gold); color:var(--gold); }
+        
         .svc-icon {
             position: absolute;
             bottom: 5px; right: 5px;
@@ -256,6 +322,7 @@
         .svc-icon.sp { background:#1db954; }
         .svc-icon.ap { background:#fc3c44; }
         .svc-icon.ym { background:#ffcc00; color:#000; }
+        
         .modal {
             display: none;
             position: fixed;
@@ -309,6 +376,7 @@
             border-radius: 8px;
             font-size: 0.9rem;
         }
+        
         .draft-panel {
             position: fixed;
             left: 0; top: 0;
@@ -336,7 +404,8 @@
         }
         .draft-item:hover { background:rgba(255,255,255,0.12); }
         .draft-item.active { border:1px solid var(--gold); }
-        .footer { text-align:center; padding:20px; color:#777; font-size:0.8rem; }
+        
+        .footer { text-align:center; padding:20px; color:#777; font-size:0.8rem; position:relative; z-index:2; }
         .toast {
             position: fixed;
             bottom: 20px; right: 20px;
@@ -352,6 +421,7 @@
         }
         @keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(20px); } }
+        
         @media (max-width:850px) {
             .compare-wrap { flex-direction:column; align-items:center; }
             .column { min-width:100%; max-width:100%; }
@@ -360,6 +430,8 @@
     </style>
 </head>
 <body>
+
+    <canvas id="particlesCanvas"></canvas>
 
     <div class="draft-panel" id="draftPanel">
         <h4 style="color:var(--gold);margin-bottom:12px;">📋 Черновики</h4>
@@ -378,7 +450,6 @@
         <button class="btn danger hidden" id="resetBtn">↺ Сбросить всё</button>
         <button class="btn" id="themeBtn">🌓 Тема</button>
         <button class="btn" id="draftToggleBtn">📋 Черновики</button>
-        <button class="btn" id="langBtn">🌐 RU/EN</button>
         <button class="btn hidden" id="addTierBtn">➕ Новый тир</button>
         <button class="btn" id="pngBtn">📥 PNG</button>
         <button class="btn" id="exportBtn">💾 Экспорт</button>
@@ -503,7 +574,6 @@
             <select id="neonColor">
                 <option value="rainbow">🌈 Радужный</option><option value="gold">🟡 Золотой</option>
                 <option value="cyan">🔵 Голубой</option><option value="magenta">🟣 Пурпурный</option>
-                <option value="per_tier">🎨 По цвету тира</option>
             </select><br><br>
             <select id="neonTarget">
                 <option value="all">Всё</option><option value="items">Обложки</option>
@@ -540,7 +610,6 @@
             {id:'all_empty',icon:'💀',name:'Бесконечная Пустота',desc:'Все тиры пустые'}
         ];
 
-        // Данные по умолчанию
         function defaultData() {
             return [
                 {tier:"S",label:"S",color:"#ff7f7f",items:[
@@ -560,7 +629,6 @@
             ];
         }
 
-        // Состояние
         let DRAFTS, activeDraft, data1, data2, hist1=[], hist2=[];
         let editing=false, compare=false;
         let dragItem=null, dragSourceTier=null, dragSourceIndex=null, dragSourceList=null;
@@ -570,16 +638,13 @@
         let unlockedAchievements = [];
         let comments = [];
 
-        // Загрузка черновиков
         function loadDrafts() {
             try {
                 const saved = localStorage.getItem('wt_drafts');
                 if (saved) {
                     DRAFTS = JSON.parse(saved);
                     if (!Array.isArray(DRAFTS) || DRAFTS.length === 0) throw new Error('empty');
-                } else {
-                    throw new Error('no saved');
-                }
+                } else throw new Error('no saved');
             } catch(e) {
                 DRAFTS = [{name:'Основной', data: defaultData()}];
             }
@@ -642,16 +707,26 @@
             }
         }
 
+        // НЕОН - полностью переписан
         function applyNeon() {
             if (neonSettings.enabled) {
                 document.body.classList.add('neon-active');
-                let color = 'rgba(245,200,66,0.9)';
-                if (neonSettings.color==='cyan') color = 'rgba(0,200,255,0.9)';
-                else if (neonSettings.color==='magenta') color = 'rgba(255,0,200,0.9)';
-                else if (neonSettings.color==='rainbow') color = 'rgba(255,255,255,0.9)';
-                document.documentElement.style.setProperty('--neon-glow', '0 0 15px '+color);
+                let glowColor = 'rgba(245,200,66,0.9)';
+                if (neonSettings.color === 'cyan') glowColor = 'rgba(0,200,255,0.9)';
+                else if (neonSettings.color === 'magenta') glowColor = 'rgba(255,0,200,0.9)';
+                else if (neonSettings.color === 'rainbow') glowColor = 'rgba(255,255,255,0.9)';
+                
+                document.documentElement.style.setProperty('--neon-glow', '0 0 20px ' + glowColor);
+                document.documentElement.style.setProperty('--neon-enabled', '1');
+                
+                // Применяем по цели
+                if (neonSettings.target === 'items') {
+                    document.documentElement.style.setProperty('--neon-glow', '0 0 15px ' + glowColor);
+                }
             } else {
                 document.body.classList.remove('neon-active');
+                document.documentElement.style.setProperty('--neon-enabled', '0');
+                document.documentElement.style.setProperty('--neon-glow', 'none');
             }
         }
 
@@ -660,11 +735,12 @@
             localStorage.setItem('wt_bg', idx);
         }
 
+        // СТИЛИ ОБЛОЖЕК - полностью переписан
         function applyStyle() {
             const style = document.getElementById('styleSelect').value;
             document.querySelectorAll('.item').forEach(el => {
-                el.classList.remove('style-gradient','style-shadow','style-border','style-circle');
-                el.classList.add('style-'+style);
+                el.classList.remove('style-gradient', 'style-shadow', 'style-border', 'style-circle');
+                el.classList.add('style-' + style);
             });
             localStorage.setItem('wt_style', style);
         }
@@ -672,8 +748,8 @@
         function applySize() {
             const size = document.getElementById('sizeSelect').value;
             document.querySelectorAll('.item img').forEach(img => {
-                img.style.width = size+'px';
-                img.style.height = size+'px';
+                img.style.width = size + 'px';
+                img.style.height = size + 'px';
             });
             localStorage.setItem('wt_size', size);
         }
@@ -694,10 +770,13 @@
             render(1);
             if (compare) render(2);
             updateUI();
-            applyStyle();
-            applySize();
-            applyNeon();
+            // Применяем стили и размеры после рендера
+            setTimeout(() => {
+                applyStyle();
+                applySize();
+            }, 50);
             filterItems();
+            applyNeon();
         }
 
         function render(n) {
@@ -798,7 +877,6 @@
                     };
                     div.appendChild(delBtn);
 
-                    // Drag events
                     div.addEventListener('dragstart', function(e) {
                         if (!editing) { e.preventDefault(); return; }
                         dragItem = this;
@@ -816,7 +894,6 @@
                     itemsDiv.appendChild(div);
                 });
 
-                // Кнопка +
                 const addBtn = document.createElement('button');
                 addBtn.className = 'add-btn';
                 addBtn.textContent = '+';
@@ -831,7 +908,6 @@
                 };
                 itemsDiv.appendChild(addBtn);
 
-                // Drop events
                 itemsDiv.addEventListener('dragover', function(e) {
                     e.preventDefault();
                     this.classList.add('drag-over');
@@ -844,7 +920,6 @@
                     this.classList.remove('drag-over');
                     if (!dragItem || !editing) return;
                     if (dragSourceList !== n) return;
-
                     pushH(n);
                     const moved = data[dragSourceTier].items.splice(dragSourceIndex, 1)[0];
                     data[ti].items.push(moved);
@@ -856,7 +931,6 @@
 
                 row.appendChild(itemsDiv);
 
-                // Кнопка удаления тира
                 if (t.items.length === 0) {
                     const delTierBtn = document.createElement('button');
                     delTierBtn.className = 'del-tier';
@@ -924,36 +998,6 @@
             console.log('Firebase не подключен');
         }
 
-        // Инициализация
-        function init() {
-            loadDrafts();
-            loadComments();
-            unlockedAchievements = JSON.parse(localStorage.getItem('wt_achievements') || '[]');
-            neonSettings = JSON.parse(localStorage.getItem('wt_neon') || '{"enabled":false,"color":"rainbow","target":"all"}');
-
-            // Фон
-            const savedBg = localStorage.getItem('wt_bg');
-            if (savedBg !== null) {
-                applyBg(parseInt(savedBg));
-                document.getElementById('bgSelect').value = savedBg;
-            }
-
-            // Стиль
-            const savedStyle = localStorage.getItem('wt_style');
-            if (savedStyle) document.getElementById('styleSelect').value = savedStyle;
-
-            // Размер
-            const savedSize = localStorage.getItem('wt_size');
-            if (savedSize) document.getElementById('sizeSelect').value = savedSize;
-
-            // Тема
-            if (localStorage.getItem('wt_theme') === 'light') document.body.classList.add('light-theme');
-
-            renderAll();
-            renderDrafts();
-            applyNeon();
-        }
-
         function loadComments() {
             const p = new URLSearchParams(location.search);
             if (p.has('comments')) {
@@ -969,7 +1013,84 @@
             list.innerHTML = comments.map(c => '<div style="margin-bottom:4px;padding:4px;background:rgba(255,255,255,0.05);border-radius:4px;">'+c.replace(/</g,'&lt;')+'</div>').join('');
         }
 
-        // Обработчики кнопок
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        function init() {
+            loadDrafts();
+            loadComments();
+            unlockedAchievements = JSON.parse(localStorage.getItem('wt_achievements') || '[]');
+            neonSettings = JSON.parse(localStorage.getItem('wt_neon') || '{"enabled":false,"color":"rainbow","target":"all"}');
+
+            const savedBg = localStorage.getItem('wt_bg');
+            if (savedBg !== null) {
+                applyBg(parseInt(savedBg));
+                document.getElementById('bgSelect').value = savedBg;
+            }
+
+            const savedStyle = localStorage.getItem('wt_style');
+            if (savedStyle) document.getElementById('styleSelect').value = savedStyle;
+
+            const savedSize = localStorage.getItem('wt_size');
+            if (savedSize) document.getElementById('sizeSelect').value = savedSize;
+
+            if (localStorage.getItem('wt_theme') === 'light') document.body.classList.add('light-theme');
+
+            renderAll();
+            renderDrafts();
+            applyNeon();
+        }
+
+        // ========== ЧАСТИЦЫ ==========
+        function initParticles() {
+            const canvas = document.getElementById('particlesCanvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function createParticles() {
+                particles = [];
+                for (let i = 0; i < 40; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        r: Math.random() * 2 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: (Math.random() - 0.5) * 0.5,
+                        opacity: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    if (p.x < 0) p.x = canvas.width;
+                    if (p.x > canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = canvas.height;
+                    if (p.y > canvas.height) p.y = 0;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(245,200,66,' + p.opacity + ')';
+                    ctx.fill();
+                });
+                requestAnimationFrame(animateParticles);
+            }
+
+            resizeCanvas();
+            createParticles();
+            animateParticles();
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                createParticles();
+            });
+        }
+
+        // ========== ОБРАБОТЧИКИ ==========
         document.getElementById('editBtn').addEventListener('click', () => { editing = !editing; renderAll(); });
         document.getElementById('undoBtn').addEventListener('click', () => {
             const h = compare ? hist2 : hist1;
@@ -979,8 +1100,7 @@
         });
         document.getElementById('resetBtn').addEventListener('click', () => {
             if (confirm('Сбросить всё?')) {
-                data1 = defaultData();
-                data2 = defaultData();
+                data1 = defaultData(); data2 = defaultData();
                 hist1 = []; hist2 = [];
                 setData(1, data1); setData(2, data2);
                 checkAchievements();
@@ -1007,9 +1127,6 @@
                 renderDrafts();
             }
         });
-        document.getElementById('langBtn').addEventListener('click', () => {
-            showToast('Язык пока только русский');
-        });
         document.getElementById('addTierBtn').addEventListener('click', () => {
             if (!editing) return;
             const letters = 'EFGHIJKLMNOPQRSTUVWXYZ';
@@ -1023,8 +1140,7 @@
         });
         document.getElementById('pngBtn').addEventListener('click', async () => {
             const btn = document.getElementById('pngBtn');
-            btn.textContent = '⏳...';
-            btn.disabled = true;
+            btn.textContent = '⏳...'; btn.disabled = true;
             try {
                 const el = document.getElementById('list1');
                 const canvas = await html2canvas(el, {backgroundColor:null, scale:2, useCORS:true, allowTaint:true});
@@ -1033,8 +1149,7 @@
                 a.href = canvas.toDataURL('image/png');
                 a.click();
             } catch(e) { showToast('Ошибка PNG'); }
-            btn.textContent = '📥 PNG';
-            btn.disabled = false;
+            btn.textContent = '📥 PNG'; btn.disabled = false;
         });
         document.getElementById('exportBtn').addEventListener('click', () => {
             const blob = new Blob([JSON.stringify(data1, null, 2)], {type:'application/json'});
@@ -1052,9 +1167,7 @@
                 try {
                     const d = JSON.parse(e.target.result);
                     if (Array.isArray(d)) {
-                        pushH(1);
-                        data1 = d;
-                        setData(1, data1);
+                        pushH(1); data1 = d; setData(1, data1);
                         checkAchievements();
                         renderAll();
                         showToast('✅ Загружено!');
@@ -1086,6 +1199,8 @@
             const ids = ytTracks.map(i => { const m = i.url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/); return m?m[1]:null; }).filter(Boolean);
             if (ids.length > 0) window.open('https://www.youtube.com/watch_videos?video_ids='+ids.join(','), '_blank');
         });
+
+        // Галерея
         document.getElementById('galleryBtn').addEventListener('click', async () => {
             if (!db) { showToast('Галерея недоступна'); return; }
             document.getElementById('galleryModal').classList.add('open');
@@ -1100,9 +1215,7 @@
                     div.style.cssText = 'padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
                     div.innerHTML = '<strong>'+(d.name||'Без названия')+'</strong> ('+(d.trackCount||0)+' треков)';
                     div.onclick = () => {
-                        pushH(1);
-                        data1 = JSON.parse(d.data);
-                        setData(1, data1);
+                        pushH(1); data1 = JSON.parse(d.data); setData(1, data1);
                         document.getElementById('galleryModal').classList.remove('open');
                         renderAll();
                     };
@@ -1126,6 +1239,8 @@
                 document.getElementById('galleryModal').classList.remove('open');
             } catch(e) { showToast('Ошибка'); }
         });
+
+        // Дуэль
         document.getElementById('duelBtn').addEventListener('click', async () => {
             if (!db) { showToast('Недоступно'); return; }
             document.getElementById('duelModal').classList.add('open');
@@ -1160,6 +1275,8 @@
                 }
             } catch(e) { showToast('Ошибка'); }
         });
+
+        // Достижения
         document.getElementById('achievementsBtn').addEventListener('click', () => {
             document.getElementById('achievementsModal').classList.add('open');
             const list = document.getElementById('achievementsList');
@@ -1171,6 +1288,8 @@
             }).join('');
         });
         document.getElementById('closeAchievements').addEventListener('click', () => document.getElementById('achievementsModal').classList.remove('open'));
+
+        // НЕОН - обработчики
         document.getElementById('neonBtn').addEventListener('click', () => {
             document.getElementById('neonModal').classList.add('open');
             document.getElementById('neonToggle').checked = neonSettings.enabled;
@@ -1185,6 +1304,8 @@
             document.getElementById('neonModal').classList.remove('open');
             applyNeon();
         });
+
+        // Комментарии
         document.getElementById('commentsBtn').addEventListener('click', () => {
             document.getElementById('commentsModal').classList.add('open');
             updateCommentsDisplay();
@@ -1201,6 +1322,8 @@
                 history.replaceState({}, '', location.pathname+'?data='+compressed+'&comments='+commCompressed);
             }
         });
+
+        // Добавление трека
         document.getElementById('cancelAdd').addEventListener('click', () => document.getElementById('addModal').classList.remove('open'));
         document.getElementById('fetchCoverBtn').addEventListener('click', async function() {
             const url = document.getElementById('trackUrl').value.trim();
@@ -1237,10 +1360,13 @@
             checkAchievements();
             renderAll();
         });
+
         document.getElementById('closePlayer').addEventListener('click', () => {
             document.getElementById('playerModal').classList.remove('open');
             document.getElementById('playerFrame').src = '';
         });
+
+        // Поиск и фильтры
         document.getElementById('searchInput').addEventListener('input', filterItems);
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -1250,9 +1376,13 @@
                 filterItems();
             });
         });
+
+        // Стили, размер, фон
         document.getElementById('bgSelect').addEventListener('change', function() { applyBg(parseInt(this.value)); });
         document.getElementById('styleSelect').addEventListener('change', applyStyle);
         document.getElementById('sizeSelect').addEventListener('change', applySize);
+
+        // Сброс всего
         document.getElementById('resetAllLink').addEventListener('click', function(e) {
             e.preventDefault();
             if (confirm('Удалить ВСЕ данные?')) {
@@ -1267,11 +1397,16 @@
                 neonSettings = {enabled:false,color:'rainbow',target:'all'};
                 document.body.classList.remove('light-theme','neon-active');
                 document.documentElement.style.setProperty('--bg-img', 'url(\''+BGS[0]+'\')');
+                document.getElementById('bgSelect').value = '0';
+                document.getElementById('styleSelect').value = 'gradient';
+                document.getElementById('sizeSelect').value = '64';
                 saveDrafts();
                 renderAll();
                 renderDrafts();
             }
         });
+
+        // Ctrl+Z
         window.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'z') {
                 e.preventDefault();
@@ -1288,6 +1423,7 @@
 
         // Запуск
         init();
+        initParticles();
     })();
     </script>
 </body>
