@@ -1,4 +1,4 @@
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const APP_PREFIX = 'wt_';
     const BGS = [
         'https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
@@ -49,6 +49,16 @@
     let comments = [];
     let currentTierListId = null;
     let db = null;
+
+    function showLoading(show) {
+        let loader = document.querySelector('.loading-spinner');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.className = 'loading-spinner';
+            document.body.appendChild(loader);
+        }
+        loader.classList.toggle('show', show);
+    }
 
     function initFirebase() {
         try {
@@ -204,8 +214,35 @@
 
     async function loadFromURL() {
         const p = new URLSearchParams(location.search);
-        if (p.has('id') && db) { try { const doc = await db.collection('shared').doc(p.get('id')).get(); if (doc.exists) { const d = JSON.parse(doc.data().data); if (Array.isArray(d)) { pushH(1); data1=d; setData(1,data1); currentTierListId=p.get('id'); if(p.has('tierlistId'))currentTierListId=p.get('tierlistId'); await loadComments(currentTierListId); history.replaceState({},'',location.pathname); return true; } } } catch(e) {} }
-        if (p.has('data')) { try { const d = JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data'))); if (Array.isArray(d)) { pushH(1); data1=d; setData(1,data1); if(p.has('tierlistId')){currentTierListId=p.get('tierlistId');await loadComments(currentTierListId);} history.replaceState({},'',location.pathname); return true; } } catch(e) {} }
+        // Новый способ: короткая ссылка ?id=...
+        if (p.has('id') && db) {
+            try {
+                const doc = await db.collection('shared').doc(p.get('id')).get();
+                if (doc.exists) {
+                    const d = JSON.parse(doc.data().data);
+                    if (Array.isArray(d)) {
+                        pushH(1); data1=d; setData(1,data1);
+                        currentTierListId = p.get('id');
+                        if(p.has('tierlistId')) currentTierListId = p.get('tierlistId');
+                        await loadComments(currentTierListId);
+                        history.replaceState({},'',location.pathname);
+                        return true;
+                    }
+                }
+            } catch(e) {}
+        }
+        // Старый способ: длинная ссылка ?data=...
+        if (p.has('data')) {
+            try {
+                const d = JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data')));
+                if (Array.isArray(d)) {
+                    pushH(1); data1=d; setData(1,data1);
+                    if(p.has('tierlistId')){currentTierListId=p.get('tierlistId');await loadComments(currentTierListId);}
+                    history.replaceState({},'',location.pathname);
+                    return true;
+                }
+            } catch(e) {}
+        }
         return false;
     }
 
@@ -221,19 +258,44 @@
         document.getElementById('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(data1,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='wex-tier.json';a.click()});
         document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('importFile').click());
         document.getElementById('importFile').addEventListener('change',function(){const file=this.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(Array.isArray(d)){pushH(1);data1=d;setData(1,data1);checkAchievements();renderAll();showToast('✅ Загружено!')}}catch(ex){showToast('Ошибка формата')}};reader.readAsText(file);this.value=''});
+
+        // Кнопка Поделиться
         document.getElementById('shareBtn').addEventListener('click', async () => {
-            if (!db) { const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data1)); navigator.clipboard.writeText(location.origin+location.pathname+'?data='+compressed).then(()=>showToast('🔗 Ссылка скопирована!')); }
-            else { try { const docRef = await db.collection('shared').add({ data: JSON.stringify(data1), createdAt: firebase.firestore.FieldValue.serverTimestamp() }); currentTierListId = docRef.id; navigator.clipboard.writeText(location.origin+location.pathname+'?id='+docRef.id).then(()=>showToast('🔗 Короткая ссылка скопирована!')); } catch(e) { showToast('Ошибка'); } }
+            if (!db) {
+                const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data1));
+                const url = location.origin + location.pathname + '?data=' + compressed;
+                navigator.clipboard.writeText(url).then(() => showToast('🔗 Ссылка скопирована!'));
+            } else {
+                try {
+                    const docRef = await db.collection('shared').add({
+                        data: JSON.stringify(data1),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    currentTierListId = docRef.id;
+                    const shortUrl = location.origin + location.pathname + '?id=' + docRef.id;
+                    navigator.clipboard.writeText(shortUrl).then(() => showToast('🔗 Короткая ссылка скопирована!'));
+                } catch(e) {
+                    const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data1));
+                    const url = location.origin + location.pathname + '?data=' + compressed;
+                    navigator.clipboard.writeText(url).then(() => showToast('🔗 Ссылка скопирована!'));
+                }
+            }
             if (!unlockedAchievements.includes('shared')) { unlockedAchievements.push('shared'); safeSet('achievements',unlockedAchievements); showToast('🏆 Достижение: У тебя нет друзей'); }
         });
+
         document.getElementById('compareBtn').addEventListener('click',()=>{compare=!compare;if(compare){data2=JSON.parse(JSON.stringify(data1));hist2=[]}renderAll()});
         document.getElementById('playlistBtn').addEventListener('click',()=>{const yt=data1.flatMap(t=>t.items).filter(i=>i.svc==='youtube');if(yt.length===0){showToast('Нет YouTube треков');return}const ids=yt.map(i=>{const m=i.url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:null}).filter(Boolean);if(ids.length>0)window.open('https://www.youtube.com/watch_videos?video_ids='+ids.join(','),'_blank')});
-        document.getElementById('galleryBtn').addEventListener('click',async()=>{if(!db){showToast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');const list=document.getElementById('galleryList');list.innerHTML='⏳ Загрузка...';try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> ('+(d.trackCount||0)+' треков)';div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);setData(1,data1);currentTierListId=doc.id;await loadComments(currentTierListId);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';showToast('Ошибка загрузки галереи')}});
+
+        // Галерея
+        document.getElementById('galleryBtn').addEventListener('click',async()=>{if(!db){showToast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');const list=document.getElementById('galleryList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> ('+(d.trackCount||0)+' треков)';div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);setData(1,data1);currentTierListId=doc.id;await loadComments(currentTierListId);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';showToast('Ошибка загрузки галереи')}showLoading(false)});
         document.getElementById('closeGallery').addEventListener('click',()=>document.getElementById('galleryModal').classList.remove('open'));
-        document.getElementById('publishBtn').addEventListener('click',async()=>{if(!db){showToast('Недоступно');return}const name=prompt('Название:','Мой тир-лист');if(!name)return;try{const docRef=await db.collection('tierlists').add({name,data:JSON.stringify(data1),trackCount:data1.reduce((s,t)=>s+t.items.length,0),createdAt:firebase.firestore.FieldValue.serverTimestamp()});currentTierListId=docRef.id;showToast('📤 Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){showToast('Ошибка публикации')}});
-        document.getElementById('duelBtn').addEventListener('click',async()=>{if(!db){showToast('Недоступно');return}document.getElementById('duelModal').classList.add('open');const list=document.getElementById('duelList');list.innerHTML='⏳ Загрузка...';try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' ('+(d.trackCount||0)+')';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';showToast('Ошибка загрузки дуэли')}});
+        document.getElementById('publishBtn').addEventListener('click',async()=>{if(!db){showToast('Недоступно');return}const name=prompt('Название:','Мой тир-лист');if(!name)return;showLoading(true);try{const docRef=await db.collection('tierlists').add({name,data:JSON.stringify(data1),trackCount:data1.reduce((s,t)=>s+t.items.length,0),createdAt:firebase.firestore.FieldValue.serverTimestamp()});currentTierListId=docRef.id;showToast('📤 Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){showToast('Ошибка публикации')}showLoading(false)});
+
+        // Дуэль
+        document.getElementById('duelBtn').addEventListener('click',async()=>{if(!db){showToast('Недоступно');return}document.getElementById('duelModal').classList.add('open');const list=document.getElementById('duelList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' ('+(d.trackCount||0)+')';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';showToast('Ошибка загрузки дуэли')}showLoading(false)});
         document.getElementById('closeDuel').addEventListener('click',()=>document.getElementById('duelModal').classList.remove('open'));
         document.getElementById('startDuelBtn').addEventListener('click',async()=>{const sel=document.querySelector('input[name="duelSelect"]:checked');if(!sel){showToast('Выберите соперника');return}try{const doc=await db.collection('tierlists').doc(sel.value).get();if(doc.exists){compare=true;data2=JSON.parse(doc.data().data);hist2=[];document.getElementById('duelModal').classList.remove('open');renderAll();showToast('⚔ Дуэль началась!')}}catch(e){showToast('Ошибка загрузки соперника')}});
+
         document.getElementById('achievementsBtn').addEventListener('click',()=>{document.getElementById('achievementsModal').classList.add('open');document.getElementById('achievementsList').innerHTML=ACHIEVEMENTS.map(a=>{const u=unlockedAchievements.includes(a.id);return'<div style="padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;opacity:'+(u?'1':'0.4')+';display:flex;align-items:center;gap:10px;"><span style="font-size:2rem;">'+(u?a.icon:'🔒')+'</span><div><strong>'+a.name+'</strong><br><small>'+a.desc+'</small></div></div>'}).join('')});
         document.getElementById('closeAchievements').addEventListener('click',()=>document.getElementById('achievementsModal').classList.remove('open'));
         document.getElementById('neonBtn').addEventListener('click',()=>{document.getElementById('neonModal').classList.add('open');document.getElementById('neonToggle').checked=neonSettings.enabled;document.getElementById('neonColor').value=neonSettings.color;document.getElementById('neonTarget').value=neonSettings.target});
@@ -243,7 +305,7 @@
         document.getElementById('closeComments').addEventListener('click',()=>document.getElementById('commentsModal').classList.remove('open'));
         document.getElementById('addCommentBtn').addEventListener('click',async()=>{const text=document.getElementById('newComment').value.trim();if(!text)return;document.getElementById('newComment').value='';await addComment(text)});
         document.getElementById('cancelAdd').addEventListener('click',()=>document.getElementById('addModal').classList.remove('open'));
-        document.getElementById('fetchCoverBtn').addEventListener('click',async function(){const url=document.getElementById('trackUrl').value.trim();if(!url){showToast('Вставьте ссылку');return}this.textContent='⏳...';this.disabled=true;let cover=null;const ytM=url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);if(ytM)cover='https://img.youtube.com/vi/'+ytM[1]+'/mqdefault.jpg';if(cover){document.getElementById('coverUrl').value=cover;document.getElementById('coverPreview').src=cover;document.getElementById('coverPreview').style.display='block'}else{showToast('Не удалось')}this.textContent='🔍 Загрузить обложку';this.disabled=false});
+        document.getElementById('fetchCoverBtn').addEventListener('click',async function(){const url=document.getElementById('trackUrl').value.trim();if(!url){showToast('Вставьте ссылку');return}this.textContent='⏳...';this.disabled=true;let cover=null;const ytM=url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);if(ytM)cover='https://img.youtube.com/vi/'+ytM[1]+'/mqdefault.jpg';if(cover){document.getElementById('coverUrl').value=cover;document.getElementById('coverPreview').src=cover;document.getElementById('coverPreview').style.display='block'}else{showToast('Не удалось. Вставьте ссылку на картинку вручную.')}this.textContent='🔍 Загрузить обложку автоматически';this.disabled=false});
         document.getElementById('coverUrl').addEventListener('input',function(){const url=this.value.trim();const prev=document.getElementById('coverPreview');if(url){prev.src=url;prev.style.display='block'}else{prev.style.display='none'}});
         document.getElementById('okAdd').addEventListener('click',function(){const svc=document.getElementById('svc').value;const url=document.getElementById('trackUrl').value.trim();let img=document.getElementById('coverUrl').value.trim();if(!url){showToast('Вставьте ссылку!');return}if(!img)img=placeholderImg(svc);pushH(addTargetList);getData(addTargetList)[addTargetTier].items.push({img,url,svc});setData(addTargetList,getData(addTargetList));document.getElementById('addModal').classList.remove('open');checkAchievements();renderAll()});
         document.getElementById('closePlayer').addEventListener('click',()=>{document.getElementById('playerModal').classList.remove('open');document.getElementById('playerFrame').src=''});
@@ -267,11 +329,13 @@
         if(safeGet('theme','dark')==='light')document.body.classList.add('light-theme');
         parallaxOn = safeGet('parallax', false);
         bindEvents();
+        showLoading(true);
         const loaded = await loadFromURL();
+        showLoading(false);
         if (!loaded) renderAll(); else renderAll();
         renderDraftsSidebar(); applyNeon();
         if (parallaxOn) toggleParallax(true);
         initParticles(); initParallax();
     }
     init();
-})();
+});
