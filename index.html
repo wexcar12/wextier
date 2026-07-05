@@ -32,8 +32,6 @@
             --item-bg: #15151f;
             --neon-glow: none;
             --sidebar-width: 240px;
-            --parallax-back: none;
-            --parallax-middle: none;
         }
         body.light-theme {
             --bg: #e8e8f0;
@@ -90,34 +88,64 @@
             z-index: 0;
             pointer-events: none;
         }
+
+        /* ====== ПАРАЛЛАКС-СЛОИ ====== */
         #parallaxWrapper {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            z-index: 0;
+            z-index: -1;
             pointer-events: none;
             overflow: hidden;
             display: none;
         }
         .parallax-layer {
             position: absolute;
-            top: -10%;
-            left: -10%;
-            width: 120%;
-            height: 120%;
+            will-change: transform;
             background-size: cover;
             background-position: center;
-            will-change: transform;
-            transition: none;
+            background-repeat: no-repeat;
         }
-        .parallax-layer.layer-back {
-            background-image: var(--parallax-back);
+        /* Слой 1 — самый дальний (небо/фон) */
+        .para-bg-1 {
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
+            background-image: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
+            z-index: 1;
         }
-        .parallax-layer.layer-middle {
-            background-image: var(--parallax-middle);
-            opacity: 0.3;
+        /* Слой 2 */
+        .para-bg-2 {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.pinimg.com/1200x/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg');
+            z-index: 2;
+            opacity: 0.7;
+        }
+        /* Слой 3 */
+        .para-bg-3 {
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            background-image: url('https://i.pinimg.com/736x/e7/29/81/e729811d65432283f14d04b3402a7604.jpg');
+            z-index: 3;
+            opacity: 0.5;
+        }
+        /* Слой 4 — самый ближний */
+        .para-bg-4 {
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            background-image: url('https://i.pinimg.com/736x/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg');
+            z-index: 4;
+            opacity: 0.4;
         }
 
         .sidebar {
@@ -603,7 +631,6 @@
             border-radius: 8px;
         }
 
-        /* Индикатор загрузки */
         .loading-spinner {
             position: fixed;
             top: 50%;
@@ -705,8 +732,10 @@
 <body>
 
     <div id="parallaxWrapper">
-        <div class="parallax-layer layer-back"></div>
-        <div class="parallax-layer layer-middle"></div>
+        <div class="parallax-layer para-bg-1"></div>
+        <div class="parallax-layer para-bg-2"></div>
+        <div class="parallax-layer para-bg-3"></div>
+        <div class="parallax-layer para-bg-4"></div>
     </div>
     <canvas id="particlesCanvas"></canvas>
     <button class="burger-btn" id="burgerBtn">☰</button>
