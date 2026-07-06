@@ -18,6 +18,7 @@ let aTT=null,aTL=1;
 let currentFilter='all';
 let neonS={enabled:false,color:'rainbow',target:'all'};
 let unlocked=[],comments=[],ctid=null,db=null;
+let duelLeftId=null,duelRightId=null;
 
 function showLoading(show){let l=document.querySelector('.loading-spinner');if(!l){l=document.createElement('div');l.className='loading-spinner';document.body.appendChild(l)}l.classList.toggle('show',show)}
 function initFB(){try{if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length===0){firebase.initializeApp({apiKey:"AIzaSyDIiUmEqdmQXyhQfUh3Zv-oiA62qXunOqs",authDomain:"wex-tier.firebaseapp.com",projectId:"wex-tier",storageBucket:"wex-tier.appspot.com",messagingSenderId:"81848663409",appId:"1:81848663409:web:4a450cd1960ed71db64ad0"})}db=firebase.firestore()}catch(e){db=null}}
@@ -39,7 +40,6 @@ function toggleParallax(on){
         document.body.classList.add('parallax-active');
         document.getElementById('parallaxWrapper').style.display='block';
         document.getElementById('parallaxBtn').classList.add('primary');
-        // Устанавливаем 4 слоя из параллакс-файла
         document.querySelector('.para-bg-1').style.backgroundImage='url(\''+PARA_BG1+'\')';
         document.querySelector('.para-bg-2').style.backgroundImage='url(\''+PARA_BG2+'\')';
         document.querySelector('.para-bg-3').style.backgroundImage='url(\''+PARA_BG3+'\')';
@@ -48,7 +48,6 @@ function toggleParallax(on){
         document.body.classList.remove('parallax-active');
         document.getElementById('parallaxWrapper').style.display='none';
         document.getElementById('parallaxBtn').classList.remove('primary');
-        // Сбрасываем трансформации слоёв
         document.querySelectorAll('.parallax-layer').forEach(function(l){l.style.transform='translate(0px, 0px)'});
     }
     ss('parallax',on);
@@ -78,21 +77,36 @@ function initParallax(){
             const rect=wrapper.getBoundingClientRect();
             const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
             const ox=e.clientX-cx,oy=e.clientY-cy;
-            // Коэффициенты как в вашем файле: 30, 20, 10, 5
             const depths=[30,20,10,5];
-            layers.forEach(function(layer,i){
-                const d=depths[i]||15;
-                layer.style.transform='translate('+(ox/rect.width*d)+'px, '+(oy/rect.height*d)+'px)';
-            });
+            layers.forEach(function(layer,i){const d=depths[i]||15;layer.style.transform='translate('+(ox/rect.width*d)+'px, '+(oy/rect.height*d)+'px)'});
         });
     });
-    wrapper.addEventListener('mouseleave',function(){
-        if(!parallaxOn)return;
-        layers.forEach(function(l){l.style.transform='translate(0px, 0px)'});
-    });
+    wrapper.addEventListener('mouseleave',function(){if(!parallaxOn)return;layers.forEach(function(l){l.style.transform='translate(0px, 0px)'})});
 }
 
 async function loadFromURL(){const p=new URLSearchParams(location.search);if(p.has('id')&&db){try{const doc=await db.collection('shared').doc(p.get('id')).get();if(doc.exists){const d=JSON.parse(doc.data().data);if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);ctid=p.get('id');if(p.has('tierlistId'))ctid=p.get('tierlistId');await loadComments(ctid);history.replaceState({},'',location.pathname);return true}}}catch(e){}}if(p.has('data')){try{const d=JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data')));if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);if(p.has('tierlistId')){ctid=p.get('tierlistId');await loadComments(ctid)}history.replaceState({},'',location.pathname);return true}}catch(e){}}return false}
+
+// ====== ГОЛОСОВАНИЕ В ДУЭЛИ ======
+async function voteFor(side){
+    const id = side==='left' ? duelLeftId : duelRightId;
+    if(!id || id==='local'){toast('Нельзя голосовать за локальный тир-лист');return}
+    if(!db){toast('Голосование недоступно');return}
+    showLoading(true);
+    try{
+        const ref = db.collection('tierlists').doc(id);
+        const doc = await ref.get();
+        if(doc.exists){
+            const currentWins = doc.data().wins || 0;
+            await ref.update({wins: currentWins + 1});
+            toast('✅ Голос учтён! Всего побед: '+(currentWins+1));
+            // Скрыть панель голосования после голоса
+            document.getElementById('duelVoteBar').classList.remove('show');
+            duelLeftId=null; duelRightId=null;
+        }
+    }catch(e){toast('Ошибка голосования')}
+    showLoading(false);
+}
+
 function bindEvents(){
     document.getElementById('burgerBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
     document.getElementById('editBtn').addEventListener('click',()=>{editing=!editing;renderAll()});
@@ -108,12 +122,75 @@ function bindEvents(){
     document.getElementById('shareBtn').addEventListener('click',async()=>{if(!db){const compressed=LZString.compressToEncodedURIComponent(JSON.stringify(data1));const url=location.origin+location.pathname+'?data='+compressed;navigator.clipboard.writeText(url).then(()=>toast('🔗 Ссылка скопирована!'))}else{try{const docRef=await db.collection('shared').add({data:JSON.stringify(data1),createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;const shortUrl=location.origin+location.pathname+'?id='+docRef.id;navigator.clipboard.writeText(shortUrl).then(()=>toast('🔗 Короткая ссылка скопирована!'))}catch(e){const compressed=LZString.compressToEncodedURIComponent(JSON.stringify(data1));const url=location.origin+location.pathname+'?data='+compressed;navigator.clipboard.writeText(url).then(()=>toast('🔗 Ссылка скопирована!'))}}if(!unlocked.includes('shared')){unlocked.push('shared');ss('achievements',unlocked);toast('🏆 Достижение: У тебя нет друзей')}});
     document.getElementById('compareBtn').addEventListener('click',()=>{compare=!compare;if(compare){data2=JSON.parse(JSON.stringify(data1));hist2=[]}renderAll()});
     document.getElementById('playlistBtn').addEventListener('click',()=>{const yt=data1.flatMap(t=>t.items).filter(i=>i.svc==='youtube');if(yt.length===0){toast('Нет YouTube треков');return}const ids=yt.map(i=>{const m=i.url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:null}).filter(Boolean);if(ids.length>0)window.open('https://www.youtube.com/watch_videos?video_ids='+ids.join(','),'_blank')});
-    document.getElementById('galleryBtn').addEventListener('click',async()=>{if(!db){toast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');const list=document.getElementById('galleryList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> ('+(d.trackCount||0)+' треков)';div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки галереи')}showLoading(false)});
+
+    // Галерея
+    document.getElementById('galleryBtn').addEventListener('click',async()=>{if(!db){toast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='🖼 Галерея тир-листов';document.getElementById('publishBtn').style.display='inline-block';const list=document.getElementById('galleryList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> 🏆'+(d.wins||0)+' ('+(d.trackCount||0)+' треков)';div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки галереи')}showLoading(false)});
     document.getElementById('closeGallery').addEventListener('click',()=>document.getElementById('galleryModal').classList.remove('open'));
-    document.getElementById('publishBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}const name=prompt('Название:','Мой тир-лист');if(!name)return;showLoading(true);try{const docRef=await db.collection('tierlists').add({name,data:JSON.stringify(data1),trackCount:data1.reduce((s,t)=>s+t.items.length,0),createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;toast('📤 Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){toast('Ошибка публикации')}showLoading(false)});
-    document.getElementById('duelBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}document.getElementById('duelModal').classList.add('open');const list=document.getElementById('duelList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' ('+(d.trackCount||0)+')';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки дуэли')}showLoading(false)});
+    document.getElementById('publishBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}const name=prompt('Название:','Мой тир-лист');if(!name)return;showLoading(true);try{const docRef=await db.collection('tierlists').add({name,data:JSON.stringify(data1),trackCount:data1.reduce((s,t)=>s+t.items.length,0),wins:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;toast('📤 Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){toast('Ошибка публикации')}showLoading(false)});
+
+    // Дуэль
+    document.getElementById('duelBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}document.getElementById('duelModal').classList.add('open');const list=document.getElementById('duelList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' 🏆'+(d.wins||0)+' ('+(d.trackCount||0)+' треков)';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки дуэли')}showLoading(false)});
     document.getElementById('closeDuel').addEventListener('click',()=>document.getElementById('duelModal').classList.remove('open'));
-    document.getElementById('startDuelBtn').addEventListener('click',async()=>{const sel=document.querySelector('input[name="duelSelect"]:checked');if(!sel){toast('Выберите соперника');return}try{const doc=await db.collection('tierlists').doc(sel.value).get();if(doc.exists){compare=true;data2=JSON.parse(doc.data().data);hist2=[];document.getElementById('duelModal').classList.remove('open');renderAll();toast('⚔ Дуэль началась!')}}catch(e){toast('Ошибка загрузки соперника')}});
+    document.getElementById('startDuelBtn').addEventListener('click',async()=>{
+        const sel=document.querySelector('input[name="duelSelect"]:checked');
+        if(!sel){toast('Выберите соперника');return}
+        try{
+            const doc=await db.collection('tierlists').doc(sel.value).get();
+            if(doc.exists){
+                compare=true;
+                data2=JSON.parse(doc.data().data);
+                hist2=[];
+                // Запоминаем ID для голосования
+                duelLeftId = ctid; // текущий (может быть null если локальный)
+                duelRightId = sel.value;
+                // Показываем панель голосования
+                const bar = document.getElementById('duelVoteBar');
+                bar.classList.add('show');
+                document.getElementById('duelLeftWins').textContent = '🏆 '+(duelLeftId ? '?' : '0');
+                document.getElementById('duelRightWins').textContent = '🏆 '+(doc.data().wins||0);
+                document.getElementById('duelModal').classList.remove('open');
+                renderAll();
+                toast('⚔ Дуэль началась! Голосуйте за победителя!');
+            }
+        }catch(e){toast('Ошибка загрузки соперника')}
+    });
+
+    // Кнопки голосования
+    document.getElementById('voteLeftBtn').addEventListener('click',()=>voteFor('left'));
+    document.getElementById('voteRightBtn').addEventListener('click',()=>voteFor('right'));
+
+    // Топ
+    document.getElementById('topBtn').addEventListener('click',async()=>{
+        if(!db){toast('Недоступно');return}
+        document.getElementById('galleryModal').classList.add('open');
+        document.getElementById('galleryModal').querySelector('h3').textContent='🏅 Топ тир-листов';
+        document.getElementById('publishBtn').style.display='none';
+        const list=document.getElementById('galleryList');
+        list.innerHTML='⏳ Загрузка...';
+        showLoading(true);
+        try{
+            const snap=await db.collection('tierlists').orderBy('wins','desc').limit(20).get();
+            list.innerHTML='';
+            let rank=1;
+            snap.forEach(doc=>{
+                const d=doc.data();
+                if(!d.wins||d.wins===0){rank++;return;} // Пропускаем с нулём побед в топе
+                const div=document.createElement('div');
+                div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
+                let medal='';
+                if(rank===1)medal='🥇';
+                else if(rank===2)medal='🥈';
+                else if(rank===3)medal='🥉';
+                div.innerHTML=medal+' <strong>#'+rank+'</strong> '+(d.name||'Без названия')+' 🏆'+(d.wins||0)+' ('+(d.trackCount||0)+' треков)';
+                div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};
+                list.appendChild(div);
+                rank++;
+            });
+            if(list.innerHTML==='')list.innerHTML='Пока никто не побеждал...';
+        }catch(e){list.innerHTML='Ошибка загрузки'}
+        showLoading(false);
+    });
+
     document.getElementById('achievementsBtn').addEventListener('click',()=>{document.getElementById('achievementsModal').classList.add('open');document.getElementById('achievementsList').innerHTML=ACH.map(a=>{const u=unlocked.includes(a.id);return'<div style="padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;opacity:'+(u?'1':'0.4')+';display:flex;align-items:center;gap:10px;"><span style="font-size:2rem;">'+(u?a.icon:'🔒')+'</span><div><strong>'+a.name+'</strong><br><small>'+a.desc+'</small></div></div>'}).join('')});
     document.getElementById('closeAchievements').addEventListener('click',()=>document.getElementById('achievementsModal').classList.remove('open'));
     document.getElementById('neonBtn').addEventListener('click',()=>{document.getElementById('neonModal').classList.add('open');document.getElementById('neonToggle').checked=neonS.enabled;document.getElementById('neonColor').value=neonS.color;document.getElementById('neonTarget').value=neonS.target});
@@ -133,7 +210,7 @@ function bindEvents(){
     document.getElementById('styleSelect').addEventListener('change',applyStyle);
     document.getElementById('sizeSelect').addEventListener('change',applySize);
     document.getElementById('newDraftBtnSidebar').addEventListener('click',()=>{const name=prompt('Название:','Черновик '+(DRAFTS.length+1));if(name&&name.trim()){DRAFTS.push({name:name.trim(),data:dD()});ad=DRAFTS.length-1;data1=JSON.parse(JSON.stringify(DRAFTS[ad].data));hist1=[];saveDrafts();renderAll()}});
-    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;document.body.classList.remove('light-theme','neon-active','parallax-active');document.getElementById('parallaxWrapper').style.display='none';document.getElementById('parallaxBtn').classList.remove('primary');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
+    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;duelLeftId=null;duelRightId=null;document.body.classList.remove('light-theme','neon-active','parallax-active');document.getElementById('parallaxWrapper').style.display='none';document.getElementById('parallaxBtn').classList.remove('primary');document.getElementById('duelVoteBar').classList.remove('show');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
     window.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='z'){e.preventDefault();document.getElementById('undoBtn').click()}});
     document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this&&this.id!=='neonModal')this.classList.remove('open')})});
 }
