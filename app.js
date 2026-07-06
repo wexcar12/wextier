@@ -30,8 +30,37 @@ function pushH(n){const h=n===1?hist1:hist2;h.push(JSON.parse(JSON.stringify(n==
 function gD(n){return n===1?data1:data2}
 function sD(n,v){if(n===1)data1=v;else data2=v;saveDrafts()}
 function chkAch(){const total=data1.reduce((s,t)=>s+t.items.length,0),sT=data1.find(t=>t.tier==='S'),aE=data1.every(t=>t.items.length===0);const colors=data1.map(t=>t.color),aD=new Set(colors).size===data1.length&&data1.length>1;const fE=sg('first_edit_done',false);const checks={first_edit:fE||editing,twenty_tracks:total>=20,rainbow:aD,five_s:sT&&sT.items.length>=5,all_empty:aE};for(const[id,met]of Object.entries(checks)){if(met&&!unlocked.includes(id)){unlocked.push(id);const a=ACH.find(x=>x.id===id);toast('🏆 Достижение: '+(a?a.name:id));ss('achievements',unlocked)}}if(!fE&&editing)ss('first_edit_done',true)}
-function applyNeon(){if(neonS.enabled){document.body.classList.add('neon-active');let c='rgba(245,200,66,0.9)';if(neonS.color==='cyan')c='rgba(0,200,255,0.9)';else if(neonS.color==='magenta')c='rgba(255,0,200,0.9)';else if(neonS.color==='rainbow')c='rgba(255,255,255,0.9)';document.documentElement.style.setProperty('--neon-glow','0 0 20px '+c)}else{document.body.classList.remove('neon-active');document.documentElement.style.setProperty('--neon-glow','none')}const nb=document.getElementById('neonBtn');if(neonS.enabled)nb.classList.add('neon-active');else nb.classList.remove('neon-active')}
+
+// ====== НЕОН С РАДУЖНОЙ АНИМАЦИЕЙ ======
+function applyNeon(){
+    if(neonS.enabled){
+        document.body.classList.add('neon-active');
+        if(neonS.color==='rainbow'){
+            if(!window._neonRainbowInterval){
+                const colors=['rgba(255,100,100,0.9)','rgba(255,200,50,0.9)','rgba(100,255,100,0.9)','rgba(50,150,255,0.9)','rgba(200,50,255,0.9)'];
+                let ci=0;
+                window._neonRainbowInterval=setInterval(function(){
+                    ci=(ci+1)%colors.length;
+                    document.documentElement.style.setProperty('--neon-glow','0 0 20px '+colors[ci]);
+                },600);
+            }
+        }else{
+            if(window._neonRainbowInterval){clearInterval(window._neonRainbowInterval);window._neonRainbowInterval=null}
+            let c='rgba(245,200,66,0.9)';
+            if(neonS.color==='cyan')c='rgba(0,200,255,0.9)';
+            else if(neonS.color==='magenta')c='rgba(255,0,200,0.9)';
+            document.documentElement.style.setProperty('--neon-glow','0 0 20px '+c);
+        }
+    }else{
+        document.body.classList.remove('neon-active');
+        document.documentElement.style.setProperty('--neon-glow','none');
+        if(window._neonRainbowInterval){clearInterval(window._neonRainbowInterval);window._neonRainbowInterval=null}
+    }
+    const nb=document.getElementById('neonBtn');
+    if(neonS.enabled)nb.classList.add('neon-active');else nb.classList.remove('neon-active');
+}
 function saveNeon(){neonS.enabled=document.getElementById('neonToggle').checked;neonS.color=document.getElementById('neonColor').value;neonS.target=document.getElementById('neonTarget').value;ss('neon',neonS);applyNeon()}
+
 function applyBg(idx){document.documentElement.style.setProperty('--bg-img','url(\''+B[idx]+'\')');ss('bg',idx)}
 
 function toggleParallax(on){
@@ -86,22 +115,20 @@ function initParallax(){
 
 async function loadFromURL(){const p=new URLSearchParams(location.search);if(p.has('id')&&db){try{const doc=await db.collection('shared').doc(p.get('id')).get();if(doc.exists){const d=JSON.parse(doc.data().data);if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);ctid=p.get('id');if(p.has('tierlistId'))ctid=p.get('tierlistId');await loadComments(ctid);history.replaceState({},'',location.pathname);return true}}}catch(e){}}if(p.has('data')){try{const d=JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data')));if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);if(p.has('tierlistId')){ctid=p.get('tierlistId');await loadComments(ctid)}history.replaceState({},'',location.pathname);return true}}catch(e){}}return false}
 
-// ====== ГОЛОСОВАНИЕ В ДУЭЛИ ======
 async function voteFor(side){
-    const id = side==='left' ? duelLeftId : duelRightId;
-    if(!id || id==='local'){toast('Нельзя голосовать за локальный тир-лист');return}
+    const id=side==='left'?duelLeftId:duelRightId;
+    if(!id||id==='local'){toast('Нельзя голосовать за локальный тир-лист');return}
     if(!db){toast('Голосование недоступно');return}
     showLoading(true);
     try{
-        const ref = db.collection('tierlists').doc(id);
-        const doc = await ref.get();
+        const ref=db.collection('tierlists').doc(id);
+        const doc=await ref.get();
         if(doc.exists){
-            const currentWins = doc.data().wins || 0;
-            await ref.update({wins: currentWins + 1});
+            const currentWins=doc.data().wins||0;
+            await ref.update({wins:currentWins+1});
             toast('✅ Голос учтён! Всего побед: '+(currentWins+1));
-            // Скрыть панель голосования после голоса
             document.getElementById('duelVoteBar').classList.remove('show');
-            duelLeftId=null; duelRightId=null;
+            duelLeftId=null;duelRightId=null;
         }
     }catch(e){toast('Ошибка голосования')}
     showLoading(false);
@@ -123,12 +150,10 @@ function bindEvents(){
     document.getElementById('compareBtn').addEventListener('click',()=>{compare=!compare;if(compare){data2=JSON.parse(JSON.stringify(data1));hist2=[]}renderAll()});
     document.getElementById('playlistBtn').addEventListener('click',()=>{const yt=data1.flatMap(t=>t.items).filter(i=>i.svc==='youtube');if(yt.length===0){toast('Нет YouTube треков');return}const ids=yt.map(i=>{const m=i.url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:null}).filter(Boolean);if(ids.length>0)window.open('https://www.youtube.com/watch_videos?video_ids='+ids.join(','),'_blank')});
 
-    // Галерея
     document.getElementById('galleryBtn').addEventListener('click',async()=>{if(!db){toast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='🖼 Галерея тир-листов';document.getElementById('publishBtn').style.display='inline-block';const list=document.getElementById('galleryList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> 🏆'+(d.wins||0)+' ('+(d.trackCount||0)+' треков)';div.onclick=async()=>{pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки галереи')}showLoading(false)});
     document.getElementById('closeGallery').addEventListener('click',()=>document.getElementById('galleryModal').classList.remove('open'));
     document.getElementById('publishBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}const name=prompt('Название:','Мой тир-лист');if(!name)return;showLoading(true);try{const docRef=await db.collection('tierlists').add({name,data:JSON.stringify(data1),trackCount:data1.reduce((s,t)=>s+t.items.length,0),wins:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;toast('📤 Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){toast('Ошибка публикации')}showLoading(false)});
 
-    // Дуэль
     document.getElementById('duelBtn').addEventListener('click',async()=>{if(!db){toast('Недоступно');return}document.getElementById('duelModal').classList.add('open');const list=document.getElementById('duelList');list.innerHTML='⏳ Загрузка...';showLoading(true);try{const snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(doc=>{const d=doc.data();const div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' 🏆'+(d.wins||0)+' ('+(d.trackCount||0)+' треков)';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки дуэли')}showLoading(false)});
     document.getElementById('closeDuel').addEventListener('click',()=>document.getElementById('duelModal').classList.remove('open'));
     document.getElementById('startDuelBtn').addEventListener('click',async()=>{
@@ -140,14 +165,12 @@ function bindEvents(){
                 compare=true;
                 data2=JSON.parse(doc.data().data);
                 hist2=[];
-                // Запоминаем ID для голосования
-                duelLeftId = ctid; // текущий (может быть null если локальный)
-                duelRightId = sel.value;
-                // Показываем панель голосования
-                const bar = document.getElementById('duelVoteBar');
+                duelLeftId=ctid;
+                duelRightId=sel.value;
+                const bar=document.getElementById('duelVoteBar');
                 bar.classList.add('show');
-                document.getElementById('duelLeftWins').textContent = '🏆 '+(duelLeftId ? '?' : '0');
-                document.getElementById('duelRightWins').textContent = '🏆 '+(doc.data().wins||0);
+                document.getElementById('duelLeftWins').textContent='🏆 '+(duelLeftId?'?':'0');
+                document.getElementById('duelRightWins').textContent='🏆 '+(doc.data().wins||0);
                 document.getElementById('duelModal').classList.remove('open');
                 renderAll();
                 toast('⚔ Дуэль началась! Голосуйте за победителя!');
@@ -155,11 +178,9 @@ function bindEvents(){
         }catch(e){toast('Ошибка загрузки соперника')}
     });
 
-    // Кнопки голосования
     document.getElementById('voteLeftBtn').addEventListener('click',()=>voteFor('left'));
     document.getElementById('voteRightBtn').addEventListener('click',()=>voteFor('right'));
 
-    // Топ
     document.getElementById('topBtn').addEventListener('click',async()=>{
         if(!db){toast('Недоступно');return}
         document.getElementById('galleryModal').classList.add('open');
@@ -174,7 +195,7 @@ function bindEvents(){
             let rank=1;
             snap.forEach(doc=>{
                 const d=doc.data();
-                if(!d.wins||d.wins===0){rank++;return;} // Пропускаем с нулём побед в топе
+                if(!d.wins||d.wins===0){rank++;return;}
                 const div=document.createElement('div');
                 div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
                 let medal='';
@@ -210,7 +231,7 @@ function bindEvents(){
     document.getElementById('styleSelect').addEventListener('change',applyStyle);
     document.getElementById('sizeSelect').addEventListener('change',applySize);
     document.getElementById('newDraftBtnSidebar').addEventListener('click',()=>{const name=prompt('Название:','Черновик '+(DRAFTS.length+1));if(name&&name.trim()){DRAFTS.push({name:name.trim(),data:dD()});ad=DRAFTS.length-1;data1=JSON.parse(JSON.stringify(DRAFTS[ad].data));hist1=[];saveDrafts();renderAll()}});
-    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;duelLeftId=null;duelRightId=null;document.body.classList.remove('light-theme','neon-active','parallax-active');document.getElementById('parallaxWrapper').style.display='none';document.getElementById('parallaxBtn').classList.remove('primary');document.getElementById('duelVoteBar').classList.remove('show');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
+    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;duelLeftId=null;duelRightId=null;document.body.classList.remove('light-theme','neon-active','parallax-active');if(window._neonRainbowInterval){clearInterval(window._neonRainbowInterval);window._neonRainbowInterval=null}document.getElementById('parallaxWrapper').style.display='none';document.getElementById('parallaxBtn').classList.remove('primary');document.getElementById('duelVoteBar').classList.remove('show');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
     window.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='z'){e.preventDefault();document.getElementById('undoBtn').click()}});
     document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this&&this.id!=='neonModal')this.classList.remove('open')})});
 }
