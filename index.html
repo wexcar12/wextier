@@ -89,7 +89,6 @@
             pointer-events: none;
         }
 
-        /* ====== ПАРАЛЛАКС-СЛОИ ====== */
         #parallaxWrapper {
             position: fixed;
             top: 0;
@@ -108,7 +107,6 @@
             background-position: center;
             background-repeat: no-repeat;
         }
-        /* Слой 1 — самый дальний (небо/фон) */
         .para-bg-1 {
             top: -5%;
             left: -5%;
@@ -117,7 +115,6 @@
             background-image: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
             z-index: 1;
         }
-        /* Слой 2 */
         .para-bg-2 {
             top: 0;
             left: 0;
@@ -127,7 +124,6 @@
             z-index: 2;
             opacity: 0.7;
         }
-        /* Слой 3 */
         .para-bg-3 {
             top: 5%;
             left: 5%;
@@ -137,7 +133,6 @@
             z-index: 3;
             opacity: 0.5;
         }
-        /* Слой 4 — самый ближний */
         .para-bg-4 {
             top: 10%;
             left: 10%;
@@ -560,7 +555,6 @@
             color: #000;
         }
 
-        /* Модальные окна с плавной анимацией */
         .modal {
             display: none;
             opacity: 0;
@@ -629,6 +623,56 @@
             height: 315px;
             border: none;
             border-radius: 8px;
+        }
+
+        /* Панель голосования дуэли */
+        #duelVoteBar {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 150;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            padding: 12px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            gap: 14px;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        #duelVoteBar.show {
+            display: flex;
+        }
+        .vote-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .vote-btn.left {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        .vote-btn.right {
+            background: #4d96ff;
+            color: #fff;
+        }
+        .vote-btn:hover {
+            filter: brightness(1.2);
+            transform: scale(1.03);
+        }
+        .vote-score {
+            font-weight: 700;
+            color: var(--gold);
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: center;
         }
 
         .loading-spinner {
@@ -726,6 +770,11 @@
             .top-bar {
                 max-width: 100%;
             }
+            #duelVoteBar {
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 10px 14px;
+            }
         }
     </style>
 </head>
@@ -756,6 +805,7 @@
         <button class="sidebar-btn" id="playlistBtn">▶ YouTube плейлист</button>
         <button class="sidebar-btn" id="galleryBtn">🖼 Галерея</button>
         <button class="sidebar-btn" id="duelBtn">⚔ Дуэль</button>
+        <button class="sidebar-btn" id="topBtn">🏅 Топ</button>
         <button class="sidebar-btn" id="achievementsBtn">🏆 Достижения</button>
         <button class="sidebar-btn" id="commentsBtn">💬 Комментарии</button>
         <div class="sidebar-section">Экспорт</div>
@@ -790,11 +840,20 @@
         </div>
     </main>
 
+    <!-- Панель голосования дуэли -->
+    <div id="duelVoteBar">
+        <span class="vote-score" id="duelLeftWins">🏆 0</span>
+        <button class="vote-btn left" id="voteLeftBtn">⬅ Левый</button>
+        <span style="color:var(--text-secondary);">VS</span>
+        <button class="vote-btn right" id="voteRightBtn">Правый ➡</button>
+        <span class="vote-score" id="duelRightWins">🏆 0</span>
+    </div>
+
     <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc"><option value="youtube">▶ YouTube</option><option value="spotify">🟢 Spotify</option><option value="apple">🎵 Apple Music</option><option value="yandex">🎧 Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">🔍 Загрузить обложку автоматически</button><input type="text" id="coverUrl" placeholder="Ссылка на обложку (если авто не сработало)"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn" id="cancelAdd" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Отмена</button><button class="btn" id="okAdd" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">➕ Добавить</button></div></div></div>
     <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>▶ YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn" id="closePlayer" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button></div></div></div>
     <div class="modal" id="commentsModal"><div class="modal-box"><h3>💬 Комментарии</h3><div id="commentsList" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div><textarea id="newComment" placeholder="Оставьте комментарий..."></textarea><div class="modal-actions"><button class="btn" id="closeComments" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="addCommentBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">✉ Отправить</button></div></div></div>
     <div class="modal" id="galleryModal"><div class="modal-box" style="width:600px;"><h3>🖼 Галерея тир-листов</h3><div id="galleryList" style="max-height:350px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn" id="closeGallery" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="publishBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">📤 Опубликовать свой</button></div></div></div>
-    <div class="modal" id="duelModal"><div class="modal-box" style="width:600px;"><h3>⚔ Дуэль тир-листов</h3><div id="duelList" style="max-height:300px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn" id="closeDuel" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="startDuelBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">⚔ Начать дуэль</button></div></div></div>
+    <div class="modal" id="duelModal"><div class="modal-box" style="width:600px;"><h3>⚔ Дуэль тир-листов</h3><p style="color:var(--text-secondary);margin-bottom:8px;">Выберите соперника и начните дуэль. После битвы проголосуйте за лучший тир-лист!</p><div id="duelList" style="max-height:300px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn" id="closeDuel" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="startDuelBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">⚔ Начать дуэль</button></div></div></div>
     <div class="modal" id="achievementsModal"><div class="modal-box"><h3>🏆 Достижения</h3><div id="achievementsList"></div><div class="modal-actions"><button class="btn" id="closeAchievements" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button></div></div></div>
     <div class="modal" id="neonModal"><div class="modal-box"><h3>💡 Настройки неона</h3><label><input type="checkbox" id="neonToggle"> Включить неон</label><br><br><select id="neonColor"><option value="rainbow">🌈 Радужный</option><option value="gold">🟡 Золотой</option><option value="cyan">🔵 Голубой</option><option value="magenta">🟣 Пурпурный</option></select><br><br><select id="neonTarget"><option value="all">Всё</option><option value="items">Обложки</option><option value="tiers">Тиры</option><option value="title">Заголовок</option></select><div class="modal-actions"><button class="btn" id="closeNeon" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">Сохранить и закрыть</button></div></div></div>
 
