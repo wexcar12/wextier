@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WEX-TIER — Создай свой музыкальный тир-лист</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --bg: #0b0b12;
@@ -72,15 +68,20 @@
             pointer-events: none;
         }
         body.parallax-active { background-image: none !important; }
-        body.parallax-active::before { opacity: 0.3; }
+        body.parallax-active::before { opacity: 0.25; }
         #particlesCanvas { position: fixed; top:0; left:0; z-index:0; pointer-events:none; }
 
-        #parallaxWrapper { position:fixed; top:0; left:0; width:100%; height:100vh; z-index:-1; pointer-events:none; overflow:hidden; display:none; }
-        .parallax-layer { position:absolute; will-change:transform; background-size:cover; background-position:center; background-repeat:no-repeat; }
-        .para-bg-1 { top:-5%; left:-5%; width:110%; height:110%; background-image:url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg'); z-index:1; }
-        .para-bg-2 { top:0; left:0; width:100%; height:100%; background-image:url('https://i.pinimg.com/1200x/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg'); z-index:2; opacity:0.7; }
-        .para-bg-3 { top:5%; left:5%; width:90%; height:90%; background-image:url('https://i.pinimg.com/736x/e7/29/81/e729811d65432283f14d04b3402a7604.jpg'); z-index:3; opacity:0.5; }
-        .para-bg-4 { top:10%; left:10%; width:80%; height:80%; background-image:url('https://i.pinimg.com/736x/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg'); z-index:4; opacity:0.4; }
+        /* Видео-фон параллакса */
+        #parallaxVideo {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            pointer-events: none;
+            display: none;
+        }
+        body.parallax-active #parallaxVideo { display: block; }
 
         .sidebar {
             position:fixed; top:0; left:0; width:var(--sidebar-width); height:100vh;
@@ -190,12 +191,9 @@
 </head>
 <body>
 
-    <div id="parallaxWrapper">
-        <div class="parallax-layer para-bg-1"></div>
-        <div class="parallax-layer para-bg-2"></div>
-        <div class="parallax-layer para-bg-3"></div>
-        <div class="parallax-layer para-bg-4"></div>
-    </div>
+    <video id="parallaxVideo" muted loop playsinline>
+        <source src="https://github.com/wexcar12/wextier/releases/download/v1.0/parallax_effect.mp4" type="video/mp4">
+    </video>
     <canvas id="particlesCanvas"></canvas>
     <button class="burger-btn" id="burgerBtn">☰</button>
 
