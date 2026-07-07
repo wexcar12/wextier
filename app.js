@@ -59,24 +59,35 @@ function saveNeon(){neonS.enabled=document.getElementById('neonToggle').checked;
 
 function applyBg(idx){document.documentElement.style.setProperty('--bg-img','url(\''+B[idx]+'\')');ss('bg',idx)}
 
-// ПАРАЛЛАКС С ВИДЕО
+// ====== ПАРАЛЛАКС С ОДНИМ СЛОЕМ ПО МЫШИ ======
+function initParallaxMouse(){
+    const layer=document.getElementById('parallaxLayer');
+    if(!layer)return;
+    window.addEventListener('mousemove',function(e){
+        if(!parallaxOn)return;
+        const x=(window.innerWidth/2-e.pageX)/25;
+        const y=(window.innerHeight/2-e.pageY)/25;
+        layer.style.transform='translateX('+x+'px) translateY('+y+'px)';
+    });
+}
+
 function toggleParallax(on){
     parallaxOn=on;
-    const video=document.getElementById('parallaxVideo');
+    const wrapper=document.getElementById('parallaxWrapper');
+    const layer=document.getElementById('parallaxLayer');
     if(on){
         document.body.classList.add('parallax-active');
         document.getElementById('parallaxBtn').classList.add('primary');
-        if(video){
-            video.style.display='block';
-            video.play().catch(function(){});
+        if(wrapper)wrapper.style.display='block';
+        if(layer){
+            const bgIdx=parseInt(document.getElementById('bgSelect').value,10);
+            layer.style.backgroundImage='url(\''+B[bgIdx]+'\')';
         }
     }else{
         document.body.classList.remove('parallax-active');
         document.getElementById('parallaxBtn').classList.remove('primary');
-        if(video){
-            video.pause();
-            video.style.display='none';
-        }
+        if(wrapper)wrapper.style.display='none';
+        if(layer)layer.style.transform='translateX(0px) translateY(0px)';
     }
     ss('parallax',on);
 }
@@ -212,8 +223,8 @@ function bindEvents(){
     document.getElementById('styleSelect').addEventListener('change',applyStyle);
     document.getElementById('sizeSelect').addEventListener('change',applySize);
     document.getElementById('newDraftBtnSidebar').addEventListener('click',()=>{const name=prompt('Название:','Черновик '+(DRAFTS.length+1));if(name&&name.trim()){DRAFTS.push({name:name.trim(),data:dD()});ad=DRAFTS.length-1;data1=JSON.parse(JSON.stringify(DRAFTS[ad].data));hist1=[];saveDrafts();renderAll()}});
-    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;duelLeftId=null;duelRightId=null;document.body.classList.remove('light-theme','neon-active','parallax-active');if(window._neonRainbowInterval){clearInterval(window._neonRainbowInterval);window._neonRainbowInterval=null}const video=document.getElementById('parallaxVideo');if(video){video.pause();video.style.display='none';}document.getElementById('parallaxBtn').classList.remove('primary');document.getElementById('duelVoteBar').classList.remove('show');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
+    document.getElementById('resetAllLink').addEventListener('click',function(e){e.preventDefault();if(confirm('Удалить ВСЕ данные?')){clr();DRAFTS=[{name:'Основной',data:dD()}];ad=0;data1=JSON.parse(JSON.stringify(DRAFTS[0].data));data2=dD();hist1=[];hist2=[];comments=[];unlocked=[];neonS={enabled:false,color:'rainbow',target:'all'};parallaxOn=false;ctid=null;duelLeftId=null;duelRightId=null;document.body.classList.remove('light-theme','neon-active','parallax-active');if(window._neonRainbowInterval){clearInterval(window._neonRainbowInterval);window._neonRainbowInterval=null}const wrapper=document.getElementById('parallaxWrapper');if(wrapper)wrapper.style.display='none';document.getElementById('parallaxBtn').classList.remove('primary');document.getElementById('duelVoteBar').classList.remove('show');document.documentElement.style.setProperty('--bg-img','url(\''+B[0]+'\')');document.getElementById('bgSelect').value='0';document.getElementById('styleSelect').value='gradient';document.getElementById('sizeSelect').value='60';saveDrafts();renderAll()}});
     window.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='z'){e.preventDefault();document.getElementById('undoBtn').click()}});
     document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',function(e){if(e.target===this&&this.id!=='neonModal')this.classList.remove('open')})});
 }
-async function init(){initFB();loadDrafts();unlocked=sg('achievements',[]);neonS=sg('neon',{enabled:false,color:'rainbow',target:'all'});const sbg=sg('bg',null);if(sbg!==null){applyBg(parseInt(sbg,10));document.getElementById('bgSelect').value=sbg}document.getElementById('styleSelect').value=sg('style','gradient');document.getElementById('sizeSelect').value=sg('size','60');if(sg('theme','dark')==='light')document.body.classList.add('light-theme');parallaxOn=sg('parallax',false);bindEvents();showLoading(true);const loaded=await loadFromURL();showLoading(false);if(!loaded)renderAll();else renderAll();renderDraftsSidebar();applyNeon();if(parallaxOn)toggleParallax(true);initParticles()}init()});
+async function init(){initFB();loadDrafts();unlocked=sg('achievements',[]);neonS=sg('neon',{enabled:false,color:'rainbow',target:'all'});const sbg=sg('bg',null);if(sbg!==null){applyBg(parseInt(sbg,10));document.getElementById('bgSelect').value=sbg}document.getElementById('styleSelect').value=sg('style','gradient');document.getElementById('sizeSelect').value=sg('size','60');if(sg('theme','dark')==='light')document.body.classList.add('light-theme');parallaxOn=sg('parallax',false);bindEvents();showLoading(true);const loaded=await loadFromURL();showLoading(false);if(!loaded)renderAll();else renderAll();renderDraftsSidebar();applyNeon();if(parallaxOn)toggleParallax(true);initParticles();initParallaxMouse()}init()});
