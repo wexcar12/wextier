@@ -11,6 +11,8 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -80,11 +82,11 @@
     </main>
 
     <div id="duelVoteBar">
-        <span class="vote-score" id="duelLeftWins">🏆 0</span>
-        <button class="vote-btn left" id="voteLeftBtn">⬅ Левый</button>
+        <span class="vote-score" id="duelLeftWins">0</span>
+        <button class="vote-btn left" id="voteLeftBtn"><i data-lucide="arrow-left"></i> Левый</button>
         <span style="color:var(--text-secondary);">VS</span>
-        <button class="vote-btn right" id="voteRightBtn">Правый ➡</button>
-        <span class="vote-score" id="duelRightWins">🏆 0</span>
+        <button class="vote-btn right" id="voteRightBtn">Правый <i data-lucide="arrow-right"></i></button>
+        <span class="vote-score" id="duelRightWins">0</span>
     </div>
 
     <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc"><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><input type="text" id="coverUrl" placeholder="Ссылка на картинку (запасной вариант)"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
