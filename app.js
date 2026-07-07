@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-   const B = [
-    'https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
-    'https://i.pinimg.com/736x/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
-    'https://i.pinimg.com/736x/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
-    'https://i.pinimg.com/1200x/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
-    'https://i.pinimg.com/736x/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
-    'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/?imw=637&imh=358&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true'
-];
+    const B = [
+        'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
+        'https://i.pinimg.com/originals/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
+        'https://i.pinimg.com/originals/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
+        'https://i.pinimg.com/originals/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
+        'https://i.pinimg.com/originals/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
+        'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/'
+    ];
     const TC = ['#ff7f7f', '#ffbf7f', '#ffdf7f', '#bfff7f', '#7fffff', '#bfbfff', '#df7fff', '#ff9fcf'];
     const ACH = [
         {id:'first_edit',icon:'trophy',name:'Первый среди всех',desc:'Внести первое изменение'},
