@@ -4,260 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WEX-TIER — Создай свой музыкальный тир-лист</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        :root {
-            --bg: #0b0b12;
-            --bg-img: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
-            --overlay: rgba(0, 0, 0, 0.55);
-            --sidebar-bg: rgba(14, 14, 24, 0.85);
-            --glass: rgba(20, 20, 35, 0.6);
-            --text: #e8e8f0;
-            --text-secondary: #aaa;
-            --gold: #f5c842;
-            --blur: 20px;
-            --btn-bg: rgba(40, 40, 60, 0.8);
-            --btn-hover: rgba(60, 60, 90, 0.9);
-            --btn-text: #ddd;
-            --modal-bg: #1e1e2e;
-            --input-bg: #2a2a3a;
-            --input-border: #444;
-            --item-bg: #15151f;
-            --neon-glow: none;
-            --sidebar-width: 240px;
-        }
-        body.light-theme {
-            --bg: #e8e8f0;
-            --overlay: rgba(255, 255, 255, 0.3);
-            --sidebar-bg: rgba(240, 240, 245, 0.9);
-            --glass: rgba(255, 255, 255, 0.65);
-            --text: #1a1a1a;
-            --text-secondary: #555;
-            --gold: #c79100;
-            --btn-bg: rgba(220, 220, 230, 0.9);
-            --btn-hover: rgba(200, 200, 215, 1);
-            --btn-text: #222;
-            --modal-bg: #f5f5f8;
-            --input-bg: #e8e8ee;
-            --input-border: #ccc;
-            --item-bg: #f0f0f0;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            background: var(--bg);
-            background-image: var(--bg-img);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            color: var(--text);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            min-height: 100vh;
-            position: relative;
-            transition: background-color 0.4s, color 0.4s;
-            overflow-x: hidden;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: var(--overlay);
-            z-index: 0;
-            pointer-events: none;
-        }
-        body.parallax-active { background-image: none !important; }
-        body.parallax-active::before { opacity: 0.2; }
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-        #particlesCanvas { position: fixed; top:0; left:0; z-index:0; pointer-events:none; }
-
-        /* ====== ПАРАЛЛАКС-КОНТЕЙНЕР ====== */
-        #parallaxWrapper {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: -1;
-            pointer-events: none;
-            overflow: hidden;
-            display: none;
-        }
-        body.parallax-active #parallaxWrapper { display: block; }
-        #parallaxLayer {
-            position: absolute;
-            top: -5%; left: -5%;
-            width: 110%; height: 110%;
-            background-image: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
-            background-size: cover;
-            background-position: center;
-            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            will-change: transform;
-        }
-
-        .sidebar {
-            position:fixed; top:0; left:0; width:var(--sidebar-width); height:100vh;
-            background:var(--sidebar-bg); backdrop-filter:blur(25px); -webkit-backdrop-filter:blur(25px);
-            border-right:1px solid rgba(255,255,255,0.06); z-index:100;
-            display:flex; flex-direction:column; padding:16px 12px; gap:6px; overflow-y:auto;
-            transform:translateX(0); transition:transform 0.3s;
-        }
-        .sidebar-logo { font-size:1.6rem; font-weight:900; letter-spacing:2px; color:var(--gold); text-align:center; padding:8px 0 16px; animation:pulse 2s ease-in-out infinite; }
-        @keyframes pulse { 0%,100%{text-shadow:0 0 20px rgba(245,200,66,0.4)} 50%{text-shadow:0 0 40px rgba(245,200,66,0.9),0 0 80px rgba(245,200,66,0.4)} }
-        .sidebar-section { font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); padding:12px 8px 4px; opacity:0.7; }
-        .sidebar-btn { display:flex; align-items:center; gap:10px; padding:9px 12px; border:none; background:transparent; color:var(--text); border-radius:8px; cursor:pointer; font-size:0.85rem; transition:all 0.15s; width:100%; text-align:left; white-space:nowrap; }
-        .sidebar-btn:hover { background:rgba(255,255,255,0.08); }
-        .sidebar-btn.primary { background:var(--gold); color:#111; font-weight:600; }
-        .sidebar-btn.danger { color:#e74c3c; }
-        .sidebar-btn.danger:hover { background:rgba(231,76,60,0.2); }
-        .sidebar-btn.neon-active { box-shadow:0 0 12px rgba(245,200,66,0.5); border:1px solid var(--gold); }
-        .sidebar-btn:disabled { opacity:0.35; cursor:not-allowed; }
-        .sidebar-select { width:100%; padding:8px 10px; background:var(--btn-bg); border:1px solid rgba(255,255,255,0.08); color:var(--text); border-radius:8px; font-size:0.8rem; cursor:pointer; margin-top:2px; }
-        .sidebar-spacer { flex:1; }
-
-        .burger-btn { display:none; position:fixed; top:12px; left:12px; z-index:110; width:40px; height:40px; background:var(--sidebar-bg); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:var(--text); font-size:1.3rem; cursor:pointer; align-items:center; justify-content:center; }
-
-        .main-content { margin-left:var(--sidebar-width); padding:20px 24px 30px; min-height:100vh; position:relative; z-index:1; transition:margin-left 0.3s; display:flex; flex-direction:column; align-items:center; }
-        .top-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:16px; padding:10px 16px; background:rgba(18,18,28,0.6); backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px); border-radius:12px; border:1px solid rgba(255,255,255,0.06); width:100%; max-width:800px; }
-        .search-bar { flex:1; min-width:180px; padding:9px 14px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:8px; font-size:0.9rem; }
-        .filter-btn { padding:7px 12px; border:1px solid rgba(255,255,255,0.08); background:var(--btn-bg); color:var(--btn-text); border-radius:6px; cursor:pointer; font-size:0.78rem; transition:all 0.2s; white-space:nowrap; }
-        .filter-btn:hover { background:var(--btn-hover); }
-        .filter-btn.active-filter { background:var(--gold); color:#111; border-color:var(--gold); }
-
-        .compare-wrap { display:flex; gap:20px; max-width:1300px; width:100%; flex-wrap:wrap; justify-content:center; }
-        .column { flex:1; min-width:350px; max-width:650px; display:flex; flex-direction:column; align-items:center; }
-        .column-title { font-size:1rem; margin-bottom:8px; color:var(--gold); opacity:0.8; letter-spacing:1px; }
-        #list1,#list2 { width:100%; max-width:600px; }
-
-        body.neon-active .tier-row { box-shadow:var(--neon-glow),0 8px 28px rgba(0,0,0,0.5)!important; transition:box-shadow 0.5s; }
-        body.neon-active .tier-label { box-shadow:var(--neon-glow)!important; transition:box-shadow 0.5s; }
-        body.neon-active .item { box-shadow:var(--neon-glow)!important; transition:box-shadow 0.5s; }
-        .tier-row { display:flex; align-items:stretch; margin-bottom:8px; background:var(--glass); backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur)); border-radius:16px; border:1px solid rgba(255,255,255,0.1); min-height:80px; box-shadow:0 8px 28px rgba(0,0,0,0.5); position:relative; overflow:visible; transition:box-shadow 0.3s; width:100%; }
-        .tier-row.animate { animation:slideUp 0.4s ease both; }
-        @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        .tier-label { width:65px; min-width:65px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.6rem; color:#111; border-radius:16px 0 0 16px; cursor:pointer; user-select:none; letter-spacing:1px; transition:box-shadow 0.3s; }
-        .tier-items { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 14px; flex:1; min-height:60px; transition:background 0.2s; }
-        .tier-items.drag-over { background:rgba(245,200,66,0.15); border-radius:0 16px 16px 0; }
-        .item { position:relative; border-radius:10px; transition:transform 0.15s,opacity 0.15s,box-shadow 0.3s; }
-        .item.style-gradient { padding:3px; background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#ff6b6b); background-size:400% 400%; animation:borderFlow 4s ease infinite; }
-        @keyframes borderFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        .item.style-shadow { padding:0; background:transparent; animation:none; box-shadow:0 6px 18px rgba(0,0,0,0.6); }
-        .item.style-border { padding:3px; background:#555; animation:none; }
-        .item.style-circle a,.item.style-circle img { border-radius:50%!important; }
-        .item.style-circle { border-radius:50%; }
-        .item a { display:block; border-radius:7px; overflow:hidden; background:var(--item-bg); box-shadow:0 4px 12px rgba(0,0,0,0.6); transition:transform 0.2s,box-shadow 0.2s; }
-        .item a:hover { transform:scale(1.06); box-shadow:0 6px 18px rgba(245,200,66,0.5); }
-        .item img { display:block; width:60px; height:60px; object-fit:cover; border-radius:7px; pointer-events:none; }
-        .item.dragging { opacity:0.35; transform:scale(0.9); }
-        .del-btn,.del-tier { position:absolute; top:-8px; right:-8px; width:22px; height:22px; background:#e74c3c; color:#fff; border:none; border-radius:50%; font-size:13px; cursor:pointer; z-index:3; display:none; align-items:center; justify-content:center; }
-        .del-tier { width:26px; height:26px; font-size:15px; z-index:5; }
-        .editing .del-btn,.editing .del-tier { display:flex; }
-        .add-btn { display:none; width:34px; height:34px; border:2px dashed rgba(255,255,255,0.25); border-radius:8px; background:rgba(255,255,255,0.05); color:#aaa; font-size:1.3rem; cursor:pointer; align-items:center; justify-content:center; transition:all 0.2s; }
-        .editing .add-btn { display:flex; }
-        .add-btn:hover { border-color:var(--gold); color:var(--gold); }
-        .svc-icon { position:absolute; bottom:4px; right:4px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,0.75); color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:2; }
-        .svc-icon.yt { background:#ff0000; }
-        .svc-icon.sp { background:#1db954; }
-        .svc-icon.ap { background:#fc3c44; }
-        .svc-icon.ym { background:#ffcc00; color:#000; }
-
-        .modal { display:none; opacity:0; transform:scale(0.95); transition:opacity 0.3s ease,transform 0.3s ease; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center; pointer-events:none; }
-        .modal.open { display:flex; opacity:1; transform:scale(1); pointer-events:auto; }
-        .modal-box { background:var(--modal-bg); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:24px; width:450px; max-width:95vw; max-height:85vh; overflow-y:auto; color:var(--text); }
-        .modal-box h3 { color:var(--gold); margin-bottom:14px; }
-        .modal-box select,.modal-box input,.modal-box textarea { width:100%; padding:9px 12px; margin-bottom:6px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px; font-size:0.9rem; }
-        .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap; }
-        .cover-preview { width:80px; height:80px; object-fit:cover; border-radius:8px; margin:8px auto; display:block; border:2px solid var(--input-border); background:var(--input-bg); }
-        .player-frame { width:100%; height:315px; border:none; border-radius:8px; }
-
-        #duelVoteBar { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:150; background:var(--sidebar-bg); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); padding:12px 20px; border-radius:16px; border:1px solid rgba(255,255,255,0.12); gap:14px; align-items:center; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-        #duelVoteBar.show { display:flex; }
-        .vote-btn { padding:8px 16px; border-radius:10px; border:none; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s; }
-        .vote-btn.left { background:#ff6b6b; color:#fff; }
-        .vote-btn.right { background:#4d96ff; color:#fff; }
-        .vote-btn:hover { filter:brightness(1.2); transform:scale(1.03); }
-        .vote-score { font-weight:700; color:var(--gold); font-size:0.9rem; min-width:50px; text-align:center; }
-
-        .loading-spinner { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; display:none; pointer-events:none; }
-        .loading-spinner.show { display:block; }
-        .loading-spinner::after { content:''; display:block; width:44px; height:44px; border:4px solid rgba(255,255,255,0.2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
-        @keyframes spin { to{transform:rotate(360deg)} }
-
-        .toast { position:fixed; bottom:20px; right:20px; background:#222; color:#fff; padding:14px 20px; border-radius:12px; z-index:300; font-size:0.9rem; box-shadow:0 10px 30px rgba(0,0,0,0.6); animation:toastIn 0.3s ease,toastOut 0.3s ease 2.5s forwards; max-width:320px; }
-        @keyframes toastIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(20px)} }
-
-        .footer { text-align:center; padding:20px; color:#777; font-size:0.75rem; margin-top:30px; }
-
-        @media (max-width:850px) {
-            .sidebar { transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); }
-            .burger-btn { display:flex; }
-            .main-content { margin-left:0; padding:16px; }
-            .compare-wrap { flex-direction:column; align-items:center; }
-            .column { min-width:100%; max-width:100%; }
-            .top-bar { max-width:100%; }
-            #duelVoteBar { flex-wrap:wrap; gap:8px; padding:10px 14px; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- Параллакс-слой (один, как в твоём коде) -->
-    <div id="parallaxWrapper">
-        <div id="parallaxLayer"></div>
-    </div>
-
+    <div id="parallaxWrapper"><div id="parallaxLayer"></div></div>
     <canvas id="particlesCanvas"></canvas>
-    <button class="burger-btn" id="burgerBtn">☰</button>
+    <button class="burger-btn" id="burgerBtn"><i data-lucide="menu"></i></button>
 
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">🎵 WEX-TIER</div>
+        <div class="sidebar-logo">WEX-TIER</div>
+        
         <div class="sidebar-section">Действия</div>
-        <button class="sidebar-btn" id="editBtn">✎ Редактировать</button>
-        <button class="sidebar-btn" id="undoBtn" disabled>↩ Отменить</button>
-        <button class="sidebar-btn danger hidden" id="resetBtn">↺ Сбросить всё</button>
-        <button class="sidebar-btn" id="addTierBtn">➕ Новый тир</button>
+        <button class="sidebar-btn" id="editBtn"><i data-lucide="edit-3"></i> Редактировать</button>
+        <button class="sidebar-btn" id="undoBtn" disabled><i data-lucide="undo-2"></i> Отменить</button>
+        <button class="sidebar-btn danger hidden" id="resetBtn"><i data-lucide="rotate-ccw"></i> Сбросить всё</button>
+        <button class="sidebar-btn hidden" id="addTierBtn"><i data-lucide="plus-square"></i> Новый тир</button>
+        
         <div class="sidebar-section">Инструменты</div>
-        <button class="sidebar-btn" id="themeBtn">🌓 Тема</button>
-        <button class="sidebar-btn" id="neonBtn">💡 Неон</button>
-        <button class="sidebar-btn" id="parallaxBtn">🌌 Параллакс</button>
-        <button class="sidebar-btn" id="compareBtn">👥 Сравнение</button>
-        <button class="sidebar-btn" id="shareBtn">🔗 Поделиться</button>
-        <button class="sidebar-btn" id="playlistBtn">▶ YouTube плейлист</button>
-        <button class="sidebar-btn" id="galleryBtn">🖼 Галерея</button>
-        <button class="sidebar-btn" id="duelBtn">⚔ Дуэль</button>
-        <button class="sidebar-btn" id="topBtn">🏅 Топ</button>
-        <button class="sidebar-btn" id="achievementsBtn">🏆 Достижения</button>
-        <button class="sidebar-btn" id="commentsBtn">💬 Комментарии</button>
+        <button class="sidebar-btn" id="themeBtn"><i data-lucide="moon"></i> Тема</button>
+        <button class="sidebar-btn" id="neonBtn"><i data-lucide="lightbulb"></i> Неон</button>
+        <button class="sidebar-btn" id="parallaxBtn"><i data-lucide="layers"></i> Параллакс</button>
+        <button class="sidebar-btn" id="compareBtn"><i data-lucide="users"></i> Сравнение</button>
+        <button class="sidebar-btn" id="shareBtn"><i data-lucide="link"></i> Поделиться</button>
+        <button class="sidebar-btn" id="playlistBtn"><i data-lucide="youtube"></i> YT плейлист</button>
+        <button class="sidebar-btn" id="galleryBtn"><i data-lucide="image"></i> Галерея</button>
+        <button class="sidebar-btn" id="duelBtn"><i data-lucide="swords"></i> Дуэль</button>
+        <button class="sidebar-btn" id="topBtn"><i data-lucide="medal"></i> Топ</button>
+        <button class="sidebar-btn" id="achievementsBtn"><i data-lucide="trophy"></i> Достижения</button>
+        <button class="sidebar-btn" id="commentsBtn"><i data-lucide="message-square"></i> Комментарии</button>
+        
         <div class="sidebar-section">Экспорт</div>
-        <button class="sidebar-btn" id="pngBtn">📥 Скачать PNG</button>
-        <button class="sidebar-btn" id="exportBtn">💾 Экспорт JSON</button>
-        <button class="sidebar-btn" id="importBtn">📂 Импорт JSON</button>
+        <button class="sidebar-btn" id="pngBtn"><i data-lucide="download"></i> Скачать PNG</button>
+        <button class="sidebar-btn" id="exportBtn"><i data-lucide="save"></i> Экспорт JSON</button>
+        <button class="sidebar-btn" id="importBtn"><i data-lucide="folder-open"></i> Импорт JSON</button>
         <input type="file" id="importFile" accept=".json" style="display:none;">
+        
         <div class="sidebar-section">Оформление</div>
-        <select id="styleSelect" class="sidebar-select"><option value="gradient">🌈 Градиент</option><option value="shadow">🕶 Тень</option><option value="border">🔲 Рамка</option><option value="circle">⚪ Круглые</option></select>
-        <select id="sizeSelect" class="sidebar-select"><option value="60">📏 Средние</option><option value="44">📏 Мелкие</option><option value="76">📏 Крупные</option></select>
-        <select id="bgSelect" class="sidebar-select"><option value="0">🖼 Фон 1</option><option value="1">🖼 Фон 2</option><option value="2">🖼 Фон 3</option><option value="3">🖼 Фон 4</option><option value="4">🖼 Фон 5</option><option value="5">🖼 Фон 6</option><option value="6">🖼 Фон 7</option><option value="7">🖼 Фон 8</option><option value="8">🖼 Фон 9</option></select>
+        <select id="styleSelect" class="sidebar-select"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
+        <select id="sizeSelect" class="sidebar-select"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
+        <select id="bgSelect" class="sidebar-select"><option value="0">Фон 1</option><option value="1">Фон 2</option><option value="2">Фон 3</option><option value="3">Фон 4</option><option value="4">Фон 5</option></select>
+        
         <div class="sidebar-section">Черновики</div>
         <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
-        <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;">➕ Новый черновик</button>
+        <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> Новый черновик</button>
         <div class="sidebar-spacer"></div>
-        <button class="sidebar-btn danger" id="resetAllLink" style="margin-top:8px;">🗑 Сбросить все данные</button>
+        <button class="sidebar-btn danger" id="resetAllLink" style="margin-top:8px;"><i data-lucide="trash-2"></i> Сбросить данные</button>
         <div class="footer">© WEX-TIER</div>
     </aside>
 
     <main class="main-content" id="mainContent">
         <div class="top-bar" id="topBar">
-            <input type="text" class="search-bar" id="searchInput" placeholder="🔍 Поиск по ссылке...">
+            <input type="text" class="search-bar" id="searchInput" placeholder="Поиск по ссылке...">
             <button class="filter-btn active-filter" data-filter="all">Все</button>
-            <button class="filter-btn" data-filter="youtube">▶ YT</button>
-            <button class="filter-btn" data-filter="spotify">🟢 SP</button>
-            <button class="filter-btn" data-filter="apple">🎵 AP</button>
-            <button class="filter-btn" data-filter="yandex">🎧 YM</button>
+            <button class="filter-btn" data-filter="youtube">YT</button>
+            <button class="filter-btn" data-filter="spotify">SP</button>
+            <button class="filter-btn" data-filter="apple">AP</button>
+            <button class="filter-btn" data-filter="yandex">YM</button>
         </div>
         <div class="compare-wrap" id="compareWrap">
-            <div class="column" id="col1"><div class="column-title">📋 Тир-лист 1</div><div id="list1"></div></div>
-            <div class="column" id="col2" style="display:none;"><div class="column-title">📋 Тир-лист 2</div><div id="list2"></div></div>
+            <div class="column" id="col1"><div class="column-title">Тир-лист 1</div><div id="list1"></div></div>
+            <div class="column" id="col2" style="display:none;"><div class="column-title">Тир-лист 2</div><div id="list2"></div></div>
         </div>
     </main>
 
@@ -269,13 +87,32 @@
         <span class="vote-score" id="duelRightWins">🏆 0</span>
     </div>
 
-    <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc"><option value="youtube">▶ YouTube</option><option value="spotify">🟢 Spotify</option><option value="apple">🎵 Apple Music</option><option value="yandex">🎧 Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">🔍 Загрузить обложку автоматически</button><input type="text" id="coverUrl" placeholder="Ссылка на обложку (если авто не сработало)"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn" id="cancelAdd" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Отмена</button><button class="btn" id="okAdd" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">➕ Добавить</button></div></div></div>
-    <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>▶ YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn" id="closePlayer" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button></div></div></div>
-    <div class="modal" id="commentsModal"><div class="modal-box"><h3>💬 Комментарии</h3><div id="commentsList" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div><textarea id="newComment" placeholder="Оставьте комментарий..."></textarea><div class="modal-actions"><button class="btn" id="closeComments" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="addCommentBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">✉ Отправить</button></div></div></div>
-    <div class="modal" id="galleryModal"><div class="modal-box" style="width:600px;"><h3>🖼 Галерея тир-листов</h3><div id="galleryList" style="max-height:350px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn" id="closeGallery" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="publishBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">📤 Опубликовать свой</button></div></div></div>
-    <div class="modal" id="duelModal"><div class="modal-box" style="width:600px;"><h3>⚔ Дуэль тир-листов</h3><p style="color:var(--text-secondary);margin-bottom:8px;">Выберите соперника и начните дуэль. После битвы проголосуйте за лучший тир-лист!</p><div id="duelList" style="max-height:300px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn" id="closeDuel" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button><button class="btn" id="startDuelBtn" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">⚔ Начать дуэль</button></div></div></div>
-    <div class="modal" id="achievementsModal"><div class="modal-box"><h3>🏆 Достижения</h3><div id="achievementsList"></div><div class="modal-actions"><button class="btn" id="closeAchievements" style="padding:8px 16px;border-radius:8px;background:var(--btn-bg);color:var(--btn-text);border:1px solid rgba(255,255,255,0.08);cursor:pointer;">Закрыть</button></div></div></div>
-    <div class="modal" id="neonModal"><div class="modal-box"><h3>💡 Настройки неона</h3><label><input type="checkbox" id="neonToggle"> Включить неон</label><br><br><select id="neonColor"><option value="rainbow">🌈 Радужный</option><option value="gold">🟡 Золотой</option><option value="cyan">🔵 Голубой</option><option value="magenta">🟣 Пурпурный</option></select><br><br><select id="neonTarget"><option value="all">Всё</option><option value="items">Обложки</option><option value="tiers">Тиры</option><option value="title">Заголовок</option></select><div class="modal-actions"><button class="btn" id="closeNeon" style="padding:8px 16px;border-radius:8px;background:var(--gold);color:#111;border:none;cursor:pointer;font-weight:600;">Сохранить и закрыть</button></div></div></div>
+    <div class="modal" id="addModal">
+        <div class="modal-box">
+            <h3>Добавить трек</h3>
+            <select id="svc">
+                <option value="youtube">YouTube</option>
+                <option value="spotify">Spotify</option>
+                <option value="apple">Apple Music</option>
+                <option value="yandex">Яндекс Музыка</option>
+            </select>
+            <input type="text" id="trackUrl" placeholder="Ссылка на трек">
+            <button class="btn" id="fetchCoverBtn">Авто-поиск обложки</button>
+            <input type="text" id="coverUrl" placeholder="Ссылка на картинку (запасной вариант)">
+            <img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelAdd">Отмена</button>
+                <button class="btn btn-primary" id="okAdd">Добавить</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn btn-secondary" id="closePlayer">Закрыть</button></div></div></div>
+    <div class="modal" id="commentsModal"><div class="modal-box"><h3>Комментарии</h3><div id="commentsList" style="max-height:200px;overflow-y:auto;margin-bottom:10px;"></div><textarea id="newComment" placeholder="Оставьте комментарий..."></textarea><div class="modal-actions"><button class="btn btn-secondary" id="closeComments">Закрыть</button><button class="btn btn-primary" id="addCommentBtn">Отправить</button></div></div></div>
+    <div class="modal" id="galleryModal"><div class="modal-box" style="width:600px;"><h3>Галерея тир-листов</h3><div id="galleryList" style="max-height:350px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn btn-secondary" id="closeGallery">Закрыть</button><button class="btn btn-primary" id="publishBtn">Опубликовать свой</button></div></div></div>
+    <div class="modal" id="duelModal"><div class="modal-box" style="width:600px;"><h3>Дуэль тир-листов</h3><p style="color:var(--text-secondary);margin-bottom:8px;">Выберите соперника и начните дуэль.</p><div id="duelList" style="max-height:300px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn btn-secondary" id="closeDuel">Закрыть</button><button class="btn btn-primary" id="startDuelBtn">Начать дуэль</button></div></div></div>
+    <div class="modal" id="achievementsModal"><div class="modal-box"><h3>Достижения</h3><div id="achievementsList"></div><div class="modal-actions"><button class="btn btn-secondary" id="closeAchievements">Закрыть</button></div></div></div>
+    <div class="modal" id="neonModal"><div class="modal-box"><h3>Настройки неона</h3><label><input type="checkbox" id="neonToggle"> Включить неон</label><br><br><select id="neonColor"><option value="rainbow">Радужный</option><option value="gold">Золотой</option><option value="cyan">Голубой</option><option value="magenta">Пурпурный</option></select><br><br><select id="neonTarget"><option value="all">Всё</option><option value="items">Обложки</option><option value="tiers">Тиры</option><option value="title">Заголовок</option></select><div class="modal-actions"><button class="btn btn-primary" id="closeNeon">Сохранить</button></div></div></div>
 
     <script src="app.js"></script>
 </body>
