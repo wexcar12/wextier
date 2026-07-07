@@ -68,20 +68,31 @@
             pointer-events: none;
         }
         body.parallax-active { background-image: none !important; }
-        body.parallax-active::before { opacity: 0.25; }
+        body.parallax-active::before { opacity: 0.2; }
+
         #particlesCanvas { position: fixed; top:0; left:0; z-index:0; pointer-events:none; }
 
-        /* Видео-фон параллакса */
-        #parallaxVideo {
+        /* ====== ПАРАЛЛАКС-КОНТЕЙНЕР ====== */
+        #parallaxWrapper {
             position: fixed;
             top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
+            width: 100vw; height: 100vh;
             z-index: -1;
             pointer-events: none;
+            overflow: hidden;
             display: none;
         }
-        body.parallax-active #parallaxVideo { display: block; }
+        body.parallax-active #parallaxWrapper { display: block; }
+        #parallaxLayer {
+            position: absolute;
+            top: -5%; left: -5%;
+            width: 110%; height: 110%;
+            background-image: url('https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg');
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
 
         .sidebar {
             position:fixed; top:0; left:0; width:var(--sidebar-width); height:100vh;
@@ -191,9 +202,11 @@
 </head>
 <body>
 
-    <video id="parallaxVideo" muted loop playsinline>
-        <source src="https://github.com/wexcar12/wextier/releases/download/v1.0/parallax_effect.mp4" type="video/mp4">
-    </video>
+    <!-- Параллакс-слой (один, как в твоём коде) -->
+    <div id="parallaxWrapper">
+        <div id="parallaxLayer"></div>
+    </div>
+
     <canvas id="particlesCanvas"></canvas>
     <button class="burger-btn" id="burgerBtn">☰</button>
 
