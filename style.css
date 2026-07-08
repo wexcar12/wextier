@@ -75,18 +75,13 @@ body.parallax-active #parallaxWrapper { display: block; }
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Заголовок сайдбара с кнопкой сворачивания */
 .sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
 }
-.sidebar-header .sidebar-logo {
-    margin-bottom: 0;
-    flex: 1;
-    text-align: center;
-}
+.sidebar-header .sidebar-logo { margin-bottom: 0; flex: 1; text-align: center; }
 .sidebar-logo { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
 .sidebar-section { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-top: 12px; padding-left: 4px; }
 .sidebar-btn {
@@ -106,14 +101,8 @@ body.parallax-active #parallaxWrapper { display: block; }
 .sidebar-spacer { flex: 1; }
 
 .sidebar-toggle-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    flex-shrink: 0;
+    background: transparent; border: none; color: var(--text-secondary);
+    cursor: pointer; padding: 4px; border-radius: 8px; transition: all 0.2s; flex-shrink: 0;
 }
 .sidebar-toggle-btn:hover { background: rgba(255,255,255,0.1); color: var(--gold); }
 .sidebar-toggle-btn i { width: 20px; height: 20px; transition: transform 0.3s; }
@@ -188,10 +177,7 @@ i[data-lucide] { display: inline-block; width: 18px; height: 18px; background: r
 
 /* Свёрнутый сайдбар */
 @media (min-width: 851px) {
-    .sidebar.collapsed {
-        width: 72px;
-        padding: 24px 10px;
-    }
+    .sidebar.collapsed { width: 72px; padding: 24px 10px; }
     .sidebar.collapsed .sidebar-header { justify-content: center; }
     .sidebar.collapsed .sidebar-logo,
     .sidebar.collapsed .sidebar-section,
@@ -203,8 +189,26 @@ i[data-lucide] { display: inline-block; width: 18px; height: 18px; background: r
     .sidebar.collapsed .sidebar-btn i { margin: 0; }
     .sidebar.collapsed .sidebar-toggle-btn i { transform: rotate(180deg); }
     .main-content { margin-left: var(--sidebar-width); }
-    /* Скрываем блок авторизации в свёрнутом виде */
-    .sidebar.collapsed #authSection { display: none; }
+    
+    .sidebar.collapsed #authSection {
+        display: flex !important;
+        justify-content: center;
+        border-bottom: none;
+        margin-bottom: 5px;
+        padding: 10px 0;
+    }
+    .sidebar.collapsed #loginBtn span,
+    .sidebar.collapsed #userName,
+    .sidebar.collapsed #logoutLink { display: none !important; }
+    .sidebar.collapsed #loginBtn {
+        justify-content: center;
+        padding: 12px 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+    }
+    .sidebar.collapsed #userProfile { justify-content: center; width: 100%; }
+    .sidebar.collapsed #userAvatar { width: 40px; height: 40px; margin: 0; }
 }
 
 @media (max-width:850px) {
@@ -215,3 +219,51 @@ i[data-lucide] { display: inline-block; width: 18px; height: 18px; background: r
     .compare-wrap { flex-direction: column; align-items: center; }
     .column { min-width: 100%; max-width: 100%; }
 }
+
+/* Синхронизация размеров кнопки "+" в пуле с настройками интерфейса */
+#templatePool #addCustomPoolItemBtn {
+    flex-shrink: 0;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#templatePool #addCustomPoolItemBtn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(245, 200, 66, 0.05);
+}
+
+#templatePool #addCustomPoolItemBtn i { width: 24px; height: 24px; background: transparent; }
+
+/* Стили для Личного кабинета */
+#userCreatedLists::-webkit-scrollbar { width: 4px; }
+#userCreatedLists::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+
+#userCreatedLists div {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+#userCreatedLists div:hover {
+    border-color: rgba(245, 200, 66, 0.3);
+    transform: translateX(2px);
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Фикс деформации кнопок управления в Личном кабинете */
+#userCreatedLists div button.btn-secondary {
+    flex-shrink: 0;
+    margin-left: 12px;
+    padding: 6px 14px;
+    height: auto;
+    font-size: 0.8rem;
+}
+
+#templatePool { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-start; align-items: center; }
