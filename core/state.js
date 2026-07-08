@@ -1,7 +1,7 @@
 /**
  * @module core/state
  * @description Управление состоянием через Command Pattern.
- *              Единый источник истины для данных и UI.
+ * Единый источник истины для данных и UI.
  */
 import { eventBus } from './event-bus.js';
 
@@ -37,6 +37,7 @@ class MoveItemCommand extends Command {
 }
 
 class AddItemCommand extends Command {
+  // ФИКС: Добавлен insertIndex для поддержки Drag & Drop из пула
   constructor(tierIndex, item, listNum, insertIndex = -1) {
     super();
     this.tierIndex = tierIndex;
