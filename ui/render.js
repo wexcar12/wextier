@@ -1,12 +1,10 @@
 /**
  * @module ui/render
  * @description Рендер тир-листов (list1, list2).
+ *              Всё состояние UI берётся из state.ui.
  */
-import { state, MoveItemCommand } from '../core/state.js';
+import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
-
-// УБИТЫ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ! 
-// Теперь всё берется из единого хранилища state.ui
 
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
@@ -14,11 +12,14 @@ export function setEditing(val) { state.setUI('editing', val); }
 export function setCompare(val) { state.setUI('compare', val); }
 export function getActiveTier() { return state.ui.activeTier; }
 export function getActiveList() { return state.ui.activeList; }
-export function setActiveTier(t, l) { state.setUI('activeTier', t); state.setUI('activeList', l); }
+export function setActiveTier(t, l) {
+  state.setUI('activeTier', t);
+  state.setUI('activeList', l);
+}
 
 export function renderAll() {
   render(1);
-  if (isCompare()) render(2); // Используем функцию вместо переменной
+  if (isCompare()) render(2);
   eventBus.emit('render:after', { listNum: isCompare() ? 2 : 1 });
 }
 
@@ -40,7 +41,7 @@ export function render(listNum) {
     lbl.title = 'Двойной клик — переименовать';
 
     lbl.ondblclick = () => {
-      if (!editing || lbl.querySelector('input')) return;
+      if (!isEditing() || lbl.querySelector('input')) return;
 
       const ci = document.createElement('input');
       ci.type = 'color';
@@ -124,7 +125,7 @@ export function render(listNum) {
 
     row.appendChild(itemsDiv);
 
-    if (t.items.length === 0) {
+    if (t.items.length === 0 && isEditing()) {
       const dt = document.createElement('button');
       dt.className = 'del-btn';
       dt.style.right = 'auto';
@@ -147,6 +148,9 @@ function pImg(svc) {
 }
 
 export function updateUI() {
+  const editing = isEditing();
+  const compare = isCompare();
+
   document.body.classList.toggle('editing', editing);
   const eb = document.getElementById('editBtn');
   if (eb) eb.innerHTML = editing ? '<i data-lucide="check"></i> Готово' : '<i data-lucide="edit-3"></i> Редактировать';
@@ -160,13 +164,11 @@ export function updateUI() {
   const col2 = document.getElementById('col2');
   if (col2) col2.style.display = compare ? 'block' : 'none';
 
-  const undoBtn = document.getElementById('undoBtn');
-  if (undoBtn) undoBtn.disabled = !state.canUndo(compare ? 2 : 1);
-
+  updateUndo();
   lucide.createIcons();
 }
 
 export function updateUndo() {
   const undoBtn = document.getElementById('undoBtn');
- if (undoBtn) undoBtn.disabled = !state.canUndo(isCompare() ? 2 : 1);
+  if (undoBtn) undoBtn.disabled = !state.canUndo(isCompare() ? 2 : 1);
 }
