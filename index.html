@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
@@ -60,6 +61,7 @@
         <button class="sidebar-btn" id="topBtn"><i data-lucide="medal"></i> Топ</button>
         <button class="sidebar-btn" id="achievementsBtn"><i data-lucide="trophy"></i> Достижения</button>
         <button class="sidebar-btn" id="commentsBtn"><i data-lucide="message-square"></i> Комментарии</button>
+        <button class="sidebar-btn" id="profileDashboardBtn" style="display: none;"><i data-lucide="folder-user"></i> Мои тир-листы</button>
         
         <div class="sidebar-section">Экспорт</div>
         <button class="sidebar-btn" id="pngBtn"><i data-lucide="download"></i> Скачать PNG</button>
@@ -122,6 +124,19 @@
     <div class="modal" id="duelModal"><div class="modal-box" style="width:600px;"><h3>Дуэль тир-листов</h3><p style="color:var(--text-secondary);margin-bottom:8px;">Выберите соперника и начните дуэль.</p><div id="duelList" style="max-height:300px;overflow-y:auto;"></div><div class="modal-actions"><button class="btn btn-secondary" id="closeDuel">Закрыть</button><button class="btn btn-primary" id="startDuelBtn">Начать дуэль</button></div></div></div>
     <div class="modal" id="achievementsModal"><div class="modal-box"><h3>Достижения</h3><div id="achievementsList"></div><div class="modal-actions"><button class="btn btn-secondary" id="closeAchievements">Закрыть</button></div></div></div>
     <div class="modal" id="neonModal"><div class="modal-box"><h3>Настройки неона</h3><label><input type="checkbox" id="neonToggle"> Включить неон</label><br><br><select id="neonColor"><option value="rainbow">Радужный</option><option value="gold">Золотой</option><option value="cyan">Голубой</option><option value="magenta">Пурпурный</option></select><br><br><select id="neonTarget"><option value="all">Всё</option><option value="items">Обложки</option><option value="tiers">Тиры</option><option value="title">Заголовок</option></select><div class="modal-actions"><button class="btn btn-primary" id="closeNeon">Сохранить</button></div></div></div>
+    <div class="modal" id="dashboardModal">
+        <div class="modal-box" style="width:600px;">
+            <h3>Личный кабинет</h3>
+            <div id="userStats" style="display: flex; gap: 20px; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid var(--input-border);">
+                <div>📊 Всего опубликовано: <strong id="statTotalLists" style="color: var(--gold);">0</strong></div>
+                <div>🏆 Всего побед в дуэлях: <strong id="statTotalWins" style="color: var(--gold);">0</strong></div>
+            </div>
+            <div id="userCreatedLists" style="max-height: 250px; overflow-y: auto;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeDashboard">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
