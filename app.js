@@ -32,40 +32,70 @@ document.addEventListener('DOMContentLoaded', function() {
     const TEMPLATES = {
         music: [],
         movies: [
-            { title: "Интерстеллар", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150", link: "https://www.imdb.com/title/tt0816692/", svc: "imdb" },
-            { title: "Начало", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=150", link: "https://www.imdb.com/title/tt1375666/", svc: "imdb" },
-            { title: "Темный Рыцарь", img: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=150", link: "https://www.imdb.com/title/tt0468569/", svc: "imdb" },
-            { title: "Матрица", img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=150", link: "https://www.imdb.com/title/tt0133093/", svc: "imdb" },
-            { title: "Побег из Шоушенка", img: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=150", link: "https://www.imdb.com/title/tt0111161/", svc: "imdb" },
-            { title: "Криминальное чтиво", img: "https://images.unsplash.com/photo-1594909122845-11ba5fcb7e47?w=150", link: "https://www.imdb.com/title/tt0110912/", svc: "imdb" },
-            { title: "Бойцовский клуб", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", link: "https://www.imdb.com/title/tt0137523/", svc: "imdb" },
-            { title: "Форрест Гамп", img: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=150", link: "https://www.imdb.com/title/tt0109830/", svc: "imdb" },
-            { title: "Властелин колец", img: "https://images.unsplash.com/photo-1506466010722-395aa2bef877?w=150", link: "https://www.imdb.com/title/tt0120737/", svc: "imdb" },
-            { title: "Гладиатор", img: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=150", link: "https://www.imdb.com/title/tt0172495/", svc: "imdb" }
+            { title: "Интерстеллар", img: "https://st.kp.yandex.net/images/film_big/258687.jpg", link: "https://www.imdb.com/title/tt0816692/", svc: "imdb" },
+            { title: "Начало", img: "https://st.kp.yandex.net/images/film_big/447301.jpg", link: "https://www.imdb.com/title/tt1375666/", svc: "imdb" },
+            { title: "Темный Рыцарь", img: "https://st.kp.yandex.net/images/film_big/111543.jpg", link: "https://www.imdb.com/title/tt0468569/", svc: "imdb" },
+            { title: "Матрица", img: "https://st.kp.yandex.net/images/film_big/301.jpg", link: "https://www.imdb.com/title/tt0133093/", svc: "imdb" },
+            { title: "Бойцовский клуб", img: "https://st.kp.yandex.net/images/film_big/361.jpg", link: "https://www.imdb.com/title/tt0137523/", svc: "imdb" },
+            { title: "Криминальное чтиво", img: "https://st.kp.yandex.net/images/film_big/342.jpg", link: "https://www.imdb.com/title/tt0110912/", svc: "imdb" },
+            { title: "Форрест Гамп", img: "https://st.kp.yandex.net/images/film_big/448.jpg", link: "https://www.imdb.com/title/tt0109830/", svc: "imdb" },
+            { title: "Гладиатор", img: "https://st.kp.yandex.net/images/film_big/474.jpg", link: "https://www.imdb.com/title/tt0172495/", svc: "imdb" },
+            { title: "Зеленая миля", img: "https://st.kp.yandex.net/images/film_big/435.jpg", link: "https://www.imdb.com/title/tt0114709/", svc: "imdb" },
+            { title: "Властелин Колец", img: "https://st.kp.yandex.net/images/film_big/312.jpg", link: "https://www.imdb.com/title/tt0120737/", svc: "imdb" },
+            { title: "Побег из Шоушенка", img: "https://st.kp.yandex.net/images/film_big/324.jpg", link: "https://www.imdb.com/title/tt0111161/", svc: "imdb" },
+            { title: "Крестный отец", img: "https://st.kp.yandex.net/images/film_big/325.jpg", link: "https://www.imdb.com/title/tt0068646/", svc: "imdb" },
+            { title: "Шрэк", img: "https://st.kp.yandex.net/images/film_big/430.jpg", link: "https://www.imdb.com/title/tt0126029/", svc: "imdb" },
+            { title: "Пираты Карибского моря", img: "https://st.kp.yandex.net/images/film_big/4365.jpg", link: "https://www.imdb.com/title/tt0325980/", svc: "imdb" },
+            { title: "Аватар", img: "https://st.kp.yandex.net/images/film_big/251733.jpg", link: "https://www.imdb.com/title/tt0499549/", svc: "imdb" },
+            { title: "Остров проклятых", img: "https://st.kp.yandex.net/images/film_big/397667.jpg", link: "https://www.imdb.com/title/tt1130884/", svc: "imdb" },
+            { title: "1+1 (Неприкасаемые)", img: "https://st.kp.yandex.net/images/film_big/535341.jpg", link: "https://www.imdb.com/title/tt1675434/", svc: "imdb" },
+            { title: "Джентльмены", img: "https://st.kp.yandex.net/images/film_big/1143242.jpg", link: "https://www.imdb.com/title/tt8131016/", svc: "imdb" },
+            { title: "Престиж", img: "https://st.kp.yandex.net/images/film_big/195334.jpg", link: "https://www.imdb.com/title/tt0482571/", svc: "imdb" },
+            { title: "Волк с Уолл-стрит", img: "https://st.kp.yandex.net/images/film_big/462682.jpg", link: "https://www.imdb.com/title/tt0993846/", svc: "imdb" }
         ],
         games: [
-            { title: "The Witcher 3", img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=150", link: "https://store.steampowered.com/app/292030/", svc: "steam" },
-            { title: "Cyberpunk 2077", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=150", link: "https://store.steampowered.com/app/1091500/", svc: "steam" },
-            { title: "Elden Ring", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150", link: "https://store.steampowered.com/app/1245620/", svc: "steam" },
-            { title: "Red Dead Redemption 2", img: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=150", link: "https://store.steampowered.com/app/1174180/", svc: "steam" },
-            { title: "GTA V", img: "https://images.unsplash.com/photo-1580327344181-c1163234e5a0?w=150", link: "https://store.steampowered.com/app/271590/", svc: "steam" },
-            { title: "Minecraft", img: "https://images.unsplash.com/photo-1604537466608-109fa2f16c3b?w=150", link: "https://www.minecraft.net/", svc: "steam" },
-            { title: "God of War", img: "https://images.unsplash.com/photo-1552820728-8b83f6b4cf19?w=150", link: "https://store.steampowered.com/app/1593500/", svc: "steam" },
-            { title: "Portal 2", img: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", link: "https://store.steampowered.com/app/620/", svc: "steam" },
-            { title: "Half-Life 2", img: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=150", link: "https://store.steampowered.com/app/220/", svc: "steam" },
-            { title: "Baldur's Gate 3", img: "https://images.unsplash.com/photo-1612282131449-25e1e80becea?w=150", link: "https://store.steampowered.com/app/1086940/", svc: "steam" }
+            { title: "The Witcher 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/capsule_184x69.jpg", link: "https://store.steampowered.com/app/292030/", svc: "steam" },
+            { title: "Cyberpunk 2077", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1091500/", svc: "steam" },
+            { title: "Elden Ring", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1245620/", svc: "steam" },
+            { title: "RDR 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1174180/", svc: "steam" },
+            { title: "GTA V", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/capsule_184x69.jpg", link: "https://store.steampowered.com/app/271590/", svc: "steam" },
+            { title: "Minecraft", img: "https://static-cdn.jtvnw.net/ttv-boxart/27471_IGDB-144x192.jpg", link: "https://www.minecraft.net/", svc: "steam" },
+            { title: "CS 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_184x69.jpg", link: "https://store.steampowered.com/app/730/", svc: "steam" },
+            { title: "Dota 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_184x69.jpg", link: "https://store.steampowered.com/app/570/", svc: "steam" },
+            { title: "Portal 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/620/capsule_184x69.jpg", link: "https://store.steampowered.com/app/620/", svc: "steam" },
+            { title: "Baldur's Gate 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1086940/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1086940/", svc: "steam" },
+            { title: "Skyrim", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/489830/capsule_184x69.jpg", link: "https://store.steampowered.com/app/489830/", svc: "steam" },
+            { title: "Terraria", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/105600/capsule_184x69.jpg", link: "https://store.steampowered.com/app/105600/", svc: "steam" },
+            { title: "Half-Life 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/220/capsule_184x69.jpg", link: "https://store.steampowered.com/app/220/", svc: "steam" },
+            { title: "Doom Eternal", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/782330/capsule_184x69.jpg", link: "https://store.steampowered.com/app/782330/", svc: "steam" },
+            { title: "Fallout 4", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/377160/capsule_184x69.jpg", link: "https://store.steampowered.com/app/377160/", svc: "steam" },
+            { title: "Hades", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1145360/", svc: "steam" },
+            { title: "Stardew Valley", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/413150/capsule_184x69.jpg", link: "https://store.steampowered.com/app/413150/", svc: "steam" },
+            { title: "Left 4 Dead 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/550/capsule_184x69.jpg", link: "https://store.steampowered.com/app/550/", svc: "steam" },
+            { title: "Rust", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/252490/capsule_184x69.jpg", link: "https://store.steampowered.com/app/252490/", svc: "steam" },
+            { title: "Subnautica", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/264710/capsule_184x69.jpg", link: "https://store.steampowered.com/app/264710/", svc: "steam" }
         ],
         actors: [
-            { title: "Леонардо Ди Каприо", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb" },
-            { title: "Киану Ривз", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150", link: "https://www.imdb.com/name/nm0000206/", svc: "imdb" },
-            { title: "Скарлетт Йоханссон", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", link: "https://www.imdb.com/name/nm0424060/", svc: "imdb" },
-            { title: "Том Харди", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150", link: "https://www.imdb.com/name/nm0362766/", svc: "imdb" },
-            { title: "Марго Робби", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", link: "https://www.imdb.com/name/nm3053338/", svc: "imdb" },
-            { title: "Роберт Дауни мл.", img: "https://images.unsplash.com/photo-1566492031773-4f4e44617d1a?w=150", link: "https://www.imdb.com/name/nm0000375/", svc: "imdb" },
-            { title: "Кристиан Бэйл", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150", link: "https://www.imdb.com/name/nm0000288/", svc: "imdb" },
-            { title: "Натали Портман", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150", link: "https://www.imdb.com/name/nm0000204/", svc: "imdb" },
-            { title: "Хоакин Феникс", img: "https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=150", link: "https://www.imdb.com/name/nm0001618/", svc: "imdb" },
-            { title: "Дензел Вашингтон", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150", link: "https://www.imdb.com/name/nm0000243/", svc: "imdb" }
+            { title: "Ди Каприо", img: "https://st.kp.yandex.net/images/actor_big/37859.jpg", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb" },
+            { title: "Киану Ривз", img: "https://st.kp.yandex.net/images/actor_big/7836.jpg", link: "https://www.imdb.com/name/nm0000206/", svc: "imdb" },
+            { title: "Скарлетт Йоханссон", img: "https://st.kp.yandex.net/images/actor_big/33113.jpg", link: "https://www.imdb.com/name/nm0424060/", svc: "imdb" },
+            { title: "Том Харди", img: "https://st.kp.yandex.net/images/actor_big/40781.jpg", link: "https://www.imdb.com/name/nm0362766/", svc: "imdb" },
+            { title: "Марго Робби", img: "https://st.kp.yandex.net/images/actor_big/1614214.jpg", link: "https://www.imdb.com/name/nm3053338/", svc: "imdb" },
+            { title: "Роберт Дауни мл.", img: "https://st.kp.yandex.net/images/actor_big/10096.jpg", link: "https://www.imdb.com/name/nm0000375/", svc: "imdb" },
+            { title: "Кристиан Бэйл", img: "https://st.kp.yandex.net/images/actor_big/8786.jpg", link: "https://www.imdb.com/name/nm0000288/", svc: "imdb" },
+            { title: "Натали Портман", img: "https://st.kp.yandex.net/images/actor_big/529.jpg", link: "https://www.imdb.com/name/nm0000204/", svc: "imdb" },
+            { title: "Брэд Питт", img: "https://st.kp.yandex.net/images/actor_big/25584.jpg", link: "https://www.imdb.com/name/nm0000093/", svc: "imdb" },
+            { title: "Джонни Депп", img: "https://st.kp.yandex.net/images/actor_big/6245.jpg", link: "https://www.imdb.com/name/nm0000136/", svc: "imdb" },
+            { title: "Том Круз", img: "https://st.kp.yandex.net/images/actor_big/7987.jpg", link: "https://www.imdb.com/name/nm0000129/", svc: "imdb" },
+            { title: "Мэттью Макконахи", img: "https://st.kp.yandex.net/images/actor_big/9230.jpg", link: "https://www.imdb.com/name/nm0000190/", svc: "imdb" },
+            { title: "Энн Хэтэуэй", img: "https://st.kp.yandex.net/images/actor_big/38383.jpg", link: "https://www.imdb.com/name/nm0004266/", svc: "imdb" },
+            { title: "Киллиан Мерфи", img: "https://st.kp.yandex.net/images/actor_big/24255.jpg", link: "https://www.imdb.com/name/nm0147068/", svc: "imdb" },
+            { title: "Гэри Олдман", img: "https://st.kp.yandex.net/images/actor_big/8423.jpg", link: "https://www.imdb.com/name/nm0000198/", svc: "imdb" },
+            { title: "Райан Гослинг", img: "https://st.kp.yandex.net/images/actor_big/31038.jpg", link: "https://www.imdb.com/name/nm0331516/", svc: "imdb" },
+            { title: "Хит Леджер", img: "https://st.kp.yandex.net/images/actor_big/4374.jpg", link: "https://www.imdb.com/name/nm0005132/", svc: "imdb" },
+            { title: "Анджелина Джоли", img: "https://st.kp.yandex.net/images/actor_big/12444.jpg", link: "https://www.imdb.com/name/nm0001401/", svc: "imdb" },
+            { title: "Аль Пачино", img: "https://st.kp.yandex.net/images/actor_big/5801.jpg", link: "https://www.imdb.com/name/nm0000199/", svc: "imdb" },
+            { title: "Уилл Смит", img: "https://st.kp.yandex.net/images/actor_big/4703.jpg", link: "https://www.imdb.com/name/nm0005450/", svc: "imdb" }
         ]
     };
     let currentPoolItems = [];
@@ -113,16 +143,19 @@ document.addEventListener('DOMContentLoaded', function() {
             var userProfile = document.getElementById('userProfile');
             var userAvatar = document.getElementById('userAvatar');
             var userName = document.getElementById('userName');
+            var profileDashboardBtn = document.getElementById('profileDashboardBtn');
             if (user) {
                 currentUser = { uid: user.uid, name: user.displayName, photo: user.photoURL };
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (userProfile) userProfile.style.display = 'flex';
                 if (userAvatar) userAvatar.src = user.photoURL || '';
                 if (userName) userName.textContent = user.displayName || 'Пользователь';
+                if (profileDashboardBtn) profileDashboardBtn.style.display = 'flex';
             } else {
                 currentUser = null;
                 if (loginBtn) loginBtn.style.display = 'flex';
                 if (userProfile) userProfile.style.display = 'none';
+                if (profileDashboardBtn) profileDashboardBtn.style.display = 'none';
             }
             lucide.createIcons();
         });
@@ -144,7 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyBg(idx){document.documentElement.style.setProperty('--bg-img','url(\''+B[idx]+'\')');ss('bg',idx)}
     function applyStyle(){var s=document.getElementById('styleSelect').value;document.querySelectorAll('.item').forEach(function(el){el.classList.remove('style-gradient','style-shadow','style-border','style-circle');el.classList.add('style-'+s)});ss('style',s)}
-    function applySize(){var s=document.getElementById('sizeSelect').value;document.querySelectorAll('.item img').forEach(function(img){img.style.width=s+'px';img.style.height=s+'px'});ss('size',s)}
+    
+    function applySize(){
+        var s=document.getElementById('sizeSelect').value;
+        document.querySelectorAll('.item img').forEach(function(img){img.style.width=s+'px';img.style.height=s+'px'});
+        ss('size',s);
+        var customBtn = document.getElementById('addCustomPoolItemBtn');
+        if(customBtn) { customBtn.style.width = s + 'px'; customBtn.style.height = s + 'px'; }
+    }
     function filterItems(){var q=document.getElementById('searchInput').value.toLowerCase();document.querySelectorAll('.item').forEach(function(el){var a=el.querySelector('a');var u=a?a.href.toLowerCase():'';var sv=el.dataset.svc||'';el.style.opacity=((!q||u.includes(q))&&(currentFilter==='all'||sv===currentFilter))?'1':'0.25'})}
 
     function initParallaxMouse(){
@@ -206,6 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
         renderAll();
     }
 
+    function updatePoolItems(type) {
+        if(type==='music'){currentPoolItems=[]}
+        else{
+            var currentItemsUrls=data1.flatMap(function(t){return t.items.map(function(i){return i.url})});
+            var customStorageKey='custom_items_'+type;
+            var userCustomItems=sg(customStorageKey,[]);
+            var fullTemplateList=TEMPLATES[type].concat(userCustomItems);
+            currentPoolItems=fullTemplateList.filter(function(item){return!currentItemsUrls.includes(item.link||item.url)}).map(function(item){return{img:item.img,url:item.link||item.url,svc:item.svc,title:item.title}})
+        }
+    }
+
     function renderTemplatePool() {
         var type = document.getElementById('templateSelect').value;
         var container = document.getElementById('templatePoolContainer');
@@ -214,13 +265,40 @@ document.addEventListener('DOMContentLoaded', function() {
             container.style.display = 'none';
         } else {
             container.style.display = 'flex';
-            pool.innerHTML = currentPoolItems.map(function(item, idx) {
+            var itemsHTML = currentPoolItems.map(function(item, idx) {
                 return '<div class="item" data-item-index="' + idx + '">' +
                        '<a href="' + item.url + '" target="_blank" rel="noopener" title="' + item.title + '">' +
                        '<img src="' + item.img + '" alt="' + item.title + '">' +
                        '</a>' +
                        '</div>';
             }).join('');
+            var addCustomHTML = '<button id="addCustomPoolItemBtn" style="width:60px;height:60px;border:2px dashed rgba(255,255,255,0.2);border-radius:8px;background:rgba(255,255,255,0.02);color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:0.2s;"><i data-lucide="plus"></i></button>';
+            pool.innerHTML = itemsHTML + addCustomHTML;
+            
+            var sVal = document.getElementById('sizeSelect').value;
+            var customBtn = document.getElementById('addCustomPoolItemBtn');
+            if(customBtn) { customBtn.style.width = sVal + 'px'; customBtn.style.height = sVal + 'px'; }
+
+            var addBtn = document.getElementById('addCustomPoolItemBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', function() {
+                    var title = prompt('Введите название элемента (например, название игры/фильма):');
+                    if (!title || !title.trim()) return;
+                    var url = prompt('Введите ссылку (Steam/IMDb или просто любая ссылка):', 'https://');
+                    if (!url || !url.trim()) return;
+                    var img = prompt('Введите ссылку на картинку-обложку (или оставьте пустой для авто-иконки):');
+                    var svcType = type === 'games' ? 'steam' : 'imdb';
+                    if (!img || !img.trim()) img = pImg(svcType);
+                    var newItem = { title: escapeHTML(title.trim()), img: img.trim(), url: url.trim(), svc: svcType };
+                    currentPoolItems.push(newItem);
+                    
+                    var customStorageKey = 'custom_items_' + type;
+                    var savedCustoms = sg(customStorageKey, []);
+                    savedCustoms.push(newItem);
+                    ss(customStorageKey, savedCustoms);
+                    renderAll();
+                });
+            }
         }
     }
 
@@ -281,6 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
             el.appendChild(row);
         });
     }
+    
     function updateUI(){
         document.body.classList.toggle('editing', editing);
         var eb = document.getElementById('editBtn');
@@ -295,7 +374,50 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderDraftsSidebar(){var list=document.getElementById('draftListSidebar');if(!list)return;list.innerHTML='';DRAFTS.forEach(function(d,i){var div=document.createElement('button');div.className='sidebar-btn'+(i===ad?' primary':'');div.textContent=(i===ad?'● ':'')+d.name;div.onclick=function(){if(i===ad)return;saveDrafts();ad=i;data1=JSON.parse(JSON.stringify(DRAFTS[i].data));hist1=[];renderAll()};list.appendChild(div)})}
     function initParticles(){var canvas=document.getElementById('particlesCanvas');if(!canvas)return;var ctx=canvas.getContext('2d');var particles=[];function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}function create(){particles=[];for(var i=0;i<40;i++)particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2+1,sx:(Math.random()-0.5)*0.5,sy:(Math.random()-0.5)*0.5,o:Math.random()*0.5+0.2})}function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(function(p){p.x+=p.sx;p.y+=p.sy;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(245,200,66,'+p.o+')';ctx.fill()});requestAnimationFrame(animate)}resize();create();animate();window.addEventListener('resize',function(){resize();create()})}
 
-    async function loadFromURL(){var p=new URLSearchParams(location.search);if(p.has('id')&&db){try{var doc=await db.collection('shared').doc(p.get('id')).get();if(doc.exists){var d=JSON.parse(doc.data().data);if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);ctid=p.get('id');if(p.has('tierlistId'))ctid=p.get('tierlistId');if(doc.data().templateType){document.getElementById('templateSelect').value=doc.data().templateType}await loadComments(ctid);history.replaceState({},'',location.pathname);return true}}}catch(e){}}if(p.has('data')){try{var d=JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data')));if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);if(p.has('tierlistId')){ctid=p.get('tierlistId');await loadComments(ctid)}history.replaceState({},'',location.pathname);return true}}catch(e){}}return false}
+    async function loadFromURL(){var p=new URLSearchParams(location.search);if(p.has('id')&&db){try{var doc=await db.collection('shared').doc(p.get('id')).get();if(doc.exists){var d=JSON.parse(doc.data().data);if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);ctid=p.get('id');if(p.has('tierlistId'))ctid=p.get('tierlistId');if(doc.data().templateType){document.getElementById('templateSelect').value=doc.data().templateType;updatePoolItems(doc.data().templateType);}await loadComments(ctid);history.replaceState({},'',location.pathname);return true}}}catch(e){}}if(p.has('data')){try{var d=JSON.parse(LZString.decompressFromEncodedURIComponent(p.get('data')));if(Array.isArray(d)){pushH(1);data1=d;sD(1,data1);if(p.has('tierlistId')){ctid=p.get('tierlistId');await loadComments(ctid)}history.replaceState({},'',location.pathname);return true}}catch(e){}}return false}
+
+    async function openUserDashboard() {
+        if (!db || !currentUser) { toast('Пожалуйста, авторизуйтесь'); return; }
+        document.getElementById('dashboardModal').classList.add('open');
+        var listContainer = document.getElementById('userCreatedLists');
+        listContainer.innerHTML = 'Загрузка ваших данных...';
+        showLoading(true);
+        try {
+            const snap = await db.collection('tierlists').where('authorId', '==', currentUser.uid).get();
+            listContainer.innerHTML = '';
+            var totalLists = 0;
+            var totalWins = 0;
+            snap.forEach(function(doc) {
+                var d = doc.data();
+                totalLists++;
+                totalWins += (d.wins || 0);
+                var div = document.createElement('div');
+                div.style.cssText = 'padding:10px; margin-bottom:6px; background:rgba(255,255,255,0.04); border-radius:8px; display:flex; justify-content:space-between; align-items:center;';
+                div.innerHTML = '<div><strong>' + (d.name || 'Без названия') + '</strong> <small style="color:var(--text-secondary);">(' + (d.templateType || 'music') + ')</small><br><span style="font-size:0.75rem; color:var(--gold);">Побед: ' + (d.wins || 0) + '</span></div>' +
+                                '<button class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;" data-doc-id="' + doc.id + '">Открыть</button>';
+                div.querySelector('button').onclick = async function() {
+                    pushH(1);
+                    data1 = JSON.parse(d.data);
+                    ctid = doc.id;
+                    if (d.templateType) {
+                        document.getElementById('templateSelect').value = d.templateType;
+                        updatePoolItems(d.templateType);
+                    }
+                    await loadComments(ctid);
+                    document.getElementById('dashboardModal').classList.remove('open');
+                    renderAll();
+                };
+                listContainer.appendChild(div);
+            });
+            document.getElementById('statTotalLists').textContent = totalLists;
+            document.getElementById('statTotalWins').textContent = totalWins;
+            if (snap.empty) listContainer.innerHTML = '<div style="color:#888; text-align:center; padding:10px;">Вы еще не опубликовали ни одного тир-листа</div>';
+        } catch(e) {
+            listContainer.innerHTML = 'Ошибка загрузки кабинета';
+            toast('Ошибка Firestore запроса');
+        }
+        showLoading(false);
+    }
 
     document.getElementById('compareWrap').addEventListener('click', function(e) {
         var delBtn = e.target.closest('.del-btn');
@@ -343,7 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('shareBtn').addEventListener('click',async function(){if(!db){var compressed=LZString.compressToEncodedURIComponent(JSON.stringify(data1));var url=location.origin+location.pathname+'?data='+compressed;navigator.clipboard.writeText(url).then(function(){toast('Ссылка скопирована!')})}else{try{var docRef=await db.collection('shared').add({data:JSON.stringify(data1),createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;var shortUrl=location.origin+location.pathname+'?id='+docRef.id;navigator.clipboard.writeText(shortUrl).then(function(){toast('Короткая ссылка скопирована!')})}catch(e){var compressed=LZString.compressToEncodedURIComponent(JSON.stringify(data1));var url=location.origin+location.pathname+'?data='+compressed;navigator.clipboard.writeText(url).then(function(){toast('Ссылка скопирована!')})}}if(!unlocked.includes('shared')){unlocked.push('shared');ss('achievements',unlocked);toast('Достижение: У тебя нет друзей')}});
         document.getElementById('compareBtn').addEventListener('click',function(){compare=!compare;if(compare){data2=JSON.parse(JSON.stringify(data1));hist2=[]}renderAll()});
         document.getElementById('playlistBtn').addEventListener('click',function(){var yt=data1.flatMap(function(t){return t.items}).filter(function(i){return i.svc==='youtube'});if(yt.length===0){toast('Нет YouTube треков');return}var ids=yt.map(function(i){var m=i.url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:null}).filter(Boolean);if(ids.length>0)window.open('https://www.youtube.com/watch_videos?video_ids='+ids.join(','),'_blank')});
-        document.getElementById('galleryBtn').addEventListener('click',async function(){if(!db){toast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='Галерея тир-листов';document.getElementById('publishBtn').style.display='inline-block';var list=document.getElementById('galleryList');list.innerHTML='Загрузка...';showLoading(true);try{var snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(function(doc){var d=doc.data();var div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> ('+(d.wins||0)+' побед, '+(d.trackCount||0)+' треков)';div.onclick=async function(){pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;if(d.templateType){document.getElementById('templateSelect').value=d.templateType}await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки галереи')}showLoading(false)});
+        document.getElementById('galleryBtn').addEventListener('click',async function(){if(!db){toast('Галерея недоступна');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='Галерея тир-листов';document.getElementById('publishBtn').style.display='inline-block';var list=document.getElementById('galleryList');list.innerHTML='Загрузка...';showLoading(true);try{var snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(function(doc){var d=doc.data();var div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';div.innerHTML='<strong>'+(d.name||'Без названия')+'</strong> ('+(d.wins||0)+' побед, '+(d.trackCount||0)+' треков)';div.onclick=async function(){pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;if(d.templateType){document.getElementById('templateSelect').value=d.templateType;updatePoolItems(d.templateType);}await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div)});if(snap.empty)list.innerHTML='Пока пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки галереи')}showLoading(false)});
         document.getElementById('closeGallery').addEventListener('click',function(){document.getElementById('galleryModal').classList.remove('open')});
         document.getElementById('publishBtn').addEventListener('click',async function(){if(!db){toast('Недоступно');return}if(!data1||data1.length===0||data1.every(function(t){return t.items.length===0})){toast('Тир-лист пуст!');return}var name=prompt('Название:','Мой тир-лист');if(!name)return;showLoading(true);try{var currentTemplateType=document.getElementById('templateSelect').value;var docRef=await db.collection('tierlists').add({name:escapeHTML(name),templateType:currentTemplateType,data:JSON.stringify(data1),trackCount:data1.reduce(function(s,t){return s+t.items.length},0),wins:0,authorId:currentUser?currentUser.uid:'anonymous',authorName:currentUser?escapeHTML(currentUser.name):'Аноним',createdAt:firebase.firestore.FieldValue.serverTimestamp()});ctid=docRef.id;toast('Опубликовано!');document.getElementById('galleryModal').classList.remove('open')}catch(e){toast('Ошибка публикации')}showLoading(false)});
         document.getElementById('duelBtn').addEventListener('click',async function(){if(!db){toast('Недоступно');return}document.getElementById('duelModal').classList.add('open');var list=document.getElementById('duelList');list.innerHTML='Загрузка...';showLoading(true);try{var snap=await db.collection('tierlists').orderBy('createdAt','desc').limit(20).get();list.innerHTML='';snap.forEach(function(doc){var d=doc.data();var div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:4px;background:rgba(255,255,255,0.05);border-radius:6px;';div.innerHTML='<input type="radio" name="duelSelect" value="'+doc.id+'"> '+(d.name||'Без названия')+' ('+(d.wins||0)+' побед)';list.appendChild(div)});if(snap.empty)list.innerHTML='Пусто...'}catch(e){list.innerHTML='Ошибка загрузки';toast('Ошибка загрузки дуэли')}showLoading(false)});
@@ -351,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('startDuelBtn').addEventListener('click',async function(){var sel=document.querySelector('input[name="duelSelect"]:checked');if(!sel){toast('Выберите соперника');return}try{var doc=await db.collection('tierlists').doc(sel.value).get();if(doc.exists){compare=true;data2=JSON.parse(doc.data().data);hist2=[];duelLeftId=ctid;duelRightId=sel.value;var bar=document.getElementById('duelVoteBar');bar.classList.add('show');document.getElementById('duelLeftWins').textContent=(duelLeftId?'?':'0');document.getElementById('duelRightWins').textContent=(doc.data().wins||0);document.getElementById('duelModal').classList.remove('open');renderAll();toast('Дуэль началась! Голосуйте за победителя!')}}catch(e){toast('Ошибка загрузки соперника')}});
         document.getElementById('voteLeftBtn').addEventListener('click',function(){voteFor('left')});
         document.getElementById('voteRightBtn').addEventListener('click',function(){voteFor('right')});
-        document.getElementById('topBtn').addEventListener('click',async function(){if(!db){toast('Недоступно');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='Топ тир-листов';document.getElementById('publishBtn').style.display='none';var list=document.getElementById('galleryList');list.innerHTML='Загрузка...';showLoading(true);try{var snap=await db.collection('tierlists').orderBy('wins','desc').limit(20).get();list.innerHTML='';var rank=1;snap.forEach(function(doc){var d=doc.data();if(!d.wins||d.wins===0){rank++;return}var div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';var medal='';if(rank===1)medal='<i data-lucide="medal"></i>';else if(rank===2)medal='<i data-lucide="medal"></i>';else if(rank===3)medal='<i data-lucide="medal"></i>';div.innerHTML=medal+' <strong>#'+rank+'</strong> '+(d.name||'Без названия')+' ('+(d.wins||0)+' побед)';div.onclick=async function(){pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;if(d.templateType){document.getElementById('templateSelect').value=d.templateType}await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div);rank++});if(list.innerHTML==='')list.innerHTML='Пока никто не побеждал...';lucide.createIcons()}catch(e){list.innerHTML='Ошибка загрузки'}showLoading(false)});
+        document.getElementById('topBtn').addEventListener('click',async function(){if(!db){toast('Недоступно');return}document.getElementById('galleryModal').classList.add('open');document.getElementById('galleryModal').querySelector('h3').textContent='Топ тир-листов';document.getElementById('publishBtn').style.display='none';var list=document.getElementById('galleryList');list.innerHTML='Загрузка...';showLoading(true);try{var snap=await db.collection('tierlists').orderBy('wins','desc').limit(20).get();list.innerHTML='';var rank=1;snap.forEach(function(doc){var d=doc.data();if(!d.wins||d.wins===0){rank++;return}var div=document.createElement('div');div.style.cssText='padding:8px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';var medal='';if(rank===1)medal='<i data-lucide="medal"></i>';else if(rank===2)medal='<i data-lucide="medal"></i>';else if(rank===3)medal='<i data-lucide="medal"></i>';div.innerHTML=medal+' <strong>#'+rank+'</strong> '+(d.name||'Без названия')+' ('+(d.wins||0)+' побед)';div.onclick=async function(){pushH(1);data1=JSON.parse(d.data);sD(1,data1);ctid=doc.id;if(d.templateType){document.getElementById('templateSelect').value=d.templateType;updatePoolItems(d.templateType);}await loadComments(ctid);document.getElementById('galleryModal').classList.remove('open');renderAll()};list.appendChild(div);rank++});if(list.innerHTML==='')list.innerHTML='Пока никто не побеждал...';lucide.createIcons()}catch(e){list.innerHTML='Ошибка загрузки'}showLoading(false)});
         document.getElementById('achievementsBtn').addEventListener('click',function(){document.getElementById('achievementsModal').classList.add('open');document.getElementById('achievementsList').innerHTML=ACH.map(function(a){var u=unlocked.includes(a.id);return'<div style="padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;opacity:'+(u?'1':'0.4')+';display:flex;align-items:center;gap:10px;"><i data-lucide="'+(u?a.icon:'lock')+'"></i><div><strong>'+a.name+'</strong><br><small>'+a.desc+'</small></div></div>'}).join('');lucide.createIcons()});
         document.getElementById('closeAchievements').addEventListener('click',function(){document.getElementById('achievementsModal').classList.remove('open')});
         document.getElementById('neonBtn').addEventListener('click',function(){document.getElementById('neonModal').classList.add('open');document.getElementById('neonToggle').checked=neonS.enabled;document.getElementById('neonColor').value=neonS.color;document.getElementById('neonTarget').value=neonS.target});
@@ -390,12 +512,30 @@ document.addEventListener('DOMContentLoaded', function() {
         if(toggleBtn){toggleBtn.addEventListener('click',function(){sidebar.classList.toggle('collapsed');var collapsed=sidebar.classList.contains('collapsed');ss('sidebar_collapsed',collapsed);document.documentElement.style.setProperty('--sidebar-width',collapsed?'72px':'260px');setTimeout(function(){lucide.createIcons()},100)})}
 
         var templateSelect=document.getElementById('templateSelect');
-        if(templateSelect){templateSelect.addEventListener('change',function(){var type=this.value;if(type==='music'){currentPoolItems=[]}else{var currentItemsUrls=data1.flatMap(function(t){return t.items.map(function(i){return i.url})});currentPoolItems=TEMPLATES[type].filter(function(item){return!currentItemsUrls.includes(item.link)}).map(function(item){return{img:item.img,url:item.link,svc:item.svc,title:item.title}})}renderAll()})}
+        if(templateSelect){
+            templateSelect.addEventListener('change',function(){
+                updatePoolItems(this.value);
+                renderAll()
+            })
+        }
 
-        document.getElementById('loginBtn').addEventListener('click', handleLogin);
-        document.getElementById('logoutLink').addEventListener('click', handleLogout);
+        var loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) { loginBtn.addEventListener('click', handleLogin); }
+        var logoutLink = document.getElementById('logoutLink');
+        if (logoutLink) { logoutLink.addEventListener('click', handleLogout); }
+        var profileDashboardBtn = document.getElementById('profileDashboardBtn');
+        if (profileDashboardBtn) { profileDashboardBtn.addEventListener('click', openUserDashboard); }
+        var closeDashboard = document.getElementById('closeDashboard');
+        if (closeDashboard) { closeDashboard.addEventListener('click', function() { document.getElementById('dashboardModal').classList.remove('open'); }); }
     }
 
     async function init(){
         if(!sg('version_1_1',false)){clr();ss('version_1_1',true)}
-        initFB();loadDrafts();unlocked=sg('achievements',[]);neonS=sg('neon',{enabled:false,color:'rainbow',target:'all'});var sbg=sg('bg',null);if(sbg!==null){applyBg(parseInt(sbg,10));document.getElementById('bgSelect').value=sbg}document.getElementById('styleSelect').value=sg('style','gradient');document.getElementById('sizeSelect').value=sg('size','60');if(sg('theme','dark')==='light')document.body.classList.add('light-theme');parallaxOn=sg('parallax',false);bindEvents();showLoading(true);var loaded=await loadFromURL();showLoading(false);if(!loaded)renderAll();else renderAll();renderDraftsSidebar();applyNeon();if(parallaxOn)toggleParallax(true);initParticles();initParallaxMouse();initAuthObserver()}init()});
+        initFB();loadDrafts();unlocked=sg('achievements',[]);neonS={enabled:false,color:'rainbow',target:'all'};var sbg=sg('bg',null);if(sbg!==null){applyBg(parseInt(sbg,10));document.getElementById('bgSelect').value=sbg}document.getElementById('styleSelect').value=sg('style','gradient');document.getElementById('sizeSelect').value=sg('size','60');if(sg('theme','dark')==='light')document.body.classList.add('light-theme');parallaxOn=sg('parallax',false);bindEvents();showLoading(true);
+        var loaded = await loadFromURL();
+        showLoading(false);
+        if(!loaded) renderAll(); else renderAll();
+        renderDraftsSidebar();applyNeon();if(parallaxOn)toggleParallax(true);initParticles();initParallaxMouse();
+        var tSelect = document.getElementById('templateSelect');
+        if (!loaded && tSelect && tSelect.value !== 'music') { updatePoolItems(tSelect.value); }
+        initAuthObserver()}init()});
