@@ -1,6 +1,6 @@
 /**
  * @module ui/gallery
- * @description Галерея, топ, публикация.
+ * @description Галерея, топ, публикация. Полная XSS-защита.
  */
 import { api } from '../api/firestore.js';
 import { getCurrentUser } from '../api/auth.js';
@@ -8,6 +8,7 @@ import { modalManager } from './modal-manager.js';
 import { state } from '../core/state.js';
 import { renderAll } from './render.js';
 import { eventBus } from '../core/event-bus.js';
+import { escapeHTML } from '../utils/sanitizers.js';
 
 let ctid = null;
 
@@ -16,7 +17,7 @@ export function setCurrentTierlistId(id) { ctid = id; }
 
 export async function openGallery() {
   if (!api) {
-    window.toast('Галерея недоступна');
+    eventBus.emit('toast:show', { text: 'Галерея недоступна', type: 'error' });
     return;
   }
 
@@ -41,7 +42,8 @@ export async function openGallery() {
     items.forEach(doc => {
       const div = document.createElement('div');
       div.style.cssText = 'padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
-      div.innerHTML = '<strong>' + (doc.name || 'Без названия') + '</strong> (' + (doc.wins || 0) + ' побед, ' + (doc.trackCount || 0) + ' треков)';
+      // XSS-ЗАЩИТА: escapeHTML для всех пользовательских данных
+      div.innerHTML = '<strong>' + escapeHTML(doc.name || 'Без названия') + '</strong> (' + (doc.wins || 0) + ' побед, ' + (doc.trackCount || 0) + ' треков)';
       div.onclick = async () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
@@ -73,7 +75,7 @@ export async function openGallery() {
     try {
       const templateType = document.getElementById('templateSelect')?.value || 'music';
       const id = await api.publishTierlist({
-        name: name,
+        name: escapeHTML(name),
         templateType: templateType,
         data: JSON.stringify(data),
         trackCount: data.reduce((s, t) => s + t.items.length, 0),
@@ -82,7 +84,7 @@ export async function openGallery() {
         likesCount: 0,
         visibility: 'public',
         authorId: user ? user.uid : 'anonymous',
-        authorName: user ? user.name : 'Аноним'
+        authorName: user ? escapeHTML(user.name) : 'Аноним'
       });
       ctid = id;
       eventBus.emit('toast:show', { text: 'Опубликовано!', type: 'success' });
@@ -95,7 +97,7 @@ export async function openGallery() {
 
 export async function openTop() {
   if (!api) {
-    window.toast('Недоступно');
+    eventBus.emit('toast:show', { text: 'Недоступно', type: 'error' });
     return;
   }
 
@@ -126,7 +128,8 @@ export async function openTop() {
       if (rank === 1) medal = '🥇';
       else if (rank === 2) medal = '🥈';
       else if (rank === 3) medal = '🥉';
-      div.innerHTML = medal + ' <strong>#' + rank + '</strong> ' + (doc.name || 'Без названия') + ' (' + (doc.wins || 0) + ' побед)';
+      // XSS-ЗАЩИТА
+      div.innerHTML = medal + ' <strong>#' + rank + '</strong> ' + escapeHTML(doc.name || 'Без названия') + ' (' + (doc.wins || 0) + ' побед)';
       div.onclick = async () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
@@ -178,7 +181,8 @@ export async function openUserDashboard() {
     items.forEach(doc => {
       const div = document.createElement('div');
       div.style.cssText = 'padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.04);border-radius:8px;display:flex;justify-content:space-between;align-items:center;';
-      div.innerHTML = '<div><strong>' + (doc.name || 'Без названия') + '</strong><br><span style="font-size:0.75rem;color:var(--gold);">Побед: ' + (doc.wins || 0) + '</span></div>' +
+      // XSS-ЗАЩИТА
+      div.innerHTML = '<div><strong>' + escapeHTML(doc.name || 'Без названия') + '</strong><br><span style="font-size:0.75rem;color:var(--gold);">Побед: ' + (doc.wins || 0) + '</span></div>' +
         '<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem;">Открыть</button>';
       div.querySelector('button').onclick = () => {
         state.setData(JSON.parse(doc.data), 1);
