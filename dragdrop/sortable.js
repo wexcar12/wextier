@@ -19,9 +19,10 @@ function handleSortableMove(evt) {
       const toTier = parseInt(evt.to.dataset.tierIndex, 10);
       const listNum = parseInt(evt.to.dataset.listNum, 10) || 1;
       const newItem = { img: item.img, url: item.url, svc: item.svc, title: item.title };
-      const data = listNum === 1 ? state.data1 : state.data2;
-      data[toTier].items.splice(evt.newIndex, 0, newItem);
-      state._save();
+      
+      // ИСПРАВЛЕНО: Используем команду вместо прямой мутации
+      const command = new AddItemCommand(toTier, newItem, listNum, evt.newIndex);
+      state.executeCommand(command, listNum);
     } else {
       currentPoolItems.splice(evt.newIndex, 0, item);
     }
