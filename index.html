@@ -25,6 +25,7 @@
 
     <div id="parallaxWrapper"><div id="parallaxLayer"></div></div>
     <canvas id="particlesCanvas"></canvas>
+    
     <button class="burger-btn" id="burgerBtn"><i data-lucide="menu"></i></button>
 
     <aside class="sidebar" id="sidebar">
@@ -34,7 +35,7 @@
         </div>
         
         <div id="authSection" style="padding: 10px 4px; border-bottom: 1px solid var(--input-border); margin-bottom: 10px;">
-            <button id="loginBtn" class="sidebar-btn primary" style="width: 100%; padding: 10px;"><i data-lucide="log-in"></i> <span>Войти через Google</span></button>
+            <button id="loginBtn" class="sidebar-btn primary" style="width: 100%; padding: 10px;"><i data-lucide="log-in"></i> <span>Войти</span></button>
             <div id="userProfile" style="display: none; align-items: center; gap: 12px;">
                 <img id="userAvatar" src="" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold);">
                 <div style="flex: 1; min-width: 0;">
@@ -45,33 +46,33 @@
         </div>
         
         <div class="sidebar-section">Действия</div>
-        <button class="sidebar-btn" id="editBtn"><i data-lucide="edit-3"></i> Редактировать</button>
-        <button class="sidebar-btn" id="undoBtn" disabled><i data-lucide="undo-2"></i> Отменить</button>
-        <button class="sidebar-btn danger hidden" id="resetBtn"><i data-lucide="rotate-ccw"></i> Сбросить всё</button>
-        <button class="sidebar-btn hidden" id="addTierBtn"><i data-lucide="plus-square"></i> Новый тир</button>
+        <button class="sidebar-btn" id="editBtn" title="Редактировать"><i data-lucide="edit-3"></i> <span>Редактировать</span></button>
+        <button class="sidebar-btn" id="undoBtn" disabled title="Отменить"><i data-lucide="undo-2"></i> <span>Отменить</span></button>
+        <button class="sidebar-btn danger hidden" id="resetBtn" title="Сбросить всё"><i data-lucide="rotate-ccw"></i> <span>Сбросить всё</span></button>
+        <button class="sidebar-btn hidden" id="addTierBtn" title="Новый тир"><i data-lucide="plus-square"></i> <span>Новый тир</span></button>
         
         <div class="sidebar-section">Инструменты</div>
-        <button class="sidebar-btn" id="themeBtn"><i data-lucide="moon"></i> Тема</button>
-        <button class="sidebar-btn" id="neonBtn"><i data-lucide="lightbulb"></i> Неон</button>
-        <button class="sidebar-btn" id="parallaxBtn"><i data-lucide="layers"></i> Параллакс</button>
-        <button class="sidebar-btn" id="compareBtn"><i data-lucide="users"></i> Сравнение</button>
-        <button class="sidebar-btn" id="shareBtn"><i data-lucide="link"></i> Поделиться</button>
-        <button class="sidebar-btn" id="playlistBtn"><i data-lucide="video"></i> YT плейлист</button>
-        <button class="sidebar-btn" id="galleryBtn"><i data-lucide="image"></i> Галерея</button>
-        <button class="sidebar-btn" id="duelBtn"><i data-lucide="swords"></i> Дуэль</button>
-        <button class="sidebar-btn" id="topBtn"><i data-lucide="medal"></i> Топ</button>
-        <button class="sidebar-btn" id="achievementsBtn"><i data-lucide="trophy"></i> Достижения</button>
-        <button class="sidebar-btn" id="commentsBtn"><i data-lucide="message-square"></i> Комментарии</button>
-        <button class="sidebar-btn" id="profileDashboardBtn" style="display: none;"><i data-lucide="folder-open"></i> Мои тир-листы</button>
+        <button class="sidebar-btn" id="themeBtn" title="Сменить тему"><i data-lucide="moon"></i> <span>Тема</span></button>
+        <button class="sidebar-btn" id="neonBtn" title="Настройки неона"><i data-lucide="lightbulb"></i> <span>Неон</span></button>
+        <button class="sidebar-btn" id="parallaxBtn" title="Эффект параллакса"><i data-lucide="layers"></i> <span>Параллакс</span></button>
+        <button class="sidebar-btn" id="compareBtn" title="Сравнить тир-листы"><i data-lucide="users"></i> <span>Сравнение</span></button>
+        <button class="sidebar-btn" id="shareBtn" title="Поделиться ссылкой"><i data-lucide="link"></i> <span>Поделиться</span></button>
+        <button class="sidebar-btn" id="playlistBtn" title="Смотреть плейлист"><i data-lucide="video"></i> <span>YT плейлист</span></button>
+        <button class="sidebar-btn" id="galleryBtn" title="Открыть галерею"><i data-lucide="image"></i> <span>Галерея</span></button>
+        <button class="sidebar-btn" id="duelBtn" title="Дуэль тир-листов"><i data-lucide="swords"></i> <span>Дуэль</span></button>
+        <button class="sidebar-btn" id="topBtn" title="Топ лучших"><i data-lucide="medal"></i> <span>Топ</span></button>
+        <button class="sidebar-btn" id="achievementsBtn" title="Мои достижения"><i data-lucide="trophy"></i> <span>Достижения</span></button>
+        <button class="sidebar-btn" id="commentsBtn" title="Комментарии"><i data-lucide="message-square"></i> <span>Комментарии</span></button>
+        <button class="sidebar-btn" id="profileDashboardBtn" style="display: none;" title="Личный кабинет"><i data-lucide="folder-open"></i> <span>Мои тир-листы</span></button>
         
         <div class="sidebar-section">Экспорт</div>
-        <button class="sidebar-btn" id="pngBtn"><i data-lucide="download"></i> Скачать PNG</button>
-        <button class="sidebar-btn" id="exportBtn"><i data-lucide="save"></i> Экспорт JSON</button>
-        <button class="sidebar-btn" id="importBtn"><i data-lucide="folder-open"></i> Импорт JSON</button>
+        <button class="sidebar-btn" id="pngBtn" title="Скачать как картинку"><i data-lucide="download"></i> <span>Скачать PNG</span></button>
+        <button class="sidebar-btn" id="exportBtn" title="Сохранить файл"><i data-lucide="save"></i> <span>Экспорт JSON</span></button>
+        <button class="sidebar-btn" id="importBtn" title="Загрузить файл"><i data-lucide="folder-open"></i> <span>Импорт JSON</span></button>
         <input type="file" id="importFile" accept=".json" style="display:none;">
         
         <div class="sidebar-section">Тематика</div>
-        <select id="templateSelect" class="sidebar-select">
+        <select id="templateSelect" class="sidebar-select" title="Выбор шаблона">
             <option value="music">🎵 Музыкальные треки</option>
             <option value="movies">🎬 Фильмы и Сериалы</option>
             <option value="games">🎮 Компьютерные Игры</option>
@@ -79,15 +80,15 @@
         </select>
         
         <div class="sidebar-section">Оформление</div>
-        <select id="styleSelect" class="sidebar-select"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
-        <select id="sizeSelect" class="sidebar-select"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
-        <select id="bgSelect" class="sidebar-select"><option value="0">Фон 1</option><option value="1">Фон 2</option><option value="2">Фон 3</option><option value="3">Фон 4</option><option value="4">Фон 5</option><option value="5">Фон 6</option></select>
+        <select id="styleSelect" class="sidebar-select" title="Стиль карточек"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
+        <select id="sizeSelect" class="sidebar-select" title="Размер карточек"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
+        <select id="bgSelect" class="sidebar-select" title="Фоновое изображение"><option value="0">Фон 1</option><option value="1">Фон 2</option><option value="2">Фон 3</option><option value="3">Фон 4</option><option value="4">Фон 5</option><option value="5">Фон 6</option></select>
         
         <div class="sidebar-section">Черновики</div>
         <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
-        <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> Новый черновик</button>
+        <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> <span>Новый черновик</span></button>
         <div class="sidebar-spacer"></div>
-        <button class="sidebar-btn danger" id="resetAllLink" style="margin-top:8px;"><i data-lucide="trash-2"></i> Сбросить данные</button>
+        <button class="sidebar-btn danger" id="resetAllLink" style="margin-top:8px;" title="Удалить все данные"><i data-lucide="trash-2"></i> <span>Сбросить данные</span></button>
         <div class="footer">© WEX-TIER</div>
     </aside>
 
