@@ -5,6 +5,7 @@
 import { api } from '../api/firestore.js';
 import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
+import { escapeHTML } from '../utils/sanitizers.js';
 
 let comments = [];
 let ctid = null;
@@ -63,12 +64,6 @@ export function updateCommentsDisplay() {
   }).join('');
 }
 
-function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, tag => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[tag] || tag));
-}
-
 export function openCommentsModal() {
   const content = document.createElement('div');
   content.innerHTML = `
@@ -95,7 +90,6 @@ export function openCommentsModal() {
   };
 }
 
-// Подписка на события
 eventBus.on('comments:load', (id) => {
   loadComments(id);
 });
