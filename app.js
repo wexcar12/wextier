@@ -23,7 +23,7 @@ import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from '.
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
 import { shareTierlist, loadFromURL } from './ui/share.js';
 import { setupSearch } from './ui/search.js';
-import { loadSettings, applySize, toggleTheme, toggleSidebar } from './ui/settings.js';
+import { loadSettings, toggleTheme, toggleSidebar } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 
 window.escapeHTML = escapeHTML;
@@ -33,9 +33,9 @@ async function init() {
   function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
   function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
 
-  if (!sg('version_1_3', false)) {
+  if (!sg('version_1_4', false)) {
     Object.keys(localStorage).filter(k => k.startsWith(P)).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-    ss('version_1_3', true);
+    ss('version_1_4', true);
   }
 
   const fbReady = initFB();
@@ -64,24 +64,55 @@ async function init() {
 
 function bindEvents() {
   document.getElementById('toggleSidebarBtn')?.addEventListener('click', toggleSidebar);
-  document.getElementById('burgerBtn')?.addEventListener('click', () => {
-    document.getElementById('sidebar')?.classList.toggle('open');
-  });
+  document.getElementById('burgerBtn')?.addEventListener('click', () => { document.getElementById('sidebar')?.classList.toggle('open'); });
 
+  // --- ИНСТРУМЕНТЫ ---
   document.getElementById('themeBtn')?.addEventListener('click', toggleTheme);
   document.getElementById('neonBtn')?.addEventListener('click', openNeonModal);
   
-  document.getElementById('editBtn')?.addEventListener('click', () => {
-    setEditing(!isEditing());
-    renderAll();
-    updateUI();
+  // ФИКС 2: Параллакс
+  let isParallax = localStorage.getItem('wt_parallax') === 'true';
+  document.getElementById('parallaxBtn')?.addEventListener('click', () => {
+    isParallax = !isParallax;
+    toggleParallax(isParallax);
   });
 
-  document.getElementById('undoBtn')?.addEventListener('click', () => {
-    state.undo(isCompare() ? 2 : 1);
-    renderAll();
-    updateUndo();
+  // --- ОФОРМЛЕНИЕ (ФИКС 7: Рабочие стили, размеры, фон) ---
+  document.getElementById('styleSelect')?.addEventListener('change', function() {
+    localStorage.setItem('wt_style', JSON.stringify(this.value));
+    document.querySelectorAll('.item').forEach(el => {
+      el.classList.remove('style-gradient', 'style-shadow', 'style-border', 'style-circle');
+      el.classList.add('style-' + this.value);
+    });
   });
+
+  document.getElementById('sizeSelect')?.addEventListener('change', function() {
+    localStorage.setItem('wt_size', JSON.stringify(this.value));
+    const size = this.value;
+    document.querySelectorAll('.item img').forEach(img => {
+      img.style.width = size + 'px';
+      img.style.height = size + 'px';
+    });
+    const addBtn = document.getElementById('addCustomPoolItemBtn');
+    if(addBtn) { addBtn.style.width = size + 'px'; addBtn.style.height = size + 'px'; }
+  });
+
+  document.getElementById('bgSelect')?.addEventListener('change', function() {
+    const B = [
+      'https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
+      'https://i.pinimg.com/originals/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
+      'https://i.pinimg.com/originals/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
+      'https://i.pinimg.com/originals/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
+      'https://i.pinimg.com/originals/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
+      'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/'
+    ];
+    document.documentElement.style.setProperty('--bg-img', `url('${B[this.value]}')`);
+    localStorage.setItem('wt_bg', JSON.stringify(this.value));
+  });
+
+  // --- ДЕЙСТВИЯ ---
+  document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
+  document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? 2 : 1); renderAll(); updateUndo(); });
 
   document.getElementById('galleryBtn')?.addEventListener('click', openGallery);
   document.getElementById('topBtn')?.addEventListener('click', openTop);
@@ -93,10 +124,7 @@ function bindEvents() {
   document.getElementById('pngBtn')?.addEventListener('click', exportPNG);
   document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
   document.getElementById('importBtn')?.addEventListener('click', () => document.getElementById('importFile')?.click());
-  document.getElementById('importFile')?.addEventListener('change', function () {
-    if (this.files[0]) importJSON(this.files[0]);
-    this.value = '';
-  });
+  document.getElementById('importFile')?.addEventListener('change', function () { if (this.files[0]) importJSON(this.files[0]); this.value = ''; });
 
   document.getElementById('loginBtn')?.addEventListener('click', loginWithGoogle);
   document.getElementById('logoutLink')?.addEventListener('click', logout);
@@ -124,9 +152,7 @@ function bindEvents() {
     }
   });
 
-  document.getElementById('templateSelect')?.addEventListener('change', function () {
-    eventBus.emit('templates:changed', this.value);
-  });
+  document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); });
 
   document.getElementById('compareWrap')?.addEventListener('click', function (e) {
     const delBtn = e.target.closest('.del-btn');
@@ -154,15 +180,45 @@ function bindEvents() {
         setActiveTier(tI, lN);
         document.getElementById('trackUrl').value = '';
         document.getElementById('coverUrl').value = '';
+        const coverPreview = document.getElementById('coverPreview');
+        if(coverPreview) coverPreview.style.display = 'none';
         document.getElementById('addModal')?.classList.add('open');
       }
       return;
     }
   });
 
-  document.getElementById('cancelAdd')?.addEventListener('click', () => {
-    document.getElementById('addModal')?.classList.remove('open');
+  // ФИКС 1: Авто-поиск обложки
+  document.getElementById('fetchCoverBtn')?.addEventListener('click', async () => {
+    const url = document.getElementById('trackUrl')?.value.trim();
+    if (!url) { eventBus.emit('toast:show', { text: 'Сначала вставьте ссылку', type: 'info' }); return; }
+    
+    const btn = document.getElementById('fetchCoverBtn');
+    btn.textContent = '...'; btn.disabled = true;
+    
+    let cover = null;
+    const ytM = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
+    if (ytM) cover = 'https://img.youtube.com/vi/' + ytM[1] + '/mqdefault.jpg';
+    
+    if (cover) {
+      document.getElementById('coverUrl').value = cover;
+      const preview = document.getElementById('coverPreview');
+      if(preview) { preview.src = cover; preview.style.display = 'block'; }
+    } else {
+      eventBus.emit('toast:show', { text: 'Не удалось найти. Вставьте ссылку на картинку вручную.', type: 'error' });
+    }
+    btn.textContent = 'Авто-поиск обложки'; btn.disabled = false;
   });
+
+  document.getElementById('coverUrl')?.addEventListener('input', function() {
+    const preview = document.getElementById('coverPreview');
+    if (preview) {
+        if(this.value.trim()) { preview.src = this.value.trim(); preview.style.display = 'block'; } 
+        else { preview.style.display = 'none'; }
+    }
+  });
+
+  document.getElementById('cancelAdd')?.addEventListener('click', () => { document.getElementById('addModal')?.classList.remove('open'); });
 
   document.getElementById('okAdd')?.addEventListener('click', () => {
     const svc = document.getElementById('svc')?.value || 'youtube';
@@ -209,5 +265,4 @@ eventBus.on('auth:changed', (user) => {
 });
 
 eventBus.on('state:changed', updateUndo);
-
 document.addEventListener('DOMContentLoaded', init);
