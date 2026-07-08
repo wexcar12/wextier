@@ -1,11 +1,11 @@
 /**
  * @module ui/render
  * @description Рендер тир-листов (list1, list2).
- *              Всё состояние UI берётся из state.ui.
+ * Всё состояние UI берётся из state.ui.
  */
 import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
-import { escapeHTML } from '../utils/sanitizers.js';
+import { escapeHTML } from '../utils/sanitizers.js'; // ФИКС: Импортируем санитизатор
 
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
@@ -38,13 +38,13 @@ export function render(listNum) {
     const lbl = document.createElement('div');
     lbl.className = 'tier-label';
     lbl.style.backgroundColor = t.color || '#ff7f7f';
+    lbl.title = 'Двойной клик — переименовать';
     
-    // СЧЁТЧИК ЭЛЕМЕНТОВ В ТИРЕ
+    // ФИКС: Выводим счетчик элементов прямо в лейбле
     lbl.innerHTML = `
       <span>${escapeHTML(t.label)}</span>
       <div class="tier-count">${t.items.length}</div>
     `;
-    lbl.title = 'Двойной клик — переименовать';
 
     lbl.ondblclick = () => {
       if (!isEditing() || lbl.querySelector('input')) return;
@@ -59,7 +59,7 @@ export function render(listNum) {
       ni.maxLength = 8;
       ni.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:55%;background:transparent;border:1px solid rgba(0,0,0,0.3);text-align:center;font-weight:900;font-size:1.1rem;color:#111;outline:none;';
 
-      lbl.textContent = '';
+      lbl.innerHTML = ''; // Очищаем содержимое перед вставкой инпутов
       lbl.style.position = 'relative';
       lbl.appendChild(ci);
       lbl.appendChild(ni);
@@ -149,7 +149,7 @@ export function render(listNum) {
 function pImg(svc) {
   const colors = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00', steam: '#171a21', imdb: '#f5c518' };
   const icons = { youtube: '▶', spotify: '●', apple: '♫', yandex: '♪', steam: '🎮', imdb: '🎬' };
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="' + (colors[svc] || '#555') + '" width="64" height="64" rx="8"/><text fill="white" x="32" y="36" text-anchor="middle" font-size="20">' + (icons[svc] || '?') + '</text></svg>';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="${colors[svc] || '#555'}" width="64" height="64" rx="8"/><text fill="white" x="32" y="36" text-anchor="middle" font-size="20">${icons[svc] || '?'}</text></svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
