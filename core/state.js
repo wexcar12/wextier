@@ -1,7 +1,7 @@
 /**
  * @module core/state
  * @description Управление состоянием через Command Pattern.
- *              Храним команды, а не снепшоты. Экономит память.
+ *              Единый источник истины для данных и UI.
  */
 import { eventBus } from './event-bus.js';
 
@@ -11,14 +11,6 @@ class Command {
 }
 
 class MoveItemCommand extends Command {
-  /**
-   * @param {string} itemId
-   * @param {number} fromTierIndex
-   * @param {number} toTierIndex
-   * @param {number} fromItemIndex
-   * @param {number} toItemIndex
-   * @param {number} listNum - 1 или 2
-   */
   constructor(itemId, fromTierIndex, toTierIndex, fromItemIndex, toItemIndex, listNum) {
     super();
     this.itemId = itemId;
@@ -65,9 +57,30 @@ class AddItemCommand extends Command {
   }
 }
 
+class RemoveItemCommand extends Command {
+  constructor(tierIndex, itemIndex, item, listNum) {
+    super();
+    this.tierIndex = tierIndex;
+    this.itemIndex = itemIndex;
+    this.item = item;
+    this.listNum = listNum;
+  }
+
+  execute(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    data[this.tierIndex].items.splice(this.itemIndex, 1);
+    return state;
+  }
+
+  undo(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    data[this.tierIndex].items.splice(this.itemIndex, 0, this.item);
+    return state;
+  }
+}
+
 class StateManager {
   constructor() {
-    /** @type {Command[]} */
     this.history1 = [];
     this.history2 = [];
     this.index1 = -1;
@@ -76,7 +89,6 @@ class StateManager {
     this.data1 = this._defaultData();
     this.data2 = this._defaultData();
 
-    // ДОБАВЛЕНО: Единый источник истины для UI
     this.ui = {
       editing: false,
       compare: false,
@@ -85,14 +97,11 @@ class StateManager {
     };
   }
 
-  // ДОБАВЛЕНО: Метод для безопасного изменения UI
   setUI(key, value) {
     this.ui[key] = value;
     eventBus.emit('ui:state:changed', { key, value, state: this.ui });
   }
 
-  _defaultData() {
-// ... дальше идет твой старый код _defaultData() и остальное
   _defaultData() {
     return [
       { tier: 'S', label: 'S', color: '#ff7f7f', items: [] },
@@ -108,11 +117,17 @@ class StateManager {
 
     history.length = index + 1;
     history.push(command);
-    
+
     command.execute(this);
-    
+
     if (listNum === 1) this.index1 = history.length - 1;
     else this.index2 = history.length - 1;
+
+    if (history.length > 50) {
+      history.shift();
+      if (listNum === 1) this.index1--;
+      else this.index2--;
+    }
 
     eventBus.emit('state:changed', { listNum });
     this._save();
@@ -123,9 +138,9 @@ class StateManager {
     let index = listNum === 1 ? this.index1 : this.index2;
 
     if (index < 0) return;
-    
+
     history[index].undo(this);
-    
+
     if (listNum === 1) this.index1--;
     else this.index2--;
 
@@ -148,21 +163,23 @@ class StateManager {
   }
 
   canUndo(listNum = 1) {
-    return listNum === 1 ? this.index1 >= 0 : this.index2 >= 0;
+    const index = listNum === 1 ? this.index1 : this.index2;
+    return index >= 0;
   }
 
   setData(data, listNum = 1) {
     if (listNum === 1) this.data1 = JSON.parse(JSON.stringify(data));
     else this.data2 = JSON.parse(JSON.stringify(data));
+    if (listNum === 1) { this.history1 = []; this.index1 = -1; }
+    else { this.history2 = []; this.index2 = -1; }
     eventBus.emit('state:changed', { listNum });
     this._save();
   }
 
   _save() {
-    // Will be overridden by drafts module
     eventBus.emit('state:needsSave', { data1: this.data1, data2: this.data2 });
   }
 }
 
 export const state = new StateManager();
-export { MoveItemCommand, AddItemCommand };
+export { MoveItemCommand, AddItemCommand, RemoveItemCommand };
