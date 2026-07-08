@@ -37,22 +37,31 @@ class MoveItemCommand extends Command {
 }
 
 class AddItemCommand extends Command {
-  constructor(tierIndex, item, listNum) {
+  constructor(tierIndex, item, listNum, insertIndex = -1) {
     super();
     this.tierIndex = tierIndex;
     this.item = item;
     this.listNum = listNum;
+    this.insertIndex = insertIndex;
   }
 
   execute(state) {
     const data = this.listNum === 1 ? state.data1 : state.data2;
-    data[this.tierIndex].items.push(this.item);
+    if (this.insertIndex >= 0) {
+      data[this.tierIndex].items.splice(this.insertIndex, 0, this.item);
+    } else {
+      data[this.tierIndex].items.push(this.item);
+    }
     return state;
   }
 
   undo(state) {
     const data = this.listNum === 1 ? state.data1 : state.data2;
-    data[this.tierIndex].items.pop();
+    if (this.insertIndex >= 0) {
+      data[this.tierIndex].items.splice(this.insertIndex, 1);
+    } else {
+      data[this.tierIndex].items.pop();
+    }
     return state;
   }
 }
