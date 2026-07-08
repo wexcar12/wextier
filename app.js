@@ -5,7 +5,7 @@
 
 // Core
 import { eventBus } from './core/event-bus.js';
-import { state } from './core/state.js';
+import { state, MoveItemCommand, AddItemCommand, RemoveItemCommand } from './core/state.js';
 
 // API
 import { initFB } from './api/firebase-init.js';
@@ -34,11 +34,6 @@ import { setupSearch } from './ui/search.js';
 import { loadSettings, setupSettingsEvents, applySize } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 
-// Глобальные переменные (совместимость)
-let editing = false;
-let compare = false;
-let aTT = null;
-let aTL = 1;
 let parallaxOn = false;
 
 // Toast-функция для обратной совместимости
@@ -55,7 +50,6 @@ window.escapeHTML = function (str) {
 
 // Инициализация приложения
 async function init() {
-  // Версионирование localStorage
   const P = 'wt_';
   function sg(k, f) {
     try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
@@ -66,22 +60,19 @@ async function init() {
 
   if (!sg('version_1_1', false)) {
     Object.keys(localStorage).filter(k => k.startsWith(P)).forEach(k => {
-      try { localStorage.removeItem(k); } catch (e) { }
+      try { localStorage.removeItem(k); } catch (e) {}
     });
     ss('version_1_1', true);
   }
 
-  // Инициализация Firebase
   const fbReady = initFB();
 
-  // Загрузка данных
   loadSettings();
   loadDrafts();
   loadAchievements();
   loadNeon();
   loadParallax();
 
-  // Настройка UI
   setupSearch();
   setupPlayer();
   setupDuelButtons();
@@ -89,28 +80,16 @@ async function init() {
   initSortable();
   initParallaxMouse();
 
-  // Авторизация
   if (fbReady) {
     initAuthObserver();
   }
 
-  // Загрузка из URL
   const loaded = await loadFromURL();
-  if (!loaded) {
-    renderAll();
-  } else {
-    renderAll();
-  }
-
+  renderAll();
   renderDraftsSidebar();
 
-  // Биндинг кнопок
   bindEvents();
-
-  // Частицы
   initParticles();
-
-  // Обновление UI
   updateUI();
 }
 
@@ -127,8 +106,7 @@ function bindEvents() {
   const editBtn = document.getElementById('editBtn');
   if (editBtn) {
     editBtn.addEventListener('click', () => {
-      editing = !editing;
-      setEditing(editing);
+      setEditing(!isEditing());
       renderAll();
       updateUI();
     });
@@ -138,7 +116,7 @@ function bindEvents() {
   const undoBtn = document.getElementById('undoBtn');
   if (undoBtn) {
     undoBtn.addEventListener('click', () => {
-      state.undo(compare ? 2 : 1);
+      state.undo(isCompare() ? 2 : 1);
       renderAll();
       updateUndo();
     });
@@ -161,7 +139,7 @@ function bindEvents() {
           { tier: 'B', label: 'B', color: '#ffdf7f', items: [] },
           { tier: 'C', label: 'C', color: '#bfff7f', items: [] }
         ], 2);
-        checkAchievements(editing);
+        eventBus.emit('achievements:check');
         renderAll();
       }
     });
@@ -171,7 +149,7 @@ function bindEvents() {
   const addTierBtn = document.getElementById('addTierBtn');
   if (addTierBtn) {
     addTierBtn.addEventListener('click', () => {
-      if (!editing) return;
+      if (!isEditing()) return;
       const letters = 'EFGHIJKLMNOPQRSTUVWXYZ';
       const exist = state.data1.map(t => t.tier);
       let next = 'E';
@@ -189,9 +167,8 @@ function bindEvents() {
   const compareBtn = document.getElementById('compareBtn');
   if (compareBtn) {
     compareBtn.addEventListener('click', () => {
-      compare = !compare;
-      setCompare(compare);
-      if (compare) {
+      setCompare(!isCompare());
+      if (isCompare()) {
         state.setData(JSON.parse(JSON.stringify(state.data1)), 2);
       }
       renderAll();
@@ -219,9 +196,7 @@ function bindEvents() {
 
   // Поделиться
   const shareBtn = document.getElementById('shareBtn');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', shareTierlist);
-  }
+  if (shareBtn) shareBtn.addEventListener('click', shareTierlist);
 
   // Экспорт
   const pngBtn = document.getElementById('pngBtn');
@@ -259,7 +234,10 @@ function bindEvents() {
   // Параллакс
   const parallaxBtn = document.getElementById('parallaxBtn');
   if (parallaxBtn) {
-    parallaxBtn.addEventListener('click', () => toggleParallax(!parallaxOn));
+    parallaxBtn.addEventListener('click', () => {
+      parallaxOn = !parallaxOn;
+      toggleParallax(parallaxOn);
+    });
   }
 
   // Комментарии
@@ -279,12 +257,14 @@ function bindEvents() {
 
   // Тема
   const themeBtn = document.getElementById('themeBtn');
-  if (themeBtn) themeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('light-theme');
-    const isLight = document.body.classList.contains('light-theme');
-    const P = 'wt_';
-    try { localStorage.setItem(P + 'theme', JSON.stringify(isLight ? 'light' : 'dark')); } catch (e) { }
-  });
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      const isLight = document.body.classList.contains('light-theme');
+      const P = 'wt_';
+      try { localStorage.setItem(P + 'theme', JSON.stringify(isLight ? 'light' : 'dark')); } catch (e) {}
+    });
+  }
 
   // Шаблоны
   const templateSelect = document.getElementById('templateSelect');
@@ -306,9 +286,7 @@ function bindEvents() {
       e.preventDefault();
       if (confirm('Удалить ВСЕ данные?')) {
         clearAllData();
-        editing = false;
         setEditing(false);
-        compare = false;
         setCompare(false);
         parallaxOn = false;
         document.body.classList.remove('light-theme', 'neon-active', 'parallax-active');
@@ -324,7 +302,7 @@ function bindEvents() {
     });
   }
 
-  // Обработчик для кнопок внутри compareWrap (удаление, добавление)
+  // Обработчик для кнопок внутри compareWrap
   document.getElementById('compareWrap')?.addEventListener('click', function (e) {
     const delBtn = e.target.closest('.del-btn');
     if (delBtn) {
@@ -335,9 +313,10 @@ function bindEvents() {
       const listN = parseInt(delBtn.dataset.listNum, 10);
       if (!isNaN(tI) && !isNaN(iI) && !isNaN(listN)) {
         const data = listN === 1 ? state.data1 : state.data2;
-        data[tI].items.splice(iI, 1);
-        state._save();
-        checkAchievements(editing);
+        const item = data[tI].items[iI];
+        const command = new RemoveItemCommand(tI, iI, item, listN);
+        state.executeCommand(command, listN);
+        eventBus.emit('achievements:check');
         renderAll();
       }
       return;
@@ -345,15 +324,13 @@ function bindEvents() {
 
     const addBtn = e.target.closest('.add-btn');
     if (addBtn) {
-      aTT = parseInt(addBtn.dataset.tierIndex, 10);
-      aTL = parseInt(addBtn.dataset.listNum, 10);
-      if (!isNaN(aTT)) {
-        const trackUrl = document.getElementById('trackUrl');
-        const coverUrl = document.getElementById('coverUrl');
-        const coverPreview = document.getElementById('coverPreview');
-        if (trackUrl) trackUrl.value = '';
-        if (coverUrl) coverUrl.value = '';
-        if (coverPreview) coverPreview.style.display = 'none';
+      const tI = parseInt(addBtn.dataset.tierIndex, 10);
+      const lN = parseInt(addBtn.dataset.listNum, 10);
+      if (!isNaN(tI)) {
+        setActiveTier(tI, lN);
+        document.getElementById('trackUrl').value = '';
+        document.getElementById('coverUrl').value = '';
+        document.getElementById('coverPreview').style.display = 'none';
         document.getElementById('addModal')?.classList.add('open');
       }
       return;
@@ -429,11 +406,15 @@ function bindEvents() {
         img = 'data:image/svg+xml,' + encodeURIComponent(svg);
       }
 
-      const data = aTL === 1 ? state.data1 : state.data2;
-      data[aTT].items.push({ img, url, svc });
-      state._save();
+      const activeList = getActiveList();
+      const activeTier = getActiveTier();
+      const newItem = { img, url, svc };
+
+      const command = new AddItemCommand(activeTier, newItem, activeList);
+      state.executeCommand(command, activeList);
+
       document.getElementById('addModal')?.classList.remove('open');
-      checkAchievements(editing);
+      eventBus.emit('achievements:check');
       renderAll();
     });
   }
@@ -455,7 +436,7 @@ function bindEvents() {
   window.addEventListener('keydown', function (e) {
     if (e.ctrlKey && e.key === 'z') {
       e.preventDefault();
-      state.undo(compare ? 2 : 1);
+      state.undo(isCompare() ? 2 : 1);
       renderAll();
       updateUndo();
     }
