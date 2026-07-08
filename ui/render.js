@@ -1,11 +1,10 @@
 /**
  * @module ui/render
- * @description Рендер тир-листов (list1, list2).
- * Всё состояние UI берётся из state.ui.
+ * @description Рендер тир-листов.
  */
 import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
-import { escapeHTML } from '../utils/sanitizers.js'; // ФИКС: Импортируем санитизатор
+import { escapeHTML } from '../utils/sanitizers.js';
 
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
@@ -13,10 +12,9 @@ export function setEditing(val) { state.setUI('editing', val); }
 export function setCompare(val) { state.setUI('compare', val); }
 export function getActiveTier() { return state.ui.activeTier; }
 export function getActiveList() { return state.ui.activeList; }
-export function setActiveTier(t, l) {
-  state.setUI('activeTier', t);
-  state.setUI('activeList', l);
-}
+export function setActiveTier(t, l) { state.setUI('activeTier', t); state.setUI('activeList', l); }
+
+function sg(k, f) { try { const r = localStorage.getItem('wt_' + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
 
 export function renderAll() {
   render(1);
@@ -29,6 +27,9 @@ export function render(listNum) {
   if (!el) return;
 
   const data = listNum === 1 ? state.data1 : state.data2;
+  const currentStyle = sg('style', 'gradient');
+  const currentSize = sg('size', '60');
+  
   el.innerHTML = '';
 
   data.forEach((t, ti) => {
@@ -40,7 +41,6 @@ export function render(listNum) {
     lbl.style.backgroundColor = t.color || '#ff7f7f';
     lbl.title = 'Двойной клик — переименовать';
     
-    // ФИКС: Выводим счетчик элементов прямо в лейбле
     lbl.innerHTML = `
       <span>${escapeHTML(t.label)}</span>
       <div class="tier-count">${t.items.length}</div>
@@ -59,7 +59,7 @@ export function render(listNum) {
       ni.maxLength = 8;
       ni.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:55%;background:transparent;border:1px solid rgba(0,0,0,0.3);text-align:center;font-weight:900;font-size:1.1rem;color:#111;outline:none;';
 
-      lbl.innerHTML = ''; // Очищаем содержимое перед вставкой инпутов
+      lbl.innerHTML = '';
       lbl.style.position = 'relative';
       lbl.appendChild(ci);
       lbl.appendChild(ni);
@@ -85,7 +85,7 @@ export function render(listNum) {
 
     t.items.forEach((item, ii) => {
       const div = document.createElement('div');
-      div.className = 'item';
+      div.className = `item style-${currentStyle}`; // ФИКС 7: Стиль карточки
       div.dataset.svc = item.svc;
 
       const a = document.createElement('a');
@@ -106,8 +106,11 @@ export function render(listNum) {
       const img = document.createElement('img');
       img.src = item.img || pImg(item.svc);
       img.alt = '';
+      img.style.width = currentSize + 'px'; // Восстанавливаем размер
+      img.style.height = currentSize + 'px';
       img.onerror = function() { this.src = pImg(item.svc); };
       img.addEventListener('dragstart', e => e.preventDefault());
+      
       a.appendChild(img);
       div.appendChild(a);
 
@@ -125,6 +128,7 @@ export function render(listNum) {
     const addBtn = document.createElement('button');
     addBtn.className = 'add-btn';
     addBtn.innerHTML = '<i data-lucide="plus"></i>';
+    addBtn.title = "Добавить элемент";
     addBtn.dataset.tierIndex = ti;
     addBtn.dataset.listNum = listNum;
     itemsDiv.appendChild(addBtn);
