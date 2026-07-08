@@ -75,8 +75,24 @@ class StateManager {
 
     this.data1 = this._defaultData();
     this.data2 = this._defaultData();
+
+    // ДОБАВЛЕНО: Единый источник истины для UI
+    this.ui = {
+      editing: false,
+      compare: false,
+      activeTier: null,
+      activeList: 1
+    };
   }
 
+  // ДОБАВЛЕНО: Метод для безопасного изменения UI
+  setUI(key, value) {
+    this.ui[key] = value;
+    eventBus.emit('ui:state:changed', { key, value, state: this.ui });
+  }
+
+  _defaultData() {
+// ... дальше идет твой старый код _defaultData() и остальное
   _defaultData() {
     return [
       { tier: 'S', label: 'S', color: '#ff7f7f', items: [] },
