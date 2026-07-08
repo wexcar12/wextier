@@ -34,18 +34,13 @@ import { setupSearch } from './ui/search.js';
 import { loadSettings, setupSettingsEvents, applySize } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 
-let parallaxOn = false;
+// Utils
+import { escapeHTML } from './utils/sanitizers.js';
+window.escapeHTML = escapeHTML;
 
 // Toast-функция для обратной совместимости
 window.toast = function (text) {
   eventBus.emit('toast:show', { text, type: 'info' });
-};
-
-// Escape HTML
-window.escapeHTML = function (str) {
-  return str.replace(/[&<>'"]/g, tag => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-  }[tag] || tag));
 };
 
 // Инициализация приложения
@@ -235,8 +230,8 @@ function bindEvents() {
   const parallaxBtn = document.getElementById('parallaxBtn');
   if (parallaxBtn) {
     parallaxBtn.addEventListener('click', () => {
-      parallaxOn = !parallaxOn;
-      toggleParallax(parallaxOn);
+      const isActive = document.body.classList.contains('parallax-active');
+      toggleParallax(!isActive);
     });
   }
 
@@ -288,7 +283,6 @@ function bindEvents() {
         clearAllData();
         setEditing(false);
         setCompare(false);
-        parallaxOn = false;
         document.body.classList.remove('light-theme', 'neon-active', 'parallax-active');
         if (window._neonRI) { clearInterval(window._neonRI); window._neonRI = null; }
         const wrapper = document.getElementById('parallaxWrapper');
@@ -296,6 +290,9 @@ function bindEvents() {
         const duelBar = document.getElementById('duelVoteBar');
         if (duelBar) duelBar.classList.remove('show');
         document.documentElement.style.setProperty('--bg-img', 'url(\'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg\')');
+        const bgSelect = document.getElementById('bgSelect');
+        if (bgSelect) bgSelect.value = '0';
+        toggleParallax(false);
         renderAll();
         updateUI();
       }
