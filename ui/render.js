@@ -168,5 +168,5 @@ export function updateUI() {
 
 export function updateUndo() {
   const undoBtn = document.getElementById('undoBtn');
-  if (undoBtn) undoBtn.disabled = !state.canUndo(compare ? 2 : 1);
+ if (undoBtn) undoBtn.disabled = !state.canUndo(isCompare() ? 2 : 1);
 }
