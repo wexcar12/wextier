@@ -5,23 +5,21 @@
 import { state, MoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
 
-let editing = false;
-let compare = false;
-let aTT = null; // active target tier
-let aTL = 1;    // active target list
+// УБИТЫ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ! 
+// Теперь всё берется из единого хранилища state.ui
 
-export function isEditing() { return editing; }
-export function isCompare() { return compare; }
-export function setEditing(val) { editing = val; }
-export function setCompare(val) { compare = val; }
-export function getActiveTier() { return aTT; }
-export function getActiveList() { return aTL; }
-export function setActiveTier(t, l) { aTT = t; aTL = l; }
+export function isEditing() { return state.ui.editing; }
+export function isCompare() { return state.ui.compare; }
+export function setEditing(val) { state.setUI('editing', val); }
+export function setCompare(val) { state.setUI('compare', val); }
+export function getActiveTier() { return state.ui.activeTier; }
+export function getActiveList() { return state.ui.activeList; }
+export function setActiveTier(t, l) { state.setUI('activeTier', t); state.setUI('activeList', l); }
 
 export function renderAll() {
   render(1);
-  if (compare) render(2);
-  eventBus.emit('render:after', { listNum: compare ? 2 : 1 });
+  if (isCompare()) render(2); // Используем функцию вместо переменной
+  eventBus.emit('render:after', { listNum: isCompare() ? 2 : 1 });
 }
 
 export function render(listNum) {
