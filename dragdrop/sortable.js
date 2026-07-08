@@ -20,7 +20,7 @@ function handleSortableMove(evt) {
       const listNum = parseInt(evt.to.dataset.listNum, 10) || 1;
       const newItem = { img: item.img, url: item.url, svc: item.svc, title: item.title };
       
-      // ИСПРАВЛЕНО: Используем команду вместо прямой мутации
+      // ФИКС: Используем AddItemCommand с указанием индекса (evt.newIndex)
       const command = new AddItemCommand(toTier, newItem, listNum, evt.newIndex);
       state.executeCommand(command, listNum);
     } else {
@@ -38,8 +38,10 @@ function handleSortableMove(evt) {
     const fromList = parseInt(evt.from.dataset.listNum, 10) || 1;
     const data = fromList === 1 ? state.data1 : state.data2;
     const item = data[fromTier].items[evt.oldIndex];
+    
     const command = new RemoveItemCommand(fromTier, evt.oldIndex, item, fromList);
     state.executeCommand(command, fromList);
+    
     currentPoolItems.splice(evt.newIndex, 0, { img: item.img, url: item.url, svc: item.svc, title: item.title || '' });
     eventBus.emit('achievements:check');
     renderAll();
