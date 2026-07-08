@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WEX-TIER — Создай свой музыкальный тир-лист</title>
+    <title>WEX-TIER — Создай свой тир-лист</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,21 @@
     <button class="burger-btn" id="burgerBtn"><i data-lucide="menu"></i></button>
 
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">WEX-TIER</div>
+        <div class="sidebar-header">
+            <div class="sidebar-logo">WEX-TIER</div>
+            <button id="toggleSidebarBtn" class="sidebar-toggle-btn"><i data-lucide="chevron-left"></i></button>
+        </div>
+        
+        <div id="authSection" style="padding: 10px 4px; border-bottom: 1px solid var(--input-border); margin-bottom: 10px;">
+            <button id="loginBtn" class="sidebar-btn primary" style="width: 100%; padding: 10px;"><i data-lucide="log-in"></i> <span>Войти через Google</span></button>
+            <div id="userProfile" style="display: none; align-items: center; gap: 12px;">
+                <img id="userAvatar" src="" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold);">
+                <div style="flex: 1; min-width: 0;">
+                    <div id="userName" style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Геймер</div>
+                    <span id="logoutLink" style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline;">Выйти</span>
+                </div>
+            </div>
+        </div>
         
         <div class="sidebar-section">Действия</div>
         <button class="sidebar-btn" id="editBtn"><i data-lucide="edit-3"></i> Редактировать</button>
@@ -53,6 +67,14 @@
         <button class="sidebar-btn" id="importBtn"><i data-lucide="folder-open"></i> Импорт JSON</button>
         <input type="file" id="importFile" accept=".json" style="display:none;">
         
+        <div class="sidebar-section">Тематика</div>
+        <select id="templateSelect" class="sidebar-select">
+            <option value="music">🎵 Музыкальные треки</option>
+            <option value="movies">🎬 Фильмы и Сериалы</option>
+            <option value="games">🎮 Компьютерные Игры</option>
+            <option value="actors">🎭 Популярные Актеры</option>
+        </select>
+        
         <div class="sidebar-section">Оформление</div>
         <select id="styleSelect" class="sidebar-select"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
         <select id="sizeSelect" class="sidebar-select"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
@@ -78,6 +100,10 @@
         <div class="compare-wrap" id="compareWrap">
             <div class="column" id="col1"><div class="column-title">Тир-лист 1</div><div id="list1"></div></div>
             <div class="column" id="col2" style="display:none;"><div class="column-title">Тир-лист 2</div><div id="list2"></div></div>
+        </div>
+        <div id="templatePoolContainer" class="top-bar" style="margin-top: 30px; max-width: 1200px; display: none; flex-direction: column; gap: 12px; width: 100%;">
+            <div style="font-size: 0.9rem; color: var(--gold); font-weight: 600;">📦 Доступные элементы шаблона (перетащите в нужный тир):</div>
+            <div id="templatePool" class="tier-items" style="min-height: 80px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--input-border);"></div>
         </div>
     </main>
 
