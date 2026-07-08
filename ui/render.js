@@ -5,6 +5,7 @@
  */
 import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
+import { escapeHTML } from '../utils/sanitizers.js';
 
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
@@ -37,7 +38,12 @@ export function render(listNum) {
     const lbl = document.createElement('div');
     lbl.className = 'tier-label';
     lbl.style.backgroundColor = t.color || '#ff7f7f';
-    lbl.textContent = t.label;
+    
+    // СЧЁТЧИК ЭЛЕМЕНТОВ В ТИРЕ
+    lbl.innerHTML = `
+      <span>${escapeHTML(t.label)}</span>
+      <div class="tier-count">${t.items.length}</div>
+    `;
     lbl.title = 'Двойной клик — переименовать';
 
     lbl.ondblclick = () => {
