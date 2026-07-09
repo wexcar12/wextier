@@ -23,6 +23,7 @@ import { shareTierlist, loadFromURL } from './ui/share.js';
 import { setupSearch } from './ui/search.js';
 import { loadSettings, toggleTheme, toggleSidebar } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
+import { setupPlayer } from './ui/player.js';
 
 window.escapeHTML = escapeHTML;
 
