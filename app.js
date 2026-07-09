@@ -1,15 +1,13 @@
 /**
  * @module app
- * @description Точка входа WEX-TIER. Enterprise Level Initialization.
+ * @description Инициализация WEX-TIER (Enterprise Version)
  */
 
 import { eventBus } from './core/event-bus.js';
-import { state, AddItemCommand, RemoveItemCommand } from './core/state.js';
+import { state, AddItemCommand } from './core/state.js';
 import { escapeHTML } from './utils/sanitizers.js';
-
 import { initFB } from './api/firebase-init.js';
 import { initAuthObserver, loginWithGoogle, logout } from './api/auth.js';
-
 import { renderAll, isEditing, setEditing, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, updateUndo } from './ui/render.js';
 import { openGallery, openTop, openUserDashboard } from './ui/gallery.js';
 import { openDuel, setupDuelButtons } from './ui/duel.js';
@@ -17,7 +15,6 @@ import { openCommentsModal } from './ui/comments.js';
 import { loadAchievements, checkAchievements, openAchievementsModal } from './ui/achievements.js';
 import { loadNeon, openNeonModal } from './ui/neon.js';
 import { loadParallax, toggleParallax, initParallaxMouse } from './ui/parallax.js';
-import { setupPlayer } from './ui/player.js';
 import { updatePoolItems, renderTemplatePool } from './ui/templates.js';
 import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from './ui/drafts.js';
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
@@ -29,240 +26,72 @@ import { initSortable } from './dragdrop/sortable.js';
 window.escapeHTML = escapeHTML;
 
 async function init() {
-  const P = 'wt_';
-  function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
-  function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
+    initFB();
+    loadSettings();
+    loadDrafts();
+    loadAchievements();
+    loadNeon();
+    loadParallax();
+    setupSearch();
+    setupDuelButtons();
+    initSortable();
+    initParallaxMouse();
+    initAuthObserver();
 
-  if (!sg('version_1_4', false)) {
-    Object.keys(localStorage).filter(k => k.startsWith(P)).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-    ss('version_1_4', true);
-  }
-
-  const fbReady = initFB();
-
-  loadSettings();
-  loadDrafts();
-  loadAchievements();
-  loadNeon();
-  loadParallax();
-
-  setupSearch();
-  setupPlayer();
-  setupDuelButtons();
-  initSortable();
-  initParallaxMouse();
-
-  if (fbReady) initAuthObserver();
-
-  await loadFromURL();
-  renderAll();
-  renderDraftsSidebar();
-
-  bindEvents();
-  updateUI();
+    await loadFromURL();
+    renderAll();
+    renderDraftsSidebar();
+    bindEvents();
+    updateUI();
 }
 
 function bindEvents() {
-  document.getElementById('toggleSidebarBtn')?.addEventListener('click', toggleSidebar);
-  document.getElementById('burgerBtn')?.addEventListener('click', () => { document.getElementById('sidebar')?.classList.toggle('open'); });
-
-  // --- ИНСТРУМЕНТЫ ---
-  document.getElementById('themeBtn')?.addEventListener('click', toggleTheme);
-  document.getElementById('neonBtn')?.addEventListener('click', openNeonModal);
-  
-  // ФИКС 2: Параллакс
-  let isParallax = localStorage.getItem('wt_parallax') === 'true';
-  document.getElementById('parallaxBtn')?.addEventListener('click', () => {
-    isParallax = !isParallax;
-    toggleParallax(isParallax);
-  });
-
-  // --- ОФОРМЛЕНИЕ (ФИКС 7: Рабочие стили, размеры, фон) ---
-  document.getElementById('styleSelect')?.addEventListener('change', function() {
-    localStorage.setItem('wt_style', JSON.stringify(this.value));
-    document.querySelectorAll('.item').forEach(el => {
-      el.classList.remove('style-gradient', 'style-shadow', 'style-border', 'style-circle');
-      el.classList.add('style-' + this.value);
-    });
-  });
-
-  document.getElementById('sizeSelect')?.addEventListener('change', function() {
-    localStorage.setItem('wt_size', JSON.stringify(this.value));
-    const size = this.value;
-    document.querySelectorAll('.item img').forEach(img => {
-      img.style.width = size + 'px';
-      img.style.height = size + 'px';
-    });
-    const addBtn = document.getElementById('addCustomPoolItemBtn');
-    if(addBtn) { addBtn.style.width = size + 'px'; addBtn.style.height = size + 'px'; }
-  });
-
-  document.getElementById('bgSelect')?.addEventListener('change', function() {
-    const B = [
-      'https://i.pinimg.com/736x/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
-      'https://i.pinimg.com/originals/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
-      'https://i.pinimg.com/originals/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
-      'https://i.pinimg.com/originals/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
-      'https://i.pinimg.com/originals/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
-      'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/'
-    ];
-    document.documentElement.style.setProperty('--bg-img', `url('${B[this.value]}')`);
-    localStorage.setItem('wt_bg', JSON.stringify(this.value));
-  });
-
-  // --- ДЕЙСТВИЯ ---
-  document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
-  document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? 2 : 1); renderAll(); updateUndo(); });
-
-  document.getElementById('galleryBtn')?.addEventListener('click', openGallery);
-  document.getElementById('topBtn')?.addEventListener('click', openTop);
-  document.getElementById('duelBtn')?.addEventListener('click', openDuel);
-  document.getElementById('achievementsBtn')?.addEventListener('click', openAchievementsModal);
-  document.getElementById('commentsBtn')?.addEventListener('click', openCommentsModal);
-  
-  document.getElementById('shareBtn')?.addEventListener('click', shareTierlist);
-  document.getElementById('pngBtn')?.addEventListener('click', exportPNG);
-  document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
-  document.getElementById('importBtn')?.addEventListener('click', () => document.getElementById('importFile')?.click());
-  document.getElementById('importFile')?.addEventListener('change', function () { if (this.files[0]) importJSON(this.files[0]); this.value = ''; });
-
-  document.getElementById('loginBtn')?.addEventListener('click', loginWithGoogle);
-  document.getElementById('logoutLink')?.addEventListener('click', logout);
-  document.getElementById('profileDashboardBtn')?.addEventListener('click', openUserDashboard);
-
-  document.getElementById('compareBtn')?.addEventListener('click', () => {
-    setCompare(!isCompare());
-    if (isCompare()) state.setData(JSON.parse(JSON.stringify(state.data1)), 2);
-    renderAll();
-    updateUI();
-  });
-
-  document.getElementById('resetBtn')?.addEventListener('click', () => {
-    if (confirm('Сбросить всё?')) {
-      const emptyData = [
-        { tier: 'S', label: 'S', color: '#ff7f7f', items: [] },
-        { tier: 'A', label: 'A', color: '#ffbf7f', items: [] },
-        { tier: 'B', label: 'B', color: '#ffdf7f', items: [] },
-        { tier: 'C', label: 'C', color: '#bfff7f', items: [] }
-      ];
-      state.setData(emptyData, 1);
-      state.setData(emptyData, 2);
-      checkAchievements(isEditing());
-      renderAll();
-    }
-  });
-
-  document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); });
-
-  document.getElementById('compareWrap')?.addEventListener('click', function (e) {
-    const delBtn = e.target.closest('.del-btn');
-    if (delBtn) {
-      e.stopPropagation(); e.preventDefault();
-      const tI = parseInt(delBtn.dataset.tierIndex, 10);
-      const iI = parseInt(delBtn.dataset.itemIndex, 10);
-      const listN = parseInt(delBtn.dataset.listNum, 10);
-      if (!isNaN(tI) && !isNaN(iI) && !isNaN(listN)) {
-        const data = listN === 1 ? state.data1 : state.data2;
-        const itemToRemove = data[tI].items[iI];
-        const command = new RemoveItemCommand(tI, iI, itemToRemove, listN);
-        state.executeCommand(command, listN);
-        checkAchievements(isEditing());
+    // UI Кнопки
+    document.getElementById('toggleSidebarBtn')?.addEventListener('click', toggleSidebar);
+    document.getElementById('burgerBtn')?.addEventListener('click', () => document.getElementById('sidebar')?.classList.toggle('open'));
+    document.getElementById('themeBtn')?.addEventListener('click', toggleTheme);
+    document.getElementById('neonBtn')?.addEventListener('click', openNeonModal);
+    document.getElementById('parallaxBtn')?.addEventListener('click', () => toggleParallax(true));
+    
+    document.getElementById('editBtn')?.addEventListener('click', () => {
+        setEditing(!isEditing());
         renderAll();
-      }
-      return;
-    }
+        updateUI();
+    });
 
-    const addBtn = e.target.closest('.add-btn');
-    if (addBtn) {
-      const tI = parseInt(addBtn.dataset.tierIndex, 10);
-      const lN = parseInt(addBtn.dataset.listNum, 10);
-      if (!isNaN(tI)) {
-        setActiveTier(tI, lN);
-        document.getElementById('trackUrl').value = '';
-        document.getElementById('coverUrl').value = '';
-        const coverPreview = document.getElementById('coverPreview');
-        if(coverPreview) coverPreview.style.display = 'none';
-        document.getElementById('addModal')?.classList.add('open');
-      }
-      return;
-    }
-  });
+    document.getElementById('undoBtn')?.addEventListener('click', () => {
+        state.undo(isCompare() ? 2 : 1);
+        renderAll();
+        updateUndo();
+    });
 
-  // ФИКС 1: Авто-поиск обложки
-  document.getElementById('fetchCoverBtn')?.addEventListener('click', async () => {
-    const url = document.getElementById('trackUrl')?.value.trim();
-    if (!url) { eventBus.emit('toast:show', { text: 'Сначала вставьте ссылку', type: 'info' }); return; }
-    
-    const btn = document.getElementById('fetchCoverBtn');
-    btn.textContent = '...'; btn.disabled = true;
-    
-    let cover = null;
-    const ytM = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
-    if (ytM) cover = 'https://img.youtube.com/vi/' + ytM[1] + '/mqdefault.jpg';
-    
-    if (cover) {
-      document.getElementById('coverUrl').value = cover;
-      const preview = document.getElementById('coverPreview');
-      if(preview) { preview.src = cover; preview.style.display = 'block'; }
-    } else {
-      eventBus.emit('toast:show', { text: 'Не удалось найти. Вставьте ссылку на картинку вручную.', type: 'error' });
-    }
-    btn.textContent = 'Авто-поиск обложки'; btn.disabled = false;
-  });
+    // Обработка кликов внутри тиров (Делегирование)
+    document.getElementById('compareWrap')?.addEventListener('click', function(e) {
+        const addBtn = e.target.closest('.add-btn');
+        if (addBtn) {
+            setActiveTier(parseInt(addBtn.dataset.tierIndex), parseInt(addBtn.dataset.listNum));
+            document.getElementById('addModal').classList.add('open');
+        }
+    });
 
-  document.getElementById('coverUrl')?.addEventListener('input', function() {
-    const preview = document.getElementById('coverPreview');
-    if (preview) {
-        if(this.value.trim()) { preview.src = this.value.trim(); preview.style.display = 'block'; } 
-        else { preview.style.display = 'none'; }
-    }
-  });
+    // Модалка добавления
+    document.getElementById('okAdd')?.addEventListener('click', () => {
+        const url = escapeHTML(document.getElementById('trackUrl').value);
+        const img = escapeHTML(document.getElementById('coverUrl').value) || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+        const svc = document.getElementById('svc').value;
+        
+        // Правильная мутация через Command
+        const cmd = new AddItemCommand(getActiveTier(), { img, url, svc }, getActiveList());
+        state.executeCommand(cmd, getActiveList());
+        
+        document.getElementById('addModal').classList.remove('open');
+        renderAll();
+    });
 
-  document.getElementById('cancelAdd')?.addEventListener('click', () => { document.getElementById('addModal')?.classList.remove('open'); });
-
-  document.getElementById('okAdd')?.addEventListener('click', () => {
-    const svc = document.getElementById('svc')?.value || 'youtube';
-    const url = escapeHTML(document.getElementById('trackUrl')?.value.trim());
-    let img = escapeHTML(document.getElementById('coverUrl')?.value.trim());
-
-    if (!url) { eventBus.emit('toast:show', { text: 'Вставьте ссылку!', type: 'error' }); return; }
-
-    if (!img) {
-      const c = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00' };
-      const ic = { youtube: '▶', spotify: '●', apple: '♫', yandex: '♪' };
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="${c[svc] || '#555'}" width="64" height="64" rx="8"/><text fill="white" x="32" y="36" text-anchor="middle" font-size="20">${ic[svc] || '?'}</text></svg>`;
-      img = 'data:image/svg+xml,' + encodeURIComponent(svg);
-    }
-
-    const activeList = getActiveList();
-    const activeTier = getActiveTier();
-    const command = new AddItemCommand(activeTier, { img, url, svc }, activeList);
-    state.executeCommand(command, activeList);
-
-    document.getElementById('addModal')?.classList.remove('open');
-    checkAchievements(isEditing());
-    renderAll();
-  });
-
-  window.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); document.getElementById('undoBtn')?.click(); }
-  });
+    // Ctrl+Z
+    window.addEventListener('keydown', e => {
+        if(e.ctrlKey && e.key === 'z') { e.preventDefault(); state.undo(isCompare() ? 2 : 1); renderAll(); }
+    });
 }
 
-eventBus.on('auth:changed', (user) => {
-  if (user) {
-    document.getElementById('loginBtn').style.display = 'none';
-    document.getElementById('userProfile').style.display = 'flex';
-    document.getElementById('userAvatar').src = user.photo || '';
-    document.getElementById('userName').textContent = user.name || 'Пользователь';
-    document.getElementById('profileDashboardBtn').style.display = 'flex';
-  } else {
-    document.getElementById('loginBtn').style.display = 'flex';
-    document.getElementById('userProfile').style.display = 'none';
-    document.getElementById('profileDashboardBtn').style.display = 'none';
-  }
-  lucide.createIcons();
-});
-
-eventBus.on('state:changed', updateUndo);
 document.addEventListener('DOMContentLoaded', init);
