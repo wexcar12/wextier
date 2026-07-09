@@ -164,9 +164,11 @@ function openCustomItemModal(type) {
   content.querySelector('#custom-cancel').onclick = close;
   content.querySelector('#custom-add').onclick = () => {
     const title = window.escapeHTML(content.querySelector('#custom-title').value.trim());
-    const url = window.escapeHTML(content.querySelector('#custom-url').value.trim() || '#');
+    
+    // ФИКС: Убрано экранирование (window.escapeHTML) для URL и IMG, чтобы ссылки не ломались
+    const url = content.querySelector('#custom-url').value.trim() || '#';
     const svcType = type === 'games' ? 'steam' : 'imdb';
-    const img = window.escapeHTML(imgInput.value.trim()) || pImg(svcType);
+    const img = imgInput.value.trim() || pImg(svcType);
 
     if (!title) { eventBus.emit('toast:show', { text: 'Введите название!', type: 'error' }); return; }
 
@@ -204,10 +206,15 @@ export function renderTemplatePool() {
         </a></div>`;
     }).join('');
 
-    pool.innerHTML = itemsHTML + `<button id="addCustomPoolItemBtn" style="width:${sVal}px;height:${sVal}px;border:2px dashed var(--input-border);border-radius:12px;background:var(--input-bg);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:0.2s;"><i data-lucide="plus"></i></button>`;
+    // Обновлен дизайн кнопки "+" для соответствия современному стилю
+    pool.innerHTML = itemsHTML + `<button id="addCustomPoolItemBtn" style="width:${sVal}px;height:${sVal}px;background:rgba(255,255,255,0.02);border:2px dashed rgba(255,255,255,0.15);border-radius:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);"><i data-lucide="plus"></i></button>`;
 
     const addBtn = document.getElementById('addCustomPoolItemBtn');
-    if (addBtn) addBtn.onclick = () => openCustomItemModal(type);
+    if (addBtn) {
+        addBtn.onclick = () => openCustomItemModal(type);
+        addBtn.onmouseover = () => { addBtn.style.borderColor = 'var(--gold)'; addBtn.style.color = 'var(--gold)'; };
+        addBtn.onmouseout = () => { addBtn.style.borderColor = 'rgba(255,255,255,0.15)'; addBtn.style.color = 'var(--text-secondary)'; };
+    }
     lucide.createIcons();
   }
 }
