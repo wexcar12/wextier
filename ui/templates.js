@@ -11,99 +11,68 @@ const P = 'wt_';
 function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
 function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
 
-// ФИКС 6: Огромная база элементов
 const TEMPLATES = {
   music: [],
   movies: [
-    { title: "Интерстеллар", img: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MvrIdxg1.jpg", svc: "imdb" },
-    { title: "Начало", img: "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg", svc: "imdb" },
-    { title: "Темный Рыцарь", img: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg", svc: "imdb" },
-    { title: "Матрица", img: "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg", svc: "imdb" },
-    { title: "Бойцовский клуб", img: "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", svc: "imdb" },
-    { title: "Криминальное чтиво", img: "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg", svc: "imdb" },
-    { title: "Властелин Колец: Возвращение Короля", img: "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg", svc: "imdb" },
-    { title: "Форрест Гамп", img: "https://image.tmdb.org/t/p/w500/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg", svc: "imdb" },
-    { title: "Побег из Шоушенка", img: "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", svc: "imdb" },
-    { title: "Зеленая миля", img: "https://image.tmdb.org/t/p/w500/8VG8fDNiy50H4FedGwdSVUPoaJe.jpg", svc: "imdb" },
-    { title: "Гладиатор", img: "https://image.tmdb.org/t/p/w500/ty8TGRWGIl0QQzYQAHD00aAmskO.jpg", svc: "imdb" },
-    { title: "Титаник", img: "https://image.tmdb.org/t/p/w500/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg", svc: "imdb" },
-    { title: "Аватар", img: "https://image.tmdb.org/t/p/w500/jRXYjXNq0Cs2TcJjLkki24MLp7u.jpg", svc: "imdb" },
-    { title: "Мстители: Финал", img: "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg", svc: "imdb" },
-    { title: "Джокер", img: "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", svc: "imdb" },
-    { title: "Звездные войны: Империя наносит ответный удар", img: "https://image.tmdb.org/t/p/w500/7BuH8itoSrLExs2GIrFNRoPhtM7.jpg", svc: "imdb" },
-    { title: "Назад в будущее", img: "https://image.tmdb.org/t/p/w500/fNOH9f1aA7XRTzl1sA84clyzjI.jpg", svc: "imdb" },
-    { title: "Гарри Поттер и Философский камень", img: "https://image.tmdb.org/t/p/w500/wuMc08IPKEb01yOVe28B7U3j9bF.jpg", svc: "imdb" },
-    { title: "Парк Юрского периода", img: "https://image.tmdb.org/t/p/w500/b1xJwUwvrO0T4X4a4hQ0Xj4yWqM.jpg", svc: "imdb" },
-    { title: "Терминатор 2: Судный день", img: "https://image.tmdb.org/t/p/w500/weHEh8lV6UfOQ7jV5sO0H3O7sNn.jpg", svc: "imdb" },
-    { title: "Чужой", img: "https://image.tmdb.org/t/p/w500/vfrQk5IPloGg1v4Rzk1KIl0M0rR.jpg", svc: "imdb" },
-    { title: "Джанго освобожденный", img: "https://image.tmdb.org/t/p/w500/7aLzQpE0eZ3BXXT5mG1W0zM9zVp.jpg", svc: "imdb" },
-    { title: "Бесславные ублюдки", img: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg", svc: "imdb" }, // Reusing DK image just for example if needed, better unique:
-    { title: "Волк с Уолл-стрит", img: "https://image.tmdb.org/t/p/w500/sKcrF1aTc1B0qR4T0Z1bQ7XQ7Vn.jpg", svc: "imdb" },
-    { title: "Бегущий по лезвию 2049", img: "https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg", svc: "imdb" },
-    { title: "Человек-паук: Через вселенные", img: "https://image.tmdb.org/t/p/w500/iiZZdoQBEYBv6id8su7ImL0oCbD.jpg", svc: "imdb" },
-    { title: "Дюна", img: "https://image.tmdb.org/t/p/w500/p6k13YtNInQYgQO1uR9ZEXsVfH6.jpg", svc: "imdb" },
-    { title: "Остров проклятых", img: "https://image.tmdb.org/t/p/w500/p402qN55Hn1Kq28K5T6rO9H5kY5.jpg", svc: "imdb" },
-    { title: "Поймай меня, если сможешь", img: "https://image.tmdb.org/t/p/w500/70Q66tZ57H1X6w7Z5sX8mY8qO5h.jpg", svc: "imdb" },
-    { title: "Семь", img: "https://image.tmdb.org/t/p/w500/6908ZJ6A9y5L3V2n5K8a4GZz1Q3.jpg", svc: "imdb" },
-    // You can add more here...
+    { title: "Интерстеллар", img: "https://upload.wikimedia.org/wikipedia/ru/3/3a/Interstellar_2014.jpg", link: "https://www.imdb.com/title/tt0816692/", svc: "imdb" },
+    { title: "Начало", img: "https://upload.wikimedia.org/wikipedia/ru/b/bc/Inception_poster.jpg", link: "https://www.imdb.com/title/tt1375666/", svc: "imdb" },
+    { title: "Темный Рыцарь", img: "https://upload.wikimedia.org/wikipedia/ru/e/e3/The_Dark_Knight_2008.jpg", link: "https://www.imdb.com/title/tt0468569/", svc: "imdb" },
+    { title: "Матрица", img: "https://upload.wikimedia.org/wikipedia/ru/5/52/The_Matrix_-_poster.jpg", link: "https://www.imdb.com/title/tt0133093/", svc: "imdb" },
+    { title: "Бойцовский клуб", img: "https://upload.wikimedia.org/wikipedia/ru/5/51/Fight_Club.jpg", link: "https://www.imdb.com/title/tt0137523/", svc: "imdb" },
+    { title: "Криминальное чтиво", img: "https://upload.wikimedia.org/wikipedia/ru/0/0a/Pulp_Fiction_1994.jpg", link: "https://www.imdb.com/title/tt0110912/", svc: "imdb" },
+    { title: "Властелин Колец", img: "https://upload.wikimedia.org/wikipedia/ru/0/0a/The_Lord_of_the_Rings_-_The_Return_of_the_King.jpg", link: "https://www.imdb.com/title/tt0167260/", svc: "imdb" },
+    { title: "Форрест Гамп", img: "https://upload.wikimedia.org/wikipedia/ru/6/62/Forrest_Gump.jpg", link: "https://www.imdb.com/title/tt0109830/", svc: "imdb" },
+    { title: "Побег из Шоушенка", img: "https://upload.wikimedia.org/wikipedia/ru/d/de/The_Shawshank_Redemption.jpg", link: "https://www.imdb.com/title/tt0111161/", svc: "imdb" },
+    { title: "Зеленая миля", img: "https://upload.wikimedia.org/wikipedia/ru/3/3b/The_Green_Mile.jpg", link: "https://www.imdb.com/title/tt0120689/", svc: "imdb" },
+    { title: "Гладиатор", img: "https://upload.wikimedia.org/wikipedia/ru/8/8d/Gladiator_2000.jpg", link: "https://www.imdb.com/title/tt0172495/", svc: "imdb" },
+    { title: "Титаник", img: "https://upload.wikimedia.org/wikipedia/ru/2/22/Titanic_poster.jpg", link: "https://www.imdb.com/title/tt0120338/", svc: "imdb" },
+    { title: "Аватар", img: "https://upload.wikimedia.org/wikipedia/ru/1/1f/Avatar_2009.jpg", link: "https://www.imdb.com/title/tt0499549/", svc: "imdb" },
+    { title: "Мстители: Финал", img: "https://upload.wikimedia.org/wikipedia/ru/4/4d/Avengers_Endgame.jpg", link: "https://www.imdb.com/title/tt4154796/", svc: "imdb" },
+    { title: "Джокер", img: "https://upload.wikimedia.org/wikipedia/ru/6/6e/Joker_2019.jpg", link: "https://www.imdb.com/title/tt7286456/", svc: "imdb" },
+    { title: "Назад в будущее", img: "https://upload.wikimedia.org/wikipedia/ru/9/9d/Back_to_the_Future.jpg", link: "https://www.imdb.com/title/tt0088763/", svc: "imdb" },
+    { title: "Парк Юрского периода", img: "https://upload.wikimedia.org/wikipedia/ru/e/e7/Jurassic_Park.jpg", link: "https://www.imdb.com/title/tt0107290/", svc: "imdb" },
+    { title: "Джанго освобожденный", img: "https://upload.wikimedia.org/wikipedia/ru/8/8b/Django_Unchained.jpg", link: "https://www.imdb.com/title/tt1853728/", svc: "imdb" },
+    { title: "Волк с Уолл-стрит", img: "https://upload.wikimedia.org/wikipedia/ru/1/1f/The_Wolf_of_Wall_Street.jpg", link: "https://www.imdb.com/title/tt0993846/", svc: "imdb" },
+    { title: "Дюна", img: "https://upload.wikimedia.org/wikipedia/ru/8/8e/Dune_2021.jpg", link: "https://www.imdb.com/title/tt1160419/", svc: "imdb" },
+    { title: "Остров проклятых", img: "https://upload.wikimedia.org/wikipedia/ru/4/46/Shutter_Island.jpg", link: "https://www.imdb.com/title/tt1130884/", svc: "imdb" },
   ],
   games: [
-    { title: "The Witcher 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/capsule_184x69.jpg", svc: "steam" },
-    { title: "Cyberpunk 2077", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/capsule_184x69.jpg", svc: "steam" },
-    { title: "Elden Ring", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_184x69.jpg", svc: "steam" },
-    { title: "GTA V", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/capsule_184x69.jpg", svc: "steam" },
-    { title: "RDR 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/capsule_184x69.jpg", svc: "steam" },
-    { title: "CS:GO", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_184x69.jpg", svc: "steam" },
-    { title: "Dota 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_184x69.jpg", svc: "steam" },
-    { title: "Baldur's Gate 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1086940/capsule_184x69.jpg", svc: "steam" },
-    { title: "Skyrim", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/489830/capsule_184x69.jpg", svc: "steam" },
-    { title: "Hollow Knight", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/capsule_184x69.jpg", svc: "steam" },
-    { title: "Hades", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/capsule_184x69.jpg", svc: "steam" },
-    { title: "Terraria", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/105600/capsule_184x69.jpg", svc: "steam" },
-    { title: "Stardew Valley", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/413150/capsule_184x69.jpg", svc: "steam" },
-    { title: "Portal 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/620/capsule_184x69.jpg", svc: "steam" },
-    { title: "Half-Life 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/220/capsule_184x69.jpg", svc: "steam" },
-    { title: "DOOM Eternal", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/782330/capsule_184x69.jpg", svc: "steam" },
-    { title: "Fallout: New Vegas", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/22380/capsule_184x69.jpg", svc: "steam" },
-    { title: "Dark Souls 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/374320/capsule_184x69.jpg", svc: "steam" },
-    { title: "Sekiro", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/814380/capsule_184x69.jpg", svc: "steam" },
-    { title: "Resident Evil 4", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/115160/capsule_184x69.jpg", svc: "steam" },
-    { title: "Mass Effect 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/24980/capsule_184x69.jpg", svc: "steam" },
-    { title: "Rust", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/252490/capsule_184x69.jpg", svc: "steam" },
-    { title: "Subnautica", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/264710/capsule_184x69.jpg", svc: "steam" },
-    { title: "Phasmophobia", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/739630/capsule_184x69.jpg", svc: "steam" }
+    { title: "The Witcher 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/capsule_184x69.jpg", link: "https://store.steampowered.com/app/292030/", svc: "steam" },
+    { title: "Cyberpunk 2077", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1091500/", svc: "steam" },
+    { title: "Elden Ring", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1245620/", svc: "steam" },
+    { title: "GTA V", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/271590/capsule_184x69.jpg", link: "https://store.steampowered.com/app/271590/", svc: "steam" },
+    { title: "RDR 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1174180/", svc: "steam" },
+    { title: "CS 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_184x69.jpg", link: "https://store.steampowered.com/app/730/", svc: "steam" },
+    { title: "Dota 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_184x69.jpg", link: "https://store.steampowered.com/app/570/", svc: "steam" },
+    { title: "Baldur's Gate 3", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1086940/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1086940/", svc: "steam" },
+    { title: "Skyrim", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/489830/capsule_184x69.jpg", link: "https://store.steampowered.com/app/489830/", svc: "steam" },
+    { title: "Hollow Knight", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/capsule_184x69.jpg", link: "https://store.steampowered.com/app/367520/", svc: "steam" },
+    { title: "Hades", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/capsule_184x69.jpg", link: "https://store.steampowered.com/app/1145360/", svc: "steam" },
+    { title: "Terraria", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/105600/capsule_184x69.jpg", link: "https://store.steampowered.com/app/105600/", svc: "steam" },
+    { title: "Stardew Valley", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/413150/capsule_184x69.jpg", link: "https://store.steampowered.com/app/413150/", svc: "steam" },
+    { title: "Portal 2", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/620/capsule_184x69.jpg", link: "https://store.steampowered.com/app/620/", svc: "steam" },
+    { title: "DOOM Eternal", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/782330/capsule_184x69.jpg", link: "https://store.steampowered.com/app/782330/", svc: "steam" },
+    { title: "Subnautica", img: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/264710/capsule_184x69.jpg", link: "https://store.steampowered.com/app/264710/", svc: "steam" }
   ],
   actors: [
-    { title: "Ди Каприо", img: "https://image.tmdb.org/t/p/w500/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg", svc: "imdb" },
-    { title: "Киану Ривз", img: "https://image.tmdb.org/t/p/w500/4D0PpNI0kmP58hgrwGC3wCjxhnm.jpg", svc: "imdb" },
-    { title: "Скарлетт Йоханссон", img: "https://image.tmdb.org/t/p/w500/6NsMbJXRlDZuDzatN2akFdGuTvx.jpg", svc: "imdb" },
-    { title: "Том Харди", img: "https://image.tmdb.org/t/p/w500/d81K0RH8UX7tZj49tZaQhZ9ewH.jpg", svc: "imdb" },
-    { title: "Марго Робби", img: "https://image.tmdb.org/t/p/w500/euDPyqLnuwaWMHajcU3oZ9uZezR.jpg", svc: "imdb" },
-    { title: "Роберт Дауни мл.", img: "https://image.tmdb.org/t/p/w500/5qHNjhtjMD4YWH3UP0rm4tKwxIQ.jpg", svc: "imdb" },
-    { title: "Кристиан Бэйл", img: "https://image.tmdb.org/t/p/w500/b7fTC9WFkgqGOv77mLQpliWorsS.jpg", svc: "imdb" },
-    { title: "Натали Портман", img: "https://image.tmdb.org/t/p/w500/vkoGFlFhRhUwaKIfecX1rT22L2O.jpg", svc: "imdb" },
-    { title: "Брэд Питт", img: "https://image.tmdb.org/t/p/w500/cckcYc2v0yh1tc9QjRelptcOBko.jpg", svc: "imdb" },
-    { title: "Джонни Депп", img: "https://image.tmdb.org/t/p/w500/yyB00XhPaPys7785Ff1UjK5wPaa.jpg", svc: "imdb" },
-    { title: "Том Круз", img: "https://image.tmdb.org/t/p/w500/gThaIXgpCm3PCiXwFNDBJCme85y.jpg", svc: "imdb" },
-    { title: "Мэттью Макконахи", img: "https://image.tmdb.org/t/p/w500/e9ZHRY5toiB6tgEQse5tn4SR804.jpg", svc: "imdb" },
-    { title: "Энн Хэтэуэй", img: "https://image.tmdb.org/t/p/w500/tLelKoPNiyJC2311X2XG0eZzGqW.jpg", svc: "imdb" },
-    { title: "Киллиан Мерфи", img: "https://image.tmdb.org/t/p/w500/3dz6bn88j2sFw7vYFmYj2wS0P8s.jpg", svc: "imdb" },
-    { title: "Гэри Олдман", img: "https://image.tmdb.org/t/p/w500/2v9FVVBUrrkW2m3QOcYkuhq9A6o.jpg", svc: "imdb" },
-    { title: "Райан Гослинг", img: "https://image.tmdb.org/t/p/w500/lyUyVARQEhce0A1K2u1Nksl8wMv.jpg", svc: "imdb" },
-    { title: "Хит Леджер", img: "https://image.tmdb.org/t/p/w500/5Y9HnYYa9jF4NuYWQNFE4AeeO6E.jpg", svc: "imdb" },
-    { title: "Анджелина Джоли", img: "https://image.tmdb.org/t/p/w500/wAjsYWwX79D0d90Z6aJtN1L8k8F.jpg", svc: "imdb" },
-    { title: "Аль Пачино", img: "https://image.tmdb.org/t/p/w500/fMDFeVf0pjDpTJnuqGE1OaUwJC8.jpg", svc: "imdb" },
-    { title: "Уилл Смит", img: "https://image.tmdb.org/t/p/w500/eze9FO9VuryXLP0aF2cRqPCcibN.jpg", svc: "imdb" },
-    { title: "Эмма Стоун", img: "https://image.tmdb.org/t/p/w500/cZ8a3QvAnj2cgcgVL6g4XaqXJp2.jpg", svc: "imdb" },
-    { title: "Том Хэнкс", img: "https://image.tmdb.org/t/p/w500/xndWFsBlClOJFRdhStgX7pE9gCH.jpg", svc: "imdb" },
-    { title: "Джейк Джилленхол", img: "https://image.tmdb.org/t/p/w500/rJdYHYNhlcOBwbPvDZVvtZXIAFz.jpg", svc: "imdb" },
-    { title: "Крис Хемсворт", img: "https://image.tmdb.org/t/p/w500/jpurJ9jAcLCYvnqWTAQiSYWgwIs.jpg", svc: "imdb" },
-    { title: "Марк Уолберг", img: "https://image.tmdb.org/t/p/w500/8tA5y2P7X491BqWj6B2a0x5KjNn.jpg", svc: "imdb" },
-    { title: "Дэниэл Дэй-Льюис", img: "https://image.tmdb.org/t/p/w500/sTfQ4cMofvS83XhN1Yd317xGXY.jpg", svc: "imdb" },
-    { title: "Роберт Де Ниро", img: "https://image.tmdb.org/t/p/w500/cT8htcckI7teZI11G1ZqM1rI8Y5.jpg", svc: "imdb" },
-    { title: "Энтони Хопкинс", img: "https://image.tmdb.org/t/p/w500/7Z01yMhFwRz5t35VqL3I7aE7f1G.jpg", svc: "imdb" },
-    { title: "Морган Фриман", img: "https://image.tmdb.org/t/p/w500/mIJI0nUoE001rF2Ue5Dq93aA4sI.jpg", svc: "imdb" },
-    { title: "Харрисон Форд", img: "https://image.tmdb.org/t/p/w500/5M7oN3sznp99hWYQ9sX0xheswWX.jpg", svc: "imdb" }
+    { title: "Ди Каприо", img: "https://upload.wikimedia.org/wikipedia/commons/2/25/Leonardo_DiCaprio_2014.jpg", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb" },
+    { title: "Киану Ривз", img: "https://upload.wikimedia.org/wikipedia/commons/a/a0/Keanu_Reeves_%28crop_and_levels%29_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0000206/", svc: "imdb" },
+    { title: "Скарлетт Йоханссон", img: "https://upload.wikimedia.org/wikipedia/commons/6/60/Scarlett_Johansson_by_Gage_Skidmore_2_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0424060/", svc: "imdb" },
+    { title: "Том Харди", img: "https://upload.wikimedia.org/wikipedia/commons/4/43/Tom_Hardy_by_Gage_Skidmore.jpg", link: "https://www.imdb.com/name/nm0362766/", svc: "imdb" },
+    { title: "Марго Робби", img: "https://upload.wikimedia.org/wikipedia/commons/6/6c/Margot_Robbie_by_Gage_Skidmore_2018.jpg", link: "https://www.imdb.com/name/nm3053338/", svc: "imdb" },
+    { title: "Роберт Дауни мл.", img: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Robert_Downey_Jr_2014_Comic_Con_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0000375/", svc: "imdb" },
+    { title: "Кристиан Бэйл", img: "https://upload.wikimedia.org/wikipedia/commons/7/73/Christian_Bale-2014.jpg", link: "https://www.imdb.com/name/nm0000288/", svc: "imdb" },
+    { title: "Натали Портман", img: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Natalie_Portman_%2848470988352%29_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0000204/", svc: "imdb" },
+    { title: "Брэд Питт", img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Brad_Pitt_2019_by_Glenn_Francis.jpg", link: "https://www.imdb.com/name/nm0000093/", svc: "imdb" },
+    { title: "Джонни Депп", img: "https://upload.wikimedia.org/wikipedia/commons/2/21/Johnny_Depp_2020.jpg", link: "https://www.imdb.com/name/nm0000136/", svc: "imdb" },
+    { title: "Том Круз", img: "https://upload.wikimedia.org/wikipedia/commons/3/33/Tom_Cruise_by_Gage_Skidmore_2.jpg", link: "https://www.imdb.com/name/nm0000129/", svc: "imdb" },
+    { title: "Энн Хэтэуэй", img: "https://upload.wikimedia.org/wikipedia/commons/2/22/Anne_Hathaway_at_the_2007_Deauville_American_Film_Festival-01A.jpg", link: "https://www.imdb.com/name/nm0004266/", svc: "imdb" },
+    { title: "Райан Гослинг", img: "https://upload.wikimedia.org/wikipedia/commons/8/8b/Ryan_Gosling_in_2018.jpg", link: "https://www.imdb.com/name/nm0331516/", svc: "imdb" },
+    { title: "Анджелина Джоли", img: "https://upload.wikimedia.org/wikipedia/commons/a/ad/Angelina_Jolie_2_June_2014_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0001401/", svc: "imdb" },
+    { title: "Уилл Смит", img: "https://upload.wikimedia.org/wikipedia/commons/3/3f/TechCrunch_Disrupt_2019_%2848834434641%29_%28cropped%29.jpg", link: "https://www.imdb.com/name/nm0000226/", svc: "imdb" },
+    { title: "Том Хэнкс", img: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Tom_Hanks_TIFF_2019.jpg", link: "https://www.imdb.com/name/nm0000158/", svc: "imdb" },
+    { title: "Морган Фриман", img: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Morgan_Freeman_2017.jpg", link: "https://www.imdb.com/name/nm0000151/", svc: "imdb" },
+    { title: "Харрисон Форд", img: "https://upload.wikimedia.org/wikipedia/commons/3/34/Harrison_Ford_by_Gage_Skidmore_3.jpg", link: "https://www.imdb.com/name/nm0000148/", svc: "imdb" }
   ]
 };
 
@@ -164,8 +133,6 @@ function openCustomItemModal(type) {
   content.querySelector('#custom-cancel').onclick = close;
   content.querySelector('#custom-add').onclick = () => {
     const title = window.escapeHTML(content.querySelector('#custom-title').value.trim());
-    
-    // ФИКС: Убрано экранирование (window.escapeHTML) для URL и IMG, чтобы ссылки не ломались
     const url = content.querySelector('#custom-url').value.trim() || '#';
     const svcType = type === 'games' ? 'steam' : 'imdb';
     const img = imgInput.value.trim() || pImg(svcType);
@@ -204,11 +171,10 @@ export function renderTemplatePool() {
         <a href="${item.url}" target="_blank" rel="noopener">
         <img loading="lazy" src="${item.img}" alt="${item.title}" 
              style="width:${sVal}px; height:${sVal}px;"
-             onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:10px\'>?</span>';">
+             onerror="this.src='${pImg(item.svc)}'">
         </a></div>`;
     }).join('');
 
-    // Обновлен дизайн кнопки "+" для соответствия современному стилю
     pool.innerHTML = itemsHTML + `<button id="addCustomPoolItemBtn" style="width:${sVal}px;height:${sVal}px;background:rgba(255,255,255,0.02);border:2px dashed rgba(255,255,255,0.15);border-radius:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);"><i data-lucide="plus"></i></button>`;
 
     const addBtn = document.getElementById('addCustomPoolItemBtn');
