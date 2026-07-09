@@ -202,7 +202,7 @@ export function renderTemplatePool() {
     const itemsHTML = currentPoolItems.map((item, idx) => {
       return `<div class="item style-${styleClass}" data-item-index="${idx}" title="${item.title}">
         <a href="${item.url}" target="_blank" rel="noopener">
-        <img src="${item.img}" alt="${item.title}" style="width:${sVal}px; height:${sVal}px;">
+        <img loading="lazy" src="${item.img}" alt="${item.title}" style="width:${sVal}px; height:${sVal}px;">
         </a></div>`;
     }).join('');
 
