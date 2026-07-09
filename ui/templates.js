@@ -202,7 +202,9 @@ export function renderTemplatePool() {
     const itemsHTML = currentPoolItems.map((item, idx) => {
       return `<div class="item style-${styleClass}" data-item-index="${idx}" title="${item.title}">
         <a href="${item.url}" target="_blank" rel="noopener">
-        <img loading="lazy" src="${item.img}" alt="${item.title}" style="width:${sVal}px; height:${sVal}px;">
+        <img loading="lazy" src="${item.img}" alt="${item.title}" 
+             style="width:${sVal}px; height:${sVal}px;" 
+             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22%3E%3Crect fill=%22%23333%22 width=%2264%22 height=%2264%22 rx=%228%22/%3E%3Ctext fill=%22white%22 x=%2232%22 y=%2236%22 text-anchor=%22middle%22 font-size=%2220%22%3E%3F%3C/text%3E%3C/svg%3E';">
         </a></div>`;
     }).join('');
 
