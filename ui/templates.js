@@ -82,7 +82,7 @@ const TEMPLATES = {
     { title: "Бесславные ублюдки", img: "https://upload.wikimedia.org/wikipedia/ru/2/2c/Inglourious_Basterds.jpg", link: "https://www.imdb.com/title/tt0361748/", svc: "imdb" },
     { title: "Убить Билла", img: "https://upload.wikimedia.org/wikipedia/ru/b/b2/Kill_Bill_Volume_1.jpg", link: "https://www.imdb.com/title/tt0266697/", svc: "imdb" },
     { title: "Однажды в Голливуде", img: "https://upload.wikimedia.org/wikipedia/ru/2/29/Once_Upon_a_Time_in_Hollywood.jpg", link: "https://www.imdb.com/title/tt7131622/", svc: "imdb" }
-  ],{ title: "Большой Лебовски", img: "https://upload.wikimedia.org/wikipedia/ru/7/7c/Big_Lebowski.jpg", link: "https://www.imdb.com/title/tt0118715/", svc: "imdb" },
+    { title: "Большой Лебовски", img: "https://upload.wikimedia.org/wikipedia/ru/7/7c/Big_Lebowski.jpg", link: "https://www.imdb.com/title/tt0118715/", svc: "imdb" },
     { title: "Фарго", img: "https://upload.wikimedia.org/wikipedia/ru/5/5e/Fargo_1996.jpg", link: "https://www.imdb.com/title/tt0116282/", svc: "imdb" },
     { title: "Старикам тут не место", img: "https://upload.wikimedia.org/wikipedia/ru/4/45/No_Country_for_Old_Men.jpg", link: "https://www.imdb.com/title/tt0477348/", svc: "imdb" },
     { title: "Марсианин", img: "https://upload.wikimedia.org/wikipedia/ru/3/34/The_Martian_2015.jpg", link: "https://www.imdb.com/title/tt3659388/", svc: "imdb" },
