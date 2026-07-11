@@ -101,6 +101,14 @@ body.parallax-active #parallaxWrapper { display: block; }
 #parallaxLayer2 { background: radial-gradient(circle at 68% 72%, var(--pz-c3) 0%, transparent 38%), radial-gradient(circle at 25% 80%, var(--pz-c1) 0%, transparent 36%); opacity: 0.4; }
 #parallaxLayer3 { background: radial-gradient(circle at 50% 45%, var(--pz-c2) 0%, transparent 32%); opacity: 0.35; }
 
+/* Слой с настоящей картинкой/видео — лежит ПОВЕРХ градиентных слоёв (те служат ему
+   красивой подложкой на случай, если картинка ещё грузится или вообще не загрузится). */
+#parallaxPhoto, #parallaxVideo {
+    display: none; object-fit: cover; width: 140%; height: 140%; top: -20%; left: -20%;
+    filter: brightness(0.55) saturate(1.15);
+}
+#parallaxPhoto.show, #parallaxVideo.show { display: block; }
+
 /* --- САЙДБАР --- */
 .sidebar {
     position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;

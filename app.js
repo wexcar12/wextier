@@ -15,7 +15,7 @@ import { openDuel, setupDuelButtons } from './ui/duel.js';
 import { openCommentsModal } from './ui/comments.js';
 import { loadAchievements, checkAchievements, openAchievementsModal } from './ui/achievements.js';
 import { loadNeon, openNeonModal } from './ui/neon.js';
-import { loadParallax, toggleParallax, initParallaxMouse } from './ui/parallax.js';
+import { loadParallax, toggleParallax, initParallaxMouse, setParallaxBg } from './ui/parallax.js';
 import { updatePoolItems, renderTemplatePool } from './ui/templates.js';
 import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from './ui/drafts.js';
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
@@ -66,6 +66,7 @@ function bindEvents() {
     const isActive = document.body.classList.contains('parallax-active');
     toggleParallax(!isActive);
   });
+  document.getElementById('parallaxBgSelect')?.addEventListener('change', (e) => { setParallaxBg(e.target.value); });
   
   document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
   // ФИКС: раньше в режиме Сравнения Undo всегда откатывал список №2, даже если правили список №1

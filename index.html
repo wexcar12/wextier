@@ -24,7 +24,7 @@
 </head>
 <body>
 
-    <div id="parallaxWrapper"><div id="parallaxLayer1" class="pz-layer"></div><div id="parallaxLayer2" class="pz-layer"></div><div id="parallaxLayer3" class="pz-layer"></div></div>
+    <div id="parallaxWrapper"><div id="parallaxLayer1" class="pz-layer"></div><div id="parallaxLayer2" class="pz-layer"></div><div id="parallaxLayer3" class="pz-layer"></div><img id="parallaxPhoto" class="pz-layer" alt=""><video id="parallaxVideo" class="pz-layer" muted loop autoplay playsinline></video></div>
     <canvas id="particlesCanvas"></canvas>
     
     <button class="burger-btn" id="burgerBtn"><i data-lucide="menu"></i></button>
@@ -56,6 +56,14 @@
         <button class="sidebar-btn" id="themeBtn" title="Сменить тему"><i data-lucide="moon"></i> <span>Тема</span></button>
         <button class="sidebar-btn" id="neonBtn" title="Настройки неона"><i data-lucide="lightbulb"></i> <span>Неон</span></button>
         <button class="sidebar-btn" id="parallaxBtn" title="Эффект параллакса"><i data-lucide="layers"></i> <span>Параллакс</span></button>
+        <select id="parallaxBgSelect" class="sidebar-select" title="Фон параллакса">
+          <option value="theme">🎨 Только тема (всегда работает)</option>
+          <option value="favorite">⭐ Мой любимый</option>
+          <option value="mountains">🏔️ Горы</option>
+          <option value="forest">🌲 Лес</option>
+          <option value="space">🌌 Космос</option>
+          <option value="custom">🔗 Своя картинка/видео...</option>
+        </select>
         <button class="sidebar-btn" id="compareBtn" title="Сравнить тир-листы"><i data-lucide="users"></i> <span>Сравнение</span></button>
         <button class="sidebar-btn" id="shareBtn" title="Поделиться ссылкой"><i data-lucide="link"></i> <span>Поделиться</span></button>
         <button class="sidebar-btn" id="playlistBtn" title="Смотреть плейлист"><i data-lucide="video"></i> <span>YT плейлист</span></button>
