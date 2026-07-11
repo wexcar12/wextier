@@ -3,11 +3,12 @@
  * @description Шэринг ссылок.
  */
 import { api } from '../api/firestore.js';
+import { getDB } from '../api/firebase-init.js';
 import { state } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
 
 export async function shareTierlist() {
-  if (!api) {
+  if (!getDB()) {
     // Оффлайн-шэринг через LZString
     if (typeof LZString !== 'undefined') {
       const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(state.data1));
@@ -44,7 +45,7 @@ export async function loadFromURL() {
   const p = new URLSearchParams(location.search);
   let loaded = false;
 
-  if (p.has('id') && api) {
+  if (p.has('id') && getDB()) {
     try {
       const data = await api.loadSharedTierlist(p.get('id'));
       if (data && Array.isArray(data)) {

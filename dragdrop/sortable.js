@@ -2,7 +2,7 @@
  * @module dragdrop/sortable
  */
 import { state, MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand } from '../core/state.js';
-import { renderAll } from '../ui/render.js';
+import { renderAll, isEditing } from '../ui/render.js';
 import { getPoolItems, updatePoolItems } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
 
@@ -56,29 +56,46 @@ function handleSortableMove(evt) {
     const command = new MoveItemCommand('item', fromTier, toTier, evt.oldIndex, evt.newIndex, fromList);
     state.executeCommand(command, fromList);
   } else {
-    // ФИКС: Безопасный перенос между разными списками в режиме Сравнения
+    // ФИКС: перенос между разными списками логируется в историю списка НАЗНАЧЕНИЯ,
+    // чтобы кнопка "Отменить" могла его найти (раньше всегда писалось в список 1 — Undo не находил).
     const command = new MoveCrossListCommand(fromTier, toTier, evt.oldIndex, evt.newIndex, fromList, toList);
-    state.executeCommand(command, 1); // Логируем в историю первого списка
+    state.executeCommand(command, toList);
   }
 
   eventBus.emit('achievements:check');
   renderAll();
 }
 
+function refreshSortableInstances() {
+  // ФИКС: перетаскивание разрешено только в режиме "Редактировать"
+  const disabled = !isEditing();
+  document.querySelectorAll('.tier-items').forEach(el => {
+    if (el._sortable) el._sortable.option('disabled', disabled);
+  });
+  const poolEl = document.getElementById('templatePool');
+  if (poolEl && poolEl._sortable) poolEl._sortable.option('disabled', disabled);
+}
+
 export function initSortable() {
   eventBus.on('render:after', () => {
     currentPoolItems = getPoolItems();
     setTimeout(() => {
+      const disabled = !isEditing();
       document.querySelectorAll('.tier-items').forEach(el => {
         if (el._sortable) el._sortable.destroy();
-        el._sortable = new Sortable(el, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove });
+        el._sortable = new Sortable(el, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, disabled });
       });
       const poolEl = document.getElementById('templatePool');
       if (poolEl) {
         if (poolEl._sortable) poolEl._sortable.destroy();
-        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove });
+        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, disabled });
       }
       lucide.createIcons();
     }, 0);
+  });
+
+  // ФИКС: когда переключают "Редактировать" — сразу включаем/выключаем перетаскивание, без пересборки Sortable
+  eventBus.on('ui:state:changed', ({ key }) => {
+    if (key === 'editing') refreshSortableInstances();
   });
 }

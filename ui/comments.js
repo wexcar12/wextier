@@ -3,6 +3,7 @@
  * @description Комментарии к тир-листам.
  */
 import { api } from '../api/firestore.js';
+import { getDB } from '../api/firebase-init.js';
 import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
 import { escapeHTML } from '../utils/sanitizers.js';
@@ -14,7 +15,7 @@ export function setCommentsTierlistId(id) { ctid = id; }
 
 export async function loadComments(id) {
   ctid = id;
-  if (!id || !api) {
+  if (!id || !getDB()) {
     comments = [];
     return;
   }
@@ -28,7 +29,7 @@ export async function loadComments(id) {
 export async function addComment(text) {
   if (!text) return;
 
-  if (!api || !ctid) {
+  if (!getDB() || !ctid) {
     comments.push({
       id: Date.now().toString(),
       text: text,
@@ -82,10 +83,15 @@ export function openCommentsModal() {
 
   content.querySelector('#closeComments').onclick = close;
   content.querySelector('#addCommentBtn').onclick = async () => {
-    const text = content.querySelector('#newComment').value.trim();
+    const textarea = content.querySelector('#newComment');
+    const text = textarea.value.trim();
     if (!text) return;
-    content.querySelector('#newComment').value = '';
+    // ФИКС: поле очищается только ПОСЛЕ успешной отправки — раньше текст стирался сразу
+    // и терялся навсегда, если отправка падала с ошибкой (например, нет сети)
+    const before = comments.length;
     await addComment(text);
+    const succeeded = comments.length > before || !ctid; // локальный режим тоже считается успехом
+    if (succeeded) textarea.value = '';
     updateCommentsDisplay();
   };
 }

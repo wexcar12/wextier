@@ -9,6 +9,7 @@ import { state } from '../core/state.js';
 import { renderAll } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { escapeHTML } from '../utils/sanitizers.js';
+import { getDB } from '../api/firebase-init.js';
 
 let ctid = null;
 
@@ -16,7 +17,7 @@ export function getCurrentTierlistId() { return ctid; }
 export function setCurrentTierlistId(id) { ctid = id; }
 
 export async function openGallery() {
-  if (!api) {
+  if (!getDB()) {
     eventBus.emit('toast:show', { text: 'Галерея недоступна', type: 'error' });
     return;
   }
@@ -96,7 +97,7 @@ export async function openGallery() {
 }
 
 export async function openTop() {
-  if (!api) {
+  if (!getDB()) {
     eventBus.emit('toast:show', { text: 'Недоступно', type: 'error' });
     return;
   }

@@ -209,38 +209,38 @@ const TEMPLATES = {
     { title: "Игра на выживание", link: "https://www.imdb.com/title/tt13147132/", svc: "imdb" }
   ],
   games: [
-    { title: "The Witcher 3: Wild Hunt", img: "images/games/witcher3.jpg", link: "https://store.steampowered.com/app/292030/", svc: "steam" },
-    { title: "Cyberpunk 2077", img: "images/games/cyberpunk2077.jpg", link: "https://store.steampowered.com/app/1091500/", svc: "steam" },
-    { title: "Elden Ring", img: "images/games/elden-ring.jpg", link: "https://store.steampowered.com/app/1245620/", svc: "steam" },
-    { title: "Grand Theft Auto V", img: "images/games/gta5.jpg", link: "https://store.steampowered.com/app/271590/", svc: "steam" },
-    { title: "Red Dead Redemption 2", img: "images/games/rdr2.jpg", link: "https://store.steampowered.com/app/1174180/", svc: "steam" },
-    { title: "Counter-Strike 2", img: "images/games/cs2.jpg", link: "https://store.steampowered.com/app/730/", svc: "steam" },
-    { title: "Dota 2", img: "images/games/dota2.jpg", link: "https://store.steampowered.com/app/570/", svc: "steam" },
-    { title: "Baldur's Gate 3", img: "images/games/baldurs-gate3.jpg", link: "https://store.steampowered.com/app/1086940/", svc: "steam" },
-    { title: "The Elder Scrolls V: Skyrim", img: "images/games/skyrim.jpg", link: "https://store.steampowered.com/app/489830/", svc: "steam" },
-    { title: "Hollow Knight", img: "images/games/hollow-knight.jpg", link: "https://store.steampowered.com/app/367520/", svc: "steam" }
+    { title: "The Witcher 3: Wild Hunt", link: "https://store.steampowered.com/app/292030/", svc: "steam" },
+    { title: "Cyberpunk 2077", link: "https://store.steampowered.com/app/1091500/", svc: "steam" },
+    { title: "Elden Ring", link: "https://store.steampowered.com/app/1245620/", svc: "steam" },
+    { title: "Grand Theft Auto V", link: "https://store.steampowered.com/app/271590/", svc: "steam" },
+    { title: "Red Dead Redemption 2", link: "https://store.steampowered.com/app/1174180/", svc: "steam" },
+    { title: "Counter-Strike 2", link: "https://store.steampowered.com/app/730/", svc: "steam" },
+    { title: "Dota 2", link: "https://store.steampowered.com/app/570/", svc: "steam" },
+    { title: "Baldur's Gate 3", link: "https://store.steampowered.com/app/1086940/", svc: "steam" },
+    { title: "The Elder Scrolls V: Skyrim", link: "https://store.steampowered.com/app/489830/", svc: "steam" },
+    { title: "Hollow Knight", link: "https://store.steampowered.com/app/367520/", svc: "steam" }
   ],
   actors: [
-    { title: "Ди Каприо", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb" },
-    { title: "Киану Ривз", link: "https://www.imdb.com/name/nm0000206/", svc: "imdb" },
-    { title: "Скарлетт Йоханссон", link: "https://www.imdb.com/name/nm0424060/", svc: "imdb" },
-    { title: "Том Харди", link: "https://www.imdb.com/name/nm0362766/", svc: "imdb" },
-    { title: "Марго Робби", link: "https://www.imdb.com/name/nm3053338/", svc: "imdb" },
-    { title: "Роберт Дауни мл.", link: "https://www.imdb.com/name/nm0000375/", svc: "imdb" },
-    { title: "Кристиан Бэйл", link: "https://www.imdb.com/name/nm0000288/", svc: "imdb" },
-    { title: "Натали Портман", link: "https://www.imdb.com/name/nm0000204/", svc: "imdb" },
-    { title: "Брэд Питт", link: "https://www.imdb.com/name/nm0000093/", svc: "imdb" },
-    { title: "Джонни Депп", link: "https://www.imdb.com/name/nm0000136/", svc: "imdb" },
-    { title: "Том Круз", link: "https://www.imdb.com/name/nm0000129/", svc: "imdb" },
-    { title: "Мэттью Макконахи", link: "https://www.imdb.com/name/nm0000190/", svc: "imdb" },
-    { title: "Энн Хэтэуэй", link: "https://www.imdb.com/name/nm0004266/", svc: "imdb" },
-    { title: "Киллиан Мерфи", link: "https://www.imdb.com/name/nm0147068/", svc: "imdb" },
-    { title: "Гэри Олдман", link: "https://www.imdb.com/name/nm0000198/", svc: "imdb" },
-    { title: "Райан Гослинг", link: "https://www.imdb.com/name/nm0331516/", svc: "imdb" },
-    { title: "Хит Леджер", link: "https://www.imdb.com/name/nm0005132/", svc: "imdb" },
-    { title: "Анджелина Джоли", link: "https://www.imdb.com/name/nm0001401/", svc: "imdb" },
-    { title: "Аль Пачино", link: "https://www.imdb.com/name/nm0000199/", svc: "imdb" },
-    { title: "Уилл Смит", link: "https://www.imdb.com/name/nm0000226/", svc: "imdb" }
+    { title: "Ди Каприо", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb", wiki: "Leonardo_DiCaprio" },
+    { title: "Киану Ривз", link: "https://www.imdb.com/name/nm0000206/", svc: "imdb", wiki: "Keanu_Reeves" },
+    { title: "Скарлетт Йоханссон", link: "https://www.imdb.com/name/nm0424060/", svc: "imdb", wiki: "Scarlett_Johansson" },
+    { title: "Том Харди", link: "https://www.imdb.com/name/nm0362766/", svc: "imdb", wiki: "Tom_Hardy" },
+    { title: "Марго Робби", link: "https://www.imdb.com/name/nm3053338/", svc: "imdb", wiki: "Margot_Robbie" },
+    { title: "Роберт Дауни мл.", link: "https://www.imdb.com/name/nm0000375/", svc: "imdb", wiki: "Robert_Downey_Jr." },
+    { title: "Кристиан Бэйл", link: "https://www.imdb.com/name/nm0000288/", svc: "imdb", wiki: "Christian_Bale" },
+    { title: "Натали Портман", link: "https://www.imdb.com/name/nm0000204/", svc: "imdb", wiki: "Natalie_Portman" },
+    { title: "Брэд Питт", link: "https://www.imdb.com/name/nm0000093/", svc: "imdb", wiki: "Brad_Pitt" },
+    { title: "Джонни Депп", link: "https://www.imdb.com/name/nm0000136/", svc: "imdb", wiki: "Johnny_Depp" },
+    { title: "Том Круз", link: "https://www.imdb.com/name/nm0000129/", svc: "imdb", wiki: "Tom_Cruise" },
+    { title: "Мэттью Макконахи", link: "https://www.imdb.com/name/nm0000190/", svc: "imdb", wiki: "Matthew_McConaughey" },
+    { title: "Энн Хэтэуэй", link: "https://www.imdb.com/name/nm0004266/", svc: "imdb", wiki: "Anne_Hathaway" },
+    { title: "Киллиан Мерфи", link: "https://www.imdb.com/name/nm0147068/", svc: "imdb", wiki: "Cillian_Murphy" },
+    { title: "Гэри Олдман", link: "https://www.imdb.com/name/nm0000198/", svc: "imdb", wiki: "Gary_Oldman" },
+    { title: "Райан Гослинг", link: "https://www.imdb.com/name/nm0331516/", svc: "imdb", wiki: "Ryan_Gosling" },
+    { title: "Хит Леджер", link: "https://www.imdb.com/name/nm0005132/", svc: "imdb", wiki: "Heath_Ledger" },
+    { title: "Анджелина Джоли", link: "https://www.imdb.com/name/nm0001401/", svc: "imdb", wiki: "Angelina_Jolie" },
+    { title: "Аль Пачино", link: "https://www.imdb.com/name/nm0000199/", svc: "imdb", wiki: "Al_Pacino" },
+    { title: "Уилл Смит", link: "https://www.imdb.com/name/nm0000226/", svc: "imdb", wiki: "Will_Smith" }
   ]
 };
 
@@ -253,6 +253,79 @@ function pImg(svc) {
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
+// ФИКС КАРТИНОК: постер фильма/сериала по IMDb id — бесплатный CDN без ключа.
+// Раньше был только ОДИН источник картинки (images.metahub.space). Если этот сервис
+// временно недоступен/перегружен — постер просто не загружался, показывалась только
+// цветная заглушка-иконка. Теперь у каждой картинки есть запасной "зеркальный" адрес
+// (см. imgOnErrorAttr ниже), и если первый сервер не ответил — браузер сам попробует второй.
+function imdbId(link) {
+  const m = (link || '').match(/tt\d+/);
+  return m ? m[0] : null;
+}
+function imdbPoster(link) {
+  const id = imdbId(link);
+  return id ? `https://images.metahub.space/poster/small/${id}/img` : null;
+}
+function imdbPosterMirror(link) {
+  const id = imdbId(link);
+  return id ? `https://live.metahub.space/poster/small/${id}/img` : null;
+}
+// Строка для атрибута onerror у <img>: сначала пробуем зеркало, и только если
+// оно тоже не сработало — показываем цветную SVG-заглушку.
+function imgOnErrorAttr(link, svc) {
+  const mirror = imdbPosterMirror(link);
+  const placeholder = pImg(svc);
+  if (!mirror) return `this.onerror=null;this.src='${placeholder}';`;
+  return `if(!this.dataset.mirrorTried){this.dataset.mirrorTried='1';this.src='${mirror}';}else{this.onerror=null;this.src='${placeholder}';}`;
+}
+
+// ФИКС КАРТИНОК: официальная обложка игры по appid из ссылки Steam — бесплатный CDN без ключа
+function steamHeader(link) {
+  const m = (link || '').match(/\/app\/(\d+)/);
+  return m ? `https://cdn.akamai.steamstatic.com/steam/apps/${m[1]}/header.jpg` : null;
+}
+
+// ФИКС КАРТИНОК: фото актёра через открытое Wikipedia API (без ключа), с кэшем в localStorage
+async function resolveActorPhoto(wikiSlug) {
+  if (!wikiSlug) return null;
+  const cacheKey = 'actor_photo_' + wikiSlug;
+  // ФИКС: раньше при неудаче (нет сети/Wikipedia не ответила) результат "нет фото"
+  // сохранялся в localStorage НАВСЕГДА — фото этого актёра переставало грузиться
+  // для пользователя навечно, даже если проблема была временной. Теперь кэшируем
+  // только УСПЕШНЫЙ результат, а неудачу всегда пробуем повторить при следующей загрузке.
+  const cached = sg(cacheKey, null);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiSlug)}`);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const url = (data.thumbnail && data.thumbnail.source) ? data.thumbnail.source : null;
+    if (url) ss(cacheKey, url);
+    return url;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Догружает реальные фото актёров в уже отрисованный пул (плейсхолдер меняется на фото, когда оно готово).
+// ФИКС: раньше запускались ВСЕ запросы к Wikipedia одновременно (до 100 штук разом на шаблон
+// "Актёры") — публичный API часто отвечал не всем из-за одновременной нагрузки, и часть фото
+// просто не подгружалась. Теперь запросы идут пачками по 6, это надёжнее.
+async function hydrateActorPhotos() {
+  const withWiki = currentPoolItems.map((item, idx) => ({ item, idx })).filter(x => x.item.wiki);
+  const BATCH_SIZE = 6;
+  for (let i = 0; i < withWiki.length; i += BATCH_SIZE) {
+    const batch = withWiki.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(async ({ item, idx }) => {
+      const url = await resolveActorPhoto(item.wiki);
+      if (!url) return;
+      const imgEl = document.querySelector('#templatePool [data-item-index="' + idx + '"] img');
+      if (imgEl) imgEl.src = url;
+      item.img = url;
+    }));
+  }
+}
+
 export function updatePoolItems(type) {
   if (type === 'music') {
     currentPoolItems = [];
@@ -262,12 +335,18 @@ export function updatePoolItems(type) {
     const fullTemplateList = (TEMPLATES[type] || []).concat(userCustomItems);
     currentPoolItems = fullTemplateList
       .filter(item => !currentItemsUrls.includes(item.link || item.url))
-      .map(item => ({
-        img: item.img || pImg(item.svc),
-        url: item.link || item.url || '#',
-        svc: item.svc,
-        title: item.title
-      }));
+      .map(item => {
+        let img = item.img || null;
+        if (!img && item.svc === 'imdb') img = imdbPoster(item.link);
+        if (!img && item.svc === 'steam') img = steamHeader(item.link);
+        return {
+          img: img || pImg(item.svc),
+          url: item.link || item.url || '#',
+          svc: item.svc,
+          title: item.title,
+          wiki: item.wiki || null
+        };
+      });
   }
 }
 
@@ -334,11 +413,14 @@ export function renderTemplatePool() {
     const styleClass = styleSelect ? styleSelect.value : 'gradient';
 
     const itemsHTML = currentPoolItems.map((item, idx) => {
+      // ФИКС КАРТИНОК: раньше при ошибке загрузки сразу показывалась заглушка.
+      // Теперь для постеров (imdb) сначала пробуем запасное зеркало.
+      const onerrorAttr = item.svc === 'imdb' ? imgOnErrorAttr(item.url, item.svc) : `this.onerror=null;this.src='${pImg(item.svc)}';`;
       return `<div class="item style-${styleClass}" data-item-index="${idx}" title="${item.title}">
         <a href="${item.url}" target="_blank" rel="noopener">
         <img loading="lazy" src="${item.img}" alt="${item.title}" 
              style="width:${sVal}px; height:${sVal}px;"
-             onerror="this.src='${pImg(item.svc)}'">
+             onerror="${onerrorAttr}">
         </a></div>`;
     }).join('');
 
@@ -351,6 +433,7 @@ export function renderTemplatePool() {
         addBtn.onmouseout = () => { addBtn.style.borderColor = 'rgba(255,255,255,0.15)'; addBtn.style.color = 'var(--text-secondary)'; };
     }
     lucide.createIcons();
+    if (type === 'actors') hydrateActorPhotos();
   }
 }
 

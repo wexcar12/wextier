@@ -4,14 +4,10 @@
  */
 
 const P = 'wt_';
-const B = [
-  'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
-  'https://i.pinimg.com/originals/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
-  'https://i.pinimg.com/originals/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
-  'https://i.pinimg.com/originals/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
-  'https://i.pinimg.com/originals/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
-  'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/'
-];
+// ФИКС: раньше здесь были ссылки на чужой Pinterest/Steam — они периодически переставали
+// грузиться (хотлинк-защита, удалённые пины) и фон сайта ломался. Теперь фон рисуется
+// самим CSS (см. style.css, .bg-preset-N) — никакой внешний сервис ему для этого не нужен.
+const B = ['aurora', 'sunset', 'ocean', 'emerald', 'violet', 'graphite'];
 
 function sg(k, f) {
   try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
@@ -53,7 +49,9 @@ export function loadSettings() {
 }
 
 export function applyBg(idx) {
-  document.documentElement.style.setProperty('--bg-img', 'url(\'' + B[idx] + '\')');
+  const name = B[idx] || B[0];
+  B.forEach(n => document.body.classList.remove('bg-' + n));
+  document.body.classList.add('bg-' + name);
   ss('bg', idx);
 }
 

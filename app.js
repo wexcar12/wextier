@@ -21,7 +21,7 @@ import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from '.
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
 import { shareTierlist, loadFromURL } from './ui/share.js';
 import { setupSearch } from './ui/search.js';
-import { loadSettings, toggleTheme, toggleSidebar } from './ui/settings.js';
+import { loadSettings, toggleTheme, toggleSidebar, setupSettingsEvents } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
 
@@ -40,6 +40,7 @@ async function init() {
   const fbReady = initFB();
   loadSettings(); loadDrafts(); loadAchievements(); loadNeon(); loadParallax();
   setupSearch(); setupPlayer(); setupDuelButtons(); initSortable(); initParallaxMouse();
+  setupSettingsEvents(); // ФИКС: без этой строки списки "Стиль/Размер/Фон" в сайдбаре ничего не делали
 
   if (fbReady) initAuthObserver();
 
@@ -52,10 +53,11 @@ async function init() {
 }
 
 function bindEvents() {
-  document.getElementById('toggleSidebarBtn')?.addEventListener('click', toggleSidebar);
+  // ФИКС: themeBtn и toggleSidebarBtn уже привязаны в setupSettingsEvents() (см. init()).
+  // Раньше они привязывались ЕЩЁ РАЗ здесь — при клике срабатывали два обработчика подряд,
+  // и тема/сайдбар переключались туда-обратно за один клик, то есть визуально не менялись вообще.
   document.getElementById('burgerBtn')?.addEventListener('click', () => { document.getElementById('sidebar')?.classList.toggle('open'); });
 
-  document.getElementById('themeBtn')?.addEventListener('click', toggleTheme);
   document.getElementById('neonBtn')?.addEventListener('click', openNeonModal);
   
   // ФИКС: Параллакс корректно переключается
@@ -65,7 +67,8 @@ function bindEvents() {
   });
   
   document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
-  document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? 2 : 1); renderAll(); updateUndo(); });
+  // ФИКС: раньше в режиме Сравнения Undo всегда откатывал список №2, даже если правили список №1
+  document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? state.lastEditedList : 1); renderAll(); updateUndo(); });
 
   document.getElementById('galleryBtn')?.addEventListener('click', openGallery);
   document.getElementById('topBtn')?.addEventListener('click', openTop);
@@ -79,9 +82,24 @@ function bindEvents() {
   document.getElementById('importBtn')?.addEventListener('click', () => document.getElementById('importFile')?.click());
   document.getElementById('importFile')?.addEventListener('change', function () { if (this.files[0]) importJSON(this.files[0]); this.value = ''; });
 
-  document.getElementById('loginBtn')?.addEventListener('click', loginWithGoogle);
+  document.getElementById('loginBtn')?.addEventListener('click', async () => {
+    // ФИКС: раньше ошибка входа (заблокирован попап, отмена окна) не показывала пользователю ничего
+    try { await loginWithGoogle(); }
+    catch (e) { eventBus.emit('toast:show', { text: 'Не удалось войти. Проверьте, не блокирует ли браузер всплывающее окно.', type: 'error' }); }
+  });
   document.getElementById('logoutLink')?.addEventListener('click', logout);
   document.getElementById('profileDashboardBtn')?.addEventListener('click', openUserDashboard);
+
+  // ФИКС: эти две кнопки раньше не были привязаны ни к чему и не реагировали на клик
+  document.getElementById('newDraftBtnSidebar')?.addEventListener('click', createNewDraft);
+  document.getElementById('resetAllLink')?.addEventListener('click', () => {
+    if (confirm('Точно удалить ВСЕ черновики и настройки без возможности восстановить?')) {
+      clearAllData();
+      renderDraftsSidebar();
+      renderAll();
+      eventBus.emit('toast:show', { text: 'Все данные сброшены', type: 'success' });
+    }
+  });
 
   document.getElementById('compareBtn')?.addEventListener('click', () => {
     setCompare(!isCompare());
@@ -153,6 +171,9 @@ function bindEvents() {
     let img = document.getElementById('coverUrl')?.value.trim();
 
     if (!url) { eventBus.emit('toast:show', { text: 'Вставьте ссылку!', type: 'error' }); return; }
+    // ФИКС: раньше можно было вставить ссылку с любой схемой (например javascript:...).
+    // Теперь принимаем только обычные веб-ссылки.
+    if (!/^https?:\/\//i.test(url)) { eventBus.emit('toast:show', { text: 'Ссылка должна начинаться с http:// или https://', type: 'error' }); return; }
 
     if (!img) {
       const c = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00' };

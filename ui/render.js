@@ -108,7 +108,16 @@ export function render(listNum) {
       img.alt = '';
       img.style.width = currentSize + 'px'; // Восстанавливаем размер
       img.style.height = currentSize + 'px';
-      img.onerror = function() { this.src = pImg(item.svc); };
+      // ФИКС КАРТИНОК: если основной постер (IMDb-обложка) не загрузился, пробуем
+      // запасное зеркало, и только если оно тоже не ответит — показываем заглушку.
+      img.onerror = function() {
+        if (item.svc === 'imdb' && !this.dataset.mirrorTried) {
+          const m = (item.url || '').match(/tt\d+/);
+          if (m) { this.dataset.mirrorTried = '1'; this.src = 'https://live.metahub.space/poster/small/' + m[0] + '/img'; return; }
+        }
+        this.onerror = null;
+        this.src = pImg(item.svc);
+      };
       img.addEventListener('dragstart', e => e.preventDefault());
       
       a.appendChild(img);
@@ -180,5 +189,5 @@ export function updateUI() {
 
 export function updateUndo() {
   const undoBtn = document.getElementById('undoBtn');
-  if (undoBtn) undoBtn.disabled = !state.canUndo(isCompare() ? 2 : 1);
+  if (undoBtn) undoBtn.disabled = !state.canUndo(isCompare() ? state.lastEditedList : 1);
 }

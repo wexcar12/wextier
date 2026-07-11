@@ -20,8 +20,14 @@ export function loadNeon() {
 }
 
 export function applyNeon() {
+  // ФИКС: раньше эта функция только высчитывала цвет свечения в переменную --neon-glow,
+  // но НИ ОДНО правило в style.css эту переменную не использовало и класс "цели" неона
+  // (target: обложки/тиры/заголовок) нигде не проставлялся — включение неона визуально
+  // не делало вообще ничего. Теперь проставляем класс, который реально стилизован в CSS.
+  document.body.classList.remove('neon-target-all', 'neon-target-items', 'neon-target-tiers', 'neon-target-title');
   if (neonS.enabled) {
     document.body.classList.add('neon-active');
+    document.body.classList.add('neon-target-' + (neonS.target || 'all'));
     if (neonS.color === 'rainbow') {
       if (!window._neonRI) {
         const colors = [

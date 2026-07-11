@@ -92,12 +92,11 @@ export const api = {
     if (!db) throw new Error('Firebase not available');
 
     const ref = db.collection('tierlists').doc(tierlistId);
+    // ФИКС: раньше было "прочитать число -> прибавить 1 -> записать" — если два человека
+    // голосовали одновременно, один голос терялся. increment() — атомарная операция на сервере.
+    await ref.update({ wins: firebase.firestore.FieldValue.increment(1) });
     const doc = await ref.get();
-    if (!doc.exists) return 0;
-
-    const currentWins = doc.data().wins || 0;
-    await ref.update({ wins: currentWins + 1 });
-    return currentWins + 1;
+    return doc.exists ? (doc.data().wins || 0) : 0;
   },
 
   async fetchUserLists(userId) {

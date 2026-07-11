@@ -86,6 +86,7 @@ class StateManager {
     this.history1 = []; this.history2 = []; this.index1 = -1; this.index2 = -1;
     this.data1 = this._defaultData(); this.data2 = this._defaultData();
     this.ui = { editing: false, compare: false, activeTier: null, activeList: 1 };
+    this.lastEditedList = 1;
   }
   setUI(key, value) { this.ui[key] = value; eventBus.emit('ui:state:changed', { key, value, state: this.ui }); }
   _defaultData() {
@@ -104,6 +105,7 @@ class StateManager {
     command.execute(this);
     if (listNum === 1) this.index1 = history.length - 1; else this.index2 = history.length - 1;
     if (history.length > 50) { history.shift(); if (listNum === 1) this.index1--; else this.index2--; }
+    this.lastEditedList = listNum; // ФИКС: запоминаем, какой список редактировали последним — нужно для Undo
     eventBus.emit('state:changed', { listNum }); this._save();
   }
   undo(listNum = 1) {

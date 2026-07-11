@@ -25,7 +25,7 @@ class ModalManager {
     container.style.zIndex = 1000 + this.stack.length * 10;
     container.appendChild(content);
 
-    this.stack.push({ container, options, cleanup: content._cleanup || null });
+    this.stack.push({ container, options, cleanup: content._cleanup || null, handleEscapeRef: null });
 
     this.overlay.innerHTML = '';
     this.overlay.appendChild(container);
@@ -37,17 +37,18 @@ class ModalManager {
       if (e.key === 'Escape' && options.closeOnEscape) this.close();
     };
     document.addEventListener('keydown', handleEscape);
+    this.stack[this.stack.length - 1].handleEscapeRef = handleEscape;
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      this._removeFromStack(container);
-    };
+    return () => this._removeFromStack(container);
   }
 
   _removeFromStack(container) {
     const index = this.stack.findIndex(item => item.container === container);
     if (index !== -1) {
       const item = this.stack[index];
+      // ФИКС: раньше слушатель Escape снимался только при закрытии через возвращённую функцию.
+      // Если закрывали кликом по фону, слушатель оставался в памяти навсегда.
+      if (item.handleEscapeRef) document.removeEventListener('keydown', item.handleEscapeRef);
       if (item.cleanup) item.cleanup();
       this.stack.splice(index, 1);
     }
