@@ -1,6 +1,6 @@
 /**
  * @module ui/parallax
- * @description Параллакс-эффект.
+ * @description Параллакс-эффект — теперь настоящий 3D из трёх слоёв, следящих за мышью.
  */
 
 const P = 'wt_';
@@ -21,43 +21,60 @@ export function loadParallax() {
 export function toggleParallax(on) {
   parallaxOn = on;
   const wrapper = document.getElementById('parallaxWrapper');
-  const layer = document.getElementById('parallaxLayer');
   const btn = document.getElementById('parallaxBtn');
 
   if (on) {
     document.body.classList.add('parallax-active');
     if (btn) btn.classList.add('primary');
     if (wrapper) wrapper.style.display = 'block';
-    if (layer) {
-      const bgSelect = document.getElementById('bgSelect');
-      const B = [
-        'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg',
-        'https://i.pinimg.com/originals/e7/29/81/e729811d65432283f14d04b3402a7604.jpg',
-        'https://i.pinimg.com/originals/b1/fb/e0/b1fbe00a51bd64ed14aa7193af834456.jpg',
-        'https://i.pinimg.com/originals/12/08/9b/12089ba4009236d30d3d5188d9d2d002.jpg',
-        'https://i.pinimg.com/originals/e1/a7/b4/e1a7b44a3711d48afe510af6a905587c.jpg',
-        'https://images.steamusercontent.com/ugc/13054916979645448/3247B76A919A45A67793B1747716F68C9C53499F/'
-      ];
-      const idx = bgSelect ? parseInt(bgSelect.value, 10) : 0;
-      layer.style.backgroundImage = 'url(\'' + B[idx] + '\')';
-    }
   } else {
     document.body.classList.remove('parallax-active');
     if (btn) btn.classList.remove('primary');
-    if (wrapper) wrapper.style.display = 'none';
-    if (layer) layer.style.transform = 'translateX(0px) translateY(0px)';
+    if (wrapper) { wrapper.style.display = 'none'; wrapper.style.transform = ''; }
+    // Возвращаем слои в исходное положение, чтобы при следующем включении не было рывка
+    ['parallaxLayer1', 'parallaxLayer2', 'parallaxLayer3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.transform = '';
+    });
   }
   ss('parallax', on);
 }
 
+// ФИКС/АПГРЕЙД: раньше был один плоский слой с чужой картинкой (Pinterest), который двигался
+// от мыши. Теперь три слоя с разной "глубиной" (ближний двигается сильнее дальнего) плюс лёгкий
+// 3D-наклон всей сцены — получается настоящее ощущение объёма, а не просто сдвиг картинки.
 export function initParallaxMouse() {
-  const layer = document.getElementById('parallaxLayer');
-  if (!layer) return;
+  const wrapper = document.getElementById('parallaxWrapper');
+  const layer1 = document.getElementById('parallaxLayer1');
+  const layer2 = document.getElementById('parallaxLayer2');
+  const layer3 = document.getElementById('parallaxLayer3');
+  if (!wrapper || !layer1 || !layer2 || !layer3) return;
+
+  let targetX = 0, targetY = 0, curX = 0, curY = 0;
+  let ticking = false;
 
   window.addEventListener('mousemove', function(e) {
     if (!parallaxOn) return;
-    const x = (window.innerWidth / 2 - e.pageX) / 25;
-    const y = (window.innerHeight / 2 - e.pageY) / 25;
-    layer.style.transform = 'translateX(' + x + 'px) translateY(' + y + 'px)';
+    // -0.5..0.5 по каждой оси относительно центра экрана
+    targetX = (e.clientX / window.innerWidth) - 0.5;
+    targetY = (e.clientY / window.innerHeight) - 0.5;
+    if (!ticking) { requestAnimationFrame(applyFrame); ticking = true; }
   });
+
+  function applyFrame() {
+    // Плавное сглаживание движения (инерция), чтобы эффект не был дёрганым
+    curX += (targetX - curX) * 0.08;
+    curY += (targetY - curY) * 0.08;
+
+    layer1.style.transform = `translate(${curX * -18}px, ${curY * -18}px)`;
+    layer2.style.transform = `translate(${curX * -40}px, ${curY * -40}px)`;
+    layer3.style.transform = `translate(${curX * -70}px, ${curY * -70}px) scale(1.04)`;
+    wrapper.style.transform = `rotateY(${curX * 5}deg) rotateX(${curY * -5}deg)`;
+
+    if (Math.abs(targetX - curX) > 0.001 || Math.abs(targetY - curY) > 0.001) {
+      requestAnimationFrame(applyFrame);
+    } else {
+      ticking = false;
+    }
+  }
 }

@@ -22,11 +22,16 @@ export async function openGallery() {
     return;
   }
 
-  const { items } = await api.fetchTierlists(20);
+  // ФИКС ПОИСКА: раньше в галерее не было строки поиска вообще — можно было только
+  // листать первые 20 тир-листов и всё. Firestore не умеет искать по тексту "из коробки",
+  // поэтому подгружаем список побольше и ищем по названию прямо в браузере.
+  const { items } = await api.fetchTierlists(60);
 
   const content = document.createElement('div');
   content.innerHTML = `
     <h3 style="color:var(--gold);">Галерея тир-листов</h3>
+    <input type="text" id="gallerySearchInput" placeholder="Поиск по названию..." autocomplete="off"
+      style="width:100%;padding:10px 12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:var(--text);margin-bottom:10px;">
     <div id="galleryList" style="max-height:350px;overflow-y:auto;"></div>
     <div class="modal-actions" style="margin-top:12px;">
       <button class="btn btn-secondary" id="closeGallery">Закрыть</button>
@@ -37,10 +42,21 @@ export async function openGallery() {
   const close = modalManager.open(content);
 
   const list = content.querySelector('#galleryList');
-  if (items.length === 0) {
-    list.innerHTML = '<div style="color:#888;text-align:center;padding:10px;">Пока пусто...</div>';
-  } else {
-    items.forEach(doc => {
+
+  function renderList(filterText) {
+    const q = (filterText || '').trim().toLowerCase();
+    const filtered = q ? items.filter(doc => (doc.name || 'без названия').toLowerCase().includes(q)) : items;
+
+    list.innerHTML = '';
+    if (items.length === 0) {
+      list.innerHTML = '<div style="color:#888;text-align:center;padding:10px;">Пока пусто...</div>';
+      return;
+    }
+    if (filtered.length === 0) {
+      list.innerHTML = '<div style="color:#888;text-align:center;padding:10px;">Ничего не найдено по запросу «' + escapeHTML(filterText) + '»</div>';
+      return;
+    }
+    filtered.forEach(doc => {
       const div = document.createElement('div');
       div.style.cssText = 'padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
       // XSS-ЗАЩИТА: escapeHTML для всех пользовательских данных
@@ -59,6 +75,9 @@ export async function openGallery() {
       list.appendChild(div);
     });
   }
+
+  content.querySelector('#gallerySearchInput').addEventListener('input', (e) => renderList(e.target.value));
+  renderList('');
 
   content.querySelector('#closeGallery').onclick = close;
 

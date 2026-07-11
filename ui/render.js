@@ -5,6 +5,7 @@
 import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
 import { escapeHTML } from '../utils/sanitizers.js';
+import { attachPosterFallback } from './templates.js';
 
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
@@ -87,6 +88,9 @@ export function render(listNum) {
       const div = document.createElement('div');
       div.className = `item style-${currentStyle}`; // ФИКС 7: Стиль карточки
       div.dataset.svc = item.svc;
+      // ФИКС: раньше при наведении на фильм/игру в тире подсказка не показывалась вообще
+      // (title у актёров в пуле шаблонов был, а у карточек в самом тир-листе — нет).
+      if (item.title) div.dataset.tooltip = item.title;
 
       const a = document.createElement('a');
       a.href = item.url;
@@ -108,16 +112,13 @@ export function render(listNum) {
       img.alt = '';
       img.style.width = currentSize + 'px'; // Восстанавливаем размер
       img.style.height = currentSize + 'px';
-      // ФИКС КАРТИНОК: если основной постер (IMDb-обложка) не загрузился, пробуем
-      // запасное зеркало, и только если оно тоже не ответит — показываем заглушку.
-      img.onerror = function() {
-        if (item.svc === 'imdb' && !this.dataset.mirrorTried) {
-          const m = (item.url || '').match(/tt\d+/);
-          if (m) { this.dataset.mirrorTried = '1'; this.src = 'https://live.metahub.space/poster/small/' + m[0] + '/img'; return; }
-        }
-        this.onerror = null;
-        this.src = pImg(item.svc);
-      };
+      // ФИКС КАРТИНОК: та же надёжная цепочка (зеркало → поиск по Wikipedia → заглушка),
+      // что и в пуле шаблонов — теперь работает одинаково и для уже добавленных карточек.
+      if (item.svc === 'imdb') {
+        attachPosterFallback(img, item);
+      } else {
+        img.onerror = function() { this.onerror = null; this.src = pImg(item.svc); };
+      }
       img.addEventListener('dragstart', e => e.preventDefault());
       
       a.appendChild(img);

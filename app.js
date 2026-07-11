@@ -24,6 +24,7 @@ import { setupSearch } from './ui/search.js';
 import { loadSettings, toggleTheme, toggleSidebar, setupSettingsEvents } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
+import { initTooltips } from './ui/tooltip.js';
 
 window.escapeHTML = escapeHTML;
 
@@ -39,7 +40,7 @@ async function init() {
 
   const fbReady = initFB();
   loadSettings(); loadDrafts(); loadAchievements(); loadNeon(); loadParallax();
-  setupSearch(); setupPlayer(); setupDuelButtons(); initSortable(); initParallaxMouse();
+  setupSearch(); setupPlayer(); setupDuelButtons(); initSortable(); initParallaxMouse(); initTooltips();
   setupSettingsEvents(); // ФИКС: без этой строки списки "Стиль/Размер/Фон" в сайдбаре ничего не делали
 
   if (fbReady) initAuthObserver();
@@ -144,22 +145,63 @@ function bindEvents() {
     }
   });
 
-  document.getElementById('fetchCoverBtn')?.addEventListener('click', async () => {
+  // ФИКС АВТО-ПОИСКА ОБЛОЖКИ: раньше "Авто-поиск" умел находить картинку только для YouTube,
+  // а для Spotify/Apple/Yandex всегда писал "не удалось найти". Теперь для Spotify обложка
+  // тоже находится автоматически (через официальный публичный oEmbed Spotify, без ключа).
+  // Apple Music и Яндекс.Музыка не отдают обложку без личного API-ключа разработчика — для них
+  // остаётся ручная вставка ссылки (это ограничение самих сервисов, а не сайта).
+  async function fetchCoverForTrack(svc, url) {
+    if (!url) return null;
+    if (svc === 'youtube') {
+      const m = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
+      return m ? 'https://img.youtube.com/vi/' + m[1] + '/mqdefault.jpg' : null;
+    }
+    if (svc === 'spotify') {
+      try {
+        const res = await fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(url));
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.thumbnail_url || null;
+      } catch (e) { return null; }
+    }
+    return null; // Apple Music / Яндекс Музыка — только вручную (см. комментарий выше)
+  }
+
+  async function runCoverAutoSearch(showErrorToast) {
+    const svc = document.getElementById('svc')?.value || 'youtube';
     const url = document.getElementById('trackUrl')?.value.trim();
-    if (!url) { eventBus.emit('toast:show', { text: 'Вставьте ссылку', type: 'info' }); return; }
-    
+    const coverInput = document.getElementById('coverUrl');
+    const preview = document.getElementById('coverPreview');
+    if (!url) { if (showErrorToast) eventBus.emit('toast:show', { text: 'Вставьте ссылку', type: 'info' }); return; }
+    if (coverInput.value.trim()) return; // пользователь уже сам вставил свою картинку — не перезаписываем
+
     document.getElementById('fetchCoverBtn').disabled = true;
-    let cover = null; const ytM = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
-    if (ytM) cover = 'https://img.youtube.com/vi/' + ytM[1] + '/mqdefault.jpg';
-    
+    const cover = await fetchCoverForTrack(svc, url);
     if (cover) {
-      document.getElementById('coverUrl').value = cover;
-      const preview = document.getElementById('coverPreview');
-      if(preview) { preview.src = cover; preview.style.display = 'block'; }
-    } else {
-      eventBus.emit('toast:show', { text: 'Не удалось найти. Вставьте ссылку на картинку вручную.', type: 'error' });
+      coverInput.value = cover;
+      if (preview) { preview.src = cover; preview.style.display = 'block'; }
+    } else if (showErrorToast) {
+      eventBus.emit('toast:show', { text: 'Не удалось найти обложку автоматически. Вставьте ссылку на картинку вручную.', type: 'error' });
     }
     document.getElementById('fetchCoverBtn').disabled = false;
+  }
+
+  // Резервная кнопка — можно нажать вручную в любой момент (например, если авто-поиск не сработал)
+  document.getElementById('fetchCoverBtn')?.addEventListener('click', () => {
+    document.getElementById('coverUrl').value = ''; // разрешаем повторный поиск по кнопке
+    runCoverAutoSearch(true);
+  });
+
+  // ГЛАВНЫЙ ФИКС: обложка теперь ищется САМА, как только вставлена ссылка — без нажатий.
+  // Кнопка и поле "Ссылка на картинку" остаются как резерв, если авто-поиск не найдёт обложку.
+  let coverAutoSearchTimer = null;
+  document.getElementById('trackUrl')?.addEventListener('input', () => {
+    clearTimeout(coverAutoSearchTimer);
+    coverAutoSearchTimer = setTimeout(() => runCoverAutoSearch(false), 700);
+  });
+  document.getElementById('svc')?.addEventListener('change', () => {
+    document.getElementById('coverUrl').value = '';
+    runCoverAutoSearch(false);
   });
 
   document.getElementById('cancelAdd')?.addEventListener('click', () => { document.getElementById('addModal')?.classList.remove('open'); });

@@ -60,12 +60,12 @@ body {
     transition: background 0.6s var(--ease);
 }
 
-body.bg-aurora   { background: radial-gradient(circle at 15% 10%, #2a3a6b 0%, transparent 45%), radial-gradient(circle at 85% 25%, #1e5c4f 0%, transparent 50%), radial-gradient(circle at 50% 90%, #3a2a5c 0%, transparent 55%), var(--bg); }
-body.bg-sunset   { background: radial-gradient(circle at 10% 15%, #6b3a2a 0%, transparent 45%), radial-gradient(circle at 90% 20%, #6b2a4a 0%, transparent 50%), radial-gradient(circle at 50% 95%, #3a2a2a 0%, transparent 55%), var(--bg); }
-body.bg-ocean    { background: radial-gradient(circle at 20% 10%, #1a4a6b 0%, transparent 45%), radial-gradient(circle at 80% 30%, #0f3a4a 0%, transparent 50%), radial-gradient(circle at 50% 90%, #1a2a4a 0%, transparent 55%), var(--bg); }
-body.bg-emerald  { background: radial-gradient(circle at 15% 15%, #144a3a 0%, transparent 45%), radial-gradient(circle at 85% 25%, #1a5c3a 0%, transparent 50%), radial-gradient(circle at 50% 90%, #0f3a2a 0%, transparent 55%), var(--bg); }
-body.bg-violet   { background: radial-gradient(circle at 15% 10%, #4a2a6b 0%, transparent 45%), radial-gradient(circle at 85% 25%, #2a1e5c 0%, transparent 50%), radial-gradient(circle at 50% 90%, #5c2a4a 0%, transparent 55%), var(--bg); }
-body.bg-graphite { background: radial-gradient(circle at 20% 15%, #2a2a32 0%, transparent 45%), radial-gradient(circle at 85% 30%, #1e1e26 0%, transparent 50%), radial-gradient(circle at 50% 95%, #26262e 0%, transparent 55%), var(--bg); }
+body.bg-aurora   { --pz-c1:#3a4e94; --pz-c2:#26816d; --pz-c3:#523a80; background: radial-gradient(circle at 15% 10%, #2a3a6b 0%, transparent 45%), radial-gradient(circle at 85% 25%, #1e5c4f 0%, transparent 50%), radial-gradient(circle at 50% 90%, #3a2a5c 0%, transparent 55%), var(--bg); }
+body.bg-sunset   { --pz-c1:#96502f; --pz-c2:#943a67; --pz-c3:#4a3535; background: radial-gradient(circle at 10% 15%, #6b3a2a 0%, transparent 45%), radial-gradient(circle at 90% 20%, #6b2a4a 0%, transparent 50%), radial-gradient(circle at 50% 95%, #3a2a2a 0%, transparent 55%), var(--bg); }
+body.bg-ocean    { --pz-c1:#25679a; --pz-c2:#15546a; --pz-c3:#243c68; background: radial-gradient(circle at 20% 10%, #1a4a6b 0%, transparent 45%), radial-gradient(circle at 80% 30%, #0f3a4a 0%, transparent 50%), radial-gradient(circle at 50% 90%, #1a2a4a 0%, transparent 55%), var(--bg); }
+body.bg-emerald  { --pz-c1:#1c6b51; --pz-c2:#237e4e; --pz-c3:#15503b; background: radial-gradient(circle at 15% 15%, #144a3a 0%, transparent 45%), radial-gradient(circle at 85% 25%, #1a5c3a 0%, transparent 50%), radial-gradient(circle at 50% 90%, #0f3a2a 0%, transparent 55%), var(--bg); }
+body.bg-violet   { --pz-c1:#653a94; --pz-c2:#3c2a80; --pz-c3:#7e3a67; background: radial-gradient(circle at 15% 10%, #4a2a6b 0%, transparent 45%), radial-gradient(circle at 85% 25%, #2a1e5c 0%, transparent 50%), radial-gradient(circle at 50% 90%, #5c2a4a 0%, transparent 55%), var(--bg); }
+body.bg-graphite { --pz-c1:#3a3a45; --pz-c2:#292930; --pz-c3:#34343e; background: radial-gradient(circle at 20% 15%, #2a2a32 0%, transparent 45%), radial-gradient(circle at 85% 30%, #1e1e26 0%, transparent 50%), radial-gradient(circle at 50% 95%, #26262e 0%, transparent 55%), var(--bg); }
 body.light-theme.bg-aurora, body.light-theme.bg-sunset, body.light-theme.bg-ocean,
 body.light-theme.bg-emerald, body.light-theme.bg-violet, body.light-theme.bg-graphite {
     background: radial-gradient(circle at 15% 10%, rgba(120,140,255,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 25%, rgba(120,220,190,0.12) 0%, transparent 50%), var(--bg);
@@ -81,14 +81,25 @@ body::before {
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 10px; transition: background 0.2s; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
-#particlesCanvas, #parallaxWrapper { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
-#parallaxWrapper { width: 100vw; height: 100vh; display: none; }
-body.parallax-active #parallaxWrapper { display: block; }
-#parallaxLayer {
-    position: absolute; top: -5%; left: -5%; width: 110%; height: 110%;
-    background-size: cover; background-position: center;
-    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* --- ПАРАЛЛАКС 2.0: настоящий 3D-эффект из трёх слоёв вместо одной чужой картинки ---
+   ФИКС НАДЁЖНОСТИ: раньше картинки параллакса грузились с Pinterest (i.pinimg.com) — такие
+   ссылки со временем протухают/блокируются, и фон параллакса мог просто пропасть. Теперь
+   всё рисуется CSS-градиентами, ничего не может "не загрузиться". А ещё теперь у параллакса
+   те же 6 цветовых тем, что и у обычного фона (--pz-c1/2/3 берутся из текущей темы выше) —
+   какую тему выбрал в "Фон", такая и будет в параллаксе. */
+#particlesCanvas { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
+#parallaxWrapper {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; display: none;
+    overflow: hidden; perspective: 1400px; transition: transform 0.25s var(--ease);
 }
+body.parallax-active #parallaxWrapper { display: block; }
+.pz-layer {
+    position: absolute; top: -20%; left: -20%; width: 140%; height: 140%;
+    transition: transform 0.15s linear; will-change: transform;
+}
+#parallaxLayer1 { background: radial-gradient(circle at 22% 25%, var(--pz-c1) 0%, transparent 38%), radial-gradient(circle at 78% 35%, var(--pz-c2) 0%, transparent 42%); opacity: 0.5; }
+#parallaxLayer2 { background: radial-gradient(circle at 68% 72%, var(--pz-c3) 0%, transparent 38%), radial-gradient(circle at 25% 80%, var(--pz-c1) 0%, transparent 36%); opacity: 0.4; }
+#parallaxLayer3 { background: radial-gradient(circle at 50% 45%, var(--pz-c2) 0%, transparent 32%); opacity: 0.35; }
 
 /* --- САЙДБАР --- */
 .sidebar {
@@ -233,6 +244,16 @@ i[data-lucide] { display: inline-block; width: 18px; height: 18px; background: r
 .neon-active.neon-target-all .sidebar-logo,
 .neon-active.neon-target-title .sidebar-logo { text-shadow: var(--neon-glow); transition: text-shadow 0.5s ease; }
 #neonBtn.neon-active { color: var(--gold); }
+
+/* --- ТУЛТИП: маленькое окошко с названием при наведении на карточку --- */
+#itemTooltip {
+  position: fixed; top: 0; left: 0; z-index: 500; pointer-events: none;
+  background: rgba(20,18,10,0.95); color: #fff; padding: 7px 12px; border-radius: 9px;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+  opacity: 0; transform-origin: top left; transition: opacity 0.15s ease;
+}
+#itemTooltip.show { opacity: 1; }
 
 /* АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ */
 .burger-btn { display: none; position: fixed; top: 15px; left: 15px; z-index: 200; background: var(--glass); border: 1px solid var(--input-border); color: white; padding: 10px; border-radius: 10px; cursor: pointer; backdrop-filter: blur(10px); }

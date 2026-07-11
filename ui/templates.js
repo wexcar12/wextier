@@ -218,7 +218,107 @@ const TEMPLATES = {
     { title: "Dota 2", link: "https://store.steampowered.com/app/570/", svc: "steam" },
     { title: "Baldur's Gate 3", link: "https://store.steampowered.com/app/1086940/", svc: "steam" },
     { title: "The Elder Scrolls V: Skyrim", link: "https://store.steampowered.com/app/489830/", svc: "steam" },
-    { title: "Hollow Knight", link: "https://store.steampowered.com/app/367520/", svc: "steam" }
+    { title: "Hollow Knight", link: "https://store.steampowered.com/app/367520/", svc: "steam" },
+    { title: "Portal 2", link: "https://store.steampowered.com/app/620/", svc: "steam" },
+    { title: "Half-Life 2", link: "https://store.steampowered.com/app/220/", svc: "steam" },
+    { title: "Half-Life: Alyx", link: "https://store.steampowered.com/app/546560/", svc: "steam" },
+    { title: "Portal", link: "https://store.steampowered.com/app/400/", svc: "steam" },
+    { title: "Half-Life", link: "https://store.steampowered.com/app/70/", svc: "steam" },
+    { title: "Terraria", link: "https://store.steampowered.com/app/105600/", svc: "steam" },
+    { title: "Stardew Valley", link: "https://store.steampowered.com/app/413150/", svc: "steam" },
+    { title: "Team Fortress 2", link: "https://store.steampowered.com/app/440/", svc: "steam" },
+    { title: "Left 4 Dead 2", link: "https://store.steampowered.com/app/550/", svc: "steam" },
+    { title: "Garry's Mod", link: "https://store.steampowered.com/app/4000/", svc: "steam" },
+    { title: "Rust", link: "https://store.steampowered.com/app/252490/", svc: "steam" },
+    { title: "ARK: Survival Evolved", link: "https://store.steampowered.com/app/346110/", svc: "steam" },
+    { title: "PUBG: BATTLEGROUNDS", link: "https://store.steampowered.com/app/578080/", svc: "steam" },
+    { title: "Apex Legends", link: "https://store.steampowered.com/app/1172470/", svc: "steam" },
+    { title: "Destiny 2", link: "https://store.steampowered.com/app/1085660/", svc: "steam" },
+    { title: "Warframe", link: "https://store.steampowered.com/app/230410/", svc: "steam" },
+    { title: "Path of Exile", link: "https://store.steampowered.com/app/238960/", svc: "steam" },
+    { title: "Sid Meier's Civilization VI", link: "https://store.steampowered.com/app/289070/", svc: "steam" },
+    { title: "Sid Meier's Civilization V", link: "https://store.steampowered.com/app/8930/", svc: "steam" },
+    { title: "Total War: WARHAMMER III", link: "https://store.steampowered.com/app/1142710/", svc: "steam" },
+    { title: "Divinity: Original Sin 2", link: "https://store.steampowered.com/app/435150/", svc: "steam" },
+    { title: "Disco Elysium", link: "https://store.steampowered.com/app/632470/", svc: "steam" },
+    { title: "Hades", link: "https://store.steampowered.com/app/1145360/", svc: "steam" },
+    { title: "Celeste", link: "https://store.steampowered.com/app/504230/", svc: "steam" },
+    { title: "Undertale", link: "https://store.steampowered.com/app/391540/", svc: "steam" },
+    { title: "Cuphead", link: "https://store.steampowered.com/app/268910/", svc: "steam" },
+    { title: "Ori and the Blind Forest", link: "https://store.steampowered.com/app/261570/", svc: "steam" },
+    { title: "Ori and the Will of the Wisps", link: "https://store.steampowered.com/app/1057090/", svc: "steam" },
+    { title: "Dead Cells", link: "https://store.steampowered.com/app/588650/", svc: "steam" },
+    { title: "Slay the Spire", link: "https://store.steampowered.com/app/646570/", svc: "steam" },
+    { title: "It Takes Two", link: "https://store.steampowered.com/app/1426210/", svc: "steam" },
+    { title: "A Way Out", link: "https://store.steampowered.com/app/1222700/", svc: "steam" },
+    { title: "Sekiro: Shadows Die Twice", link: "https://store.steampowered.com/app/814380/", svc: "steam" },
+    { title: "Dark Souls III", link: "https://store.steampowered.com/app/374320/", svc: "steam" },
+    { title: "Dark Souls Remastered", link: "https://store.steampowered.com/app/570940/", svc: "steam" },
+    { title: "Monster Hunter: World", link: "https://store.steampowered.com/app/582010/", svc: "steam" },
+    { title: "Resident Evil Village", link: "https://store.steampowered.com/app/1196590/", svc: "steam" },
+    { title: "DOOM Eternal", link: "https://store.steampowered.com/app/782330/", svc: "steam" },
+    { title: "DOOM (2016)", link: "https://store.steampowered.com/app/379720/", svc: "steam" },
+    { title: "Fallout 4", link: "https://store.steampowered.com/app/377160/", svc: "steam" },
+    { title: "Fallout: New Vegas", link: "https://store.steampowered.com/app/22380/", svc: "steam" },
+    { title: "The Elder Scrolls Online", link: "https://store.steampowered.com/app/306130/", svc: "steam" },
+    { title: "Grand Theft Auto: San Andreas", link: "https://store.steampowered.com/app/12120/", svc: "steam" },
+    { title: "Grand Theft Auto IV", link: "https://store.steampowered.com/app/12210/", svc: "steam" },
+    { title: "Grand Theft Auto: Vice City", link: "https://store.steampowered.com/app/12110/", svc: "steam" },
+    { title: "Max Payne 3", link: "https://store.steampowered.com/app/204100/", svc: "steam" },
+    { title: "L.A. Noire", link: "https://store.steampowered.com/app/45880/", svc: "steam" },
+    { title: "Metro Exodus", link: "https://store.steampowered.com/app/412020/", svc: "steam" },
+    { title: "Tomb Raider (2013)", link: "https://store.steampowered.com/app/203160/", svc: "steam" },
+    { title: "Rise of the Tomb Raider", link: "https://store.steampowered.com/app/391220/", svc: "steam" },
+    { title: "Shadow of the Tomb Raider", link: "https://store.steampowered.com/app/750920/", svc: "steam" },
+    { title: "Assassin's Creed Valhalla", link: "https://store.steampowered.com/app/2208920/", svc: "steam" },
+    { title: "Assassin's Creed Odyssey", link: "https://store.steampowered.com/app/812140/", svc: "steam" },
+    { title: "Assassin's Creed Origins", link: "https://store.steampowered.com/app/582160/", svc: "steam" },
+    { title: "Far Cry 5", link: "https://store.steampowered.com/app/552520/", svc: "steam" },
+    { title: "Watch Dogs 2", link: "https://store.steampowered.com/app/447040/", svc: "steam" },
+    { title: "No Man's Sky", link: "https://store.steampowered.com/app/275850/", svc: "steam" },
+    { title: "Subnautica", link: "https://store.steampowered.com/app/264710/", svc: "steam" },
+    { title: "Valheim", link: "https://store.steampowered.com/app/892970/", svc: "steam" },
+    { title: "Don't Starve Together", link: "https://store.steampowered.com/app/322330/", svc: "steam" },
+    { title: "Factorio", link: "https://store.steampowered.com/app/427520/", svc: "steam" },
+    { title: "Satisfactory", link: "https://store.steampowered.com/app/526870/", svc: "steam" },
+    { title: "Cities: Skylines", link: "https://store.steampowered.com/app/255710/", svc: "steam" },
+    { title: "Cities: Skylines II", link: "https://store.steampowered.com/app/949230/", svc: "steam" },
+    { title: "Planet Coaster", link: "https://store.steampowered.com/app/493340/", svc: "steam" },
+    { title: "Among Us", link: "https://store.steampowered.com/app/945360/", svc: "steam" },
+    { title: "Human: Fall Flat", link: "https://store.steampowered.com/app/477160/", svc: "steam" },
+    { title: "Goat Simulator", link: "https://store.steampowered.com/app/265930/", svc: "steam" },
+    { title: "PAYDAY 2", link: "https://store.steampowered.com/app/218620/", svc: "steam" },
+    { title: "PAYDAY 3", link: "https://store.steampowered.com/app/1272080/", svc: "steam" },
+    { title: "Deep Rock Galactic", link: "https://store.steampowered.com/app/548430/", svc: "steam" },
+    { title: "Phasmophobia", link: "https://store.steampowered.com/app/739630/", svc: "steam" },
+    { title: "Lethal Company", link: "https://store.steampowered.com/app/1966720/", svc: "steam" },
+    { title: "Risk of Rain 2", link: "https://store.steampowered.com/app/632360/", svc: "steam" },
+    { title: "Vampire Survivors", link: "https://store.steampowered.com/app/1794680/", svc: "steam" },
+    { title: "Horizon Zero Dawn", link: "https://store.steampowered.com/app/1151640/", svc: "steam" },
+    { title: "Death Stranding", link: "https://store.steampowered.com/app/1850570/", svc: "steam" },
+    { title: "Marvel's Spider-Man Remastered", link: "https://store.steampowered.com/app/1817070/", svc: "steam" },
+    { title: "Batman: Arkham Knight", link: "https://store.steampowered.com/app/208650/", svc: "steam" },
+    { title: "Batman: Arkham City", link: "https://store.steampowered.com/app/200260/", svc: "steam" },
+    { title: "Middle-earth: Shadow of Mordor", link: "https://store.steampowered.com/app/241930/", svc: "steam" },
+    { title: "Middle-earth: Shadow of War", link: "https://store.steampowered.com/app/356190/", svc: "steam" },
+    { title: "Mass Effect Legendary Edition", link: "https://store.steampowered.com/app/1328670/", svc: "steam" },
+    { title: "Rainbow Six Siege", link: "https://store.steampowered.com/app/359550/", svc: "steam" },
+    { title: "For Honor", link: "https://store.steampowered.com/app/304390/", svc: "steam" },
+    { title: "Tom Clancy's The Division 2", link: "https://store.steampowered.com/app/667790/", svc: "steam" },
+    { title: "Titanfall 2", link: "https://store.steampowered.com/app/1237970/", svc: "steam" },
+    { title: "Star Wars Jedi: Fallen Order", link: "https://store.steampowered.com/app/1172380/", svc: "steam" },
+    { title: "Star Wars Jedi: Survivor", link: "https://store.steampowered.com/app/1774580/", svc: "steam" },
+    { title: "Halo Infinite", link: "https://store.steampowered.com/app/1240440/", svc: "steam" },
+    { title: "Halo: The Master Chief Collection", link: "https://store.steampowered.com/app/976730/", svc: "steam" },
+    { title: "Forza Horizon 5", link: "https://store.steampowered.com/app/1551360/", svc: "steam" },
+    { title: "Rocket League", link: "https://store.steampowered.com/app/252950/", svc: "steam" },
+    { title: "Brawlhalla", link: "https://store.steampowered.com/app/291550/", svc: "steam" },
+    { title: "Overcooked! 2", link: "https://store.steampowered.com/app/728880/", svc: "steam" },
+    { title: "Raft", link: "https://store.steampowered.com/app/648800/", svc: "steam" },
+    { title: "The Forest", link: "https://store.steampowered.com/app/242760/", svc: "steam" },
+    { title: "Sons of the Forest", link: "https://store.steampowered.com/app/1326470/", svc: "steam" },
+    { title: "7 Days to Die", link: "https://store.steampowered.com/app/251570/", svc: "steam" },
+    { title: "Project Zomboid", link: "https://store.steampowered.com/app/108600/", svc: "steam" }
   ],
   actors: [
     { title: "Ди Каприо", link: "https://www.imdb.com/name/nm0000138/", svc: "imdb", wiki: "Leonardo_DiCaprio" },
@@ -240,7 +340,135 @@ const TEMPLATES = {
     { title: "Хит Леджер", link: "https://www.imdb.com/name/nm0005132/", svc: "imdb", wiki: "Heath_Ledger" },
     { title: "Анджелина Джоли", link: "https://www.imdb.com/name/nm0001401/", svc: "imdb", wiki: "Angelina_Jolie" },
     { title: "Аль Пачино", link: "https://www.imdb.com/name/nm0000199/", svc: "imdb", wiki: "Al_Pacino" },
-    { title: "Уилл Смит", link: "https://www.imdb.com/name/nm0000226/", svc: "imdb", wiki: "Will_Smith" }
+    { title: "Уилл Смит", link: "https://www.imdb.com/name/nm0000226/", svc: "imdb", wiki: "Will_Smith" },
+    { title: "Мэрил Стрип", link: "https://www.imdb.com/find/?q=Meryl+Streep&s=nm", svc: "imdb", wiki: "Meryl_Streep" },
+    { title: "Дензел Вашингтон", link: "https://www.imdb.com/find/?q=Denzel+Washington&s=nm", svc: "imdb", wiki: "Denzel_Washington" },
+    { title: "Том Хэнкс", link: "https://www.imdb.com/find/?q=Tom+Hanks&s=nm", svc: "imdb", wiki: "Tom_Hanks" },
+    { title: "Морган Фриман", link: "https://www.imdb.com/find/?q=Morgan+Freeman&s=nm", svc: "imdb", wiki: "Morgan_Freeman" },
+    { title: "Сэмюэл Л. Джексон", link: "https://www.imdb.com/find/?q=Samuel+L+Jackson&s=nm", svc: "imdb", wiki: "Samuel_L._Jackson" },
+    { title: "Джек Николсон", link: "https://www.imdb.com/find/?q=Jack+Nicholson&s=nm", svc: "imdb", wiki: "Jack_Nicholson" },
+    { title: "Роберт Де Ниро", link: "https://www.imdb.com/find/?q=Robert+De+Niro&s=nm", svc: "imdb", wiki: "Robert_De_Niro" },
+    { title: "Энтони Хопкинс", link: "https://www.imdb.com/find/?q=Anthony+Hopkins&s=nm", svc: "imdb", wiki: "Anthony_Hopkins" },
+    { title: "Дэниэл Дэй-Льюис", link: "https://www.imdb.com/find/?q=Daniel+Day-Lewis&s=nm", svc: "imdb", wiki: "Daniel_Day-Lewis" },
+    { title: "Хоакин Феникс", link: "https://www.imdb.com/find/?q=Joaquin+Phoenix&s=nm", svc: "imdb", wiki: "Joaquin_Phoenix" },
+    { title: "Шарлиз Терон", link: "https://www.imdb.com/find/?q=Charlize+Theron&s=nm", svc: "imdb", wiki: "Charlize_Theron" },
+    { title: "Николь Кидман", link: "https://www.imdb.com/find/?q=Nicole+Kidman&s=nm", svc: "imdb", wiki: "Nicole_Kidman" },
+    { title: "Кейт Бланшетт", link: "https://www.imdb.com/find/?q=Cate+Blanchett&s=nm", svc: "imdb", wiki: "Cate_Blanchett" },
+    { title: "Эмма Стоун", link: "https://www.imdb.com/find/?q=Emma+Stone&s=nm", svc: "imdb", wiki: "Emma_Stone" },
+    { title: "Эмма Уотсон", link: "https://www.imdb.com/find/?q=Emma+Watson&s=nm", svc: "imdb", wiki: "Emma_Watson" },
+    { title: "Дженнифер Лоуренс", link: "https://www.imdb.com/find/?q=Jennifer+Lawrence&s=nm", svc: "imdb", wiki: "Jennifer_Lawrence" },
+    { title: "Сандра Буллок", link: "https://www.imdb.com/find/?q=Sandra+Bullock&s=nm", svc: "imdb", wiki: "Sandra_Bullock" },
+    { title: "Джулия Робертс", link: "https://www.imdb.com/find/?q=Julia+Roberts&s=nm", svc: "imdb", wiki: "Julia_Roberts" },
+    { title: "Риз Уизерспун", link: "https://www.imdb.com/find/?q=Reese+Witherspoon&s=nm", svc: "imdb", wiki: "Reese_Witherspoon" },
+    { title: "Эми Адамс", link: "https://www.imdb.com/find/?q=Amy+Adams&s=nm", svc: "imdb", wiki: "Amy_Adams" },
+    { title: "Виола Дэвис", link: "https://www.imdb.com/find/?q=Viola+Davis&s=nm", svc: "imdb", wiki: "Viola_Davis" },
+    { title: "Зендея", link: "https://www.imdb.com/find/?q=Zendaya&s=nm", svc: "imdb", wiki: "Zendaya" },
+    { title: "Флоренс Пью", link: "https://www.imdb.com/find/?q=Florence+Pugh&s=nm", svc: "imdb", wiki: "Florence_Pugh" },
+    { title: "Тимоти Шаламе", link: "https://www.imdb.com/find/?q=Timothee+Chalamet&s=nm", svc: "imdb", wiki: "Timothée_Chalamet" },
+    { title: "Крис Хемсворт", link: "https://www.imdb.com/find/?q=Chris+Hemsworth&s=nm", svc: "imdb", wiki: "Chris_Hemsworth" },
+    { title: "Крис Эванс", link: "https://www.imdb.com/find/?q=Chris+Evans+actor&s=nm", svc: "imdb", wiki: "Chris_Evans_(actor)" },
+    { title: "Крис Прэтт", link: "https://www.imdb.com/find/?q=Chris+Pratt&s=nm", svc: "imdb", wiki: "Chris_Pratt" },
+    { title: "Марк Руффало", link: "https://www.imdb.com/find/?q=Mark+Ruffalo&s=nm", svc: "imdb", wiki: "Mark_Ruffalo" },
+    { title: "Джереми Реннер", link: "https://www.imdb.com/find/?q=Jeremy+Renner&s=nm", svc: "imdb", wiki: "Jeremy_Renner" },
+    { title: "Бенедикт Камбербэтч", link: "https://www.imdb.com/find/?q=Benedict+Cumberbatch&s=nm", svc: "imdb", wiki: "Benedict_Cumberbatch" },
+    { title: "Том Холланд", link: "https://www.imdb.com/find/?q=Tom+Holland&s=nm", svc: "imdb", wiki: "Tom_Holland" },
+    { title: "Эндрю Гарфилд", link: "https://www.imdb.com/find/?q=Andrew+Garfield&s=nm", svc: "imdb", wiki: "Andrew_Garfield" },
+    { title: "Тоби Магуайр", link: "https://www.imdb.com/find/?q=Tobey+Maguire&s=nm", svc: "imdb", wiki: "Tobey_Maguire" },
+    { title: "Хью Джекман", link: "https://www.imdb.com/find/?q=Hugh+Jackman&s=nm", svc: "imdb", wiki: "Hugh_Jackman" },
+    { title: "Райан Рейнольдс", link: "https://www.imdb.com/find/?q=Ryan+Reynolds&s=nm", svc: "imdb", wiki: "Ryan_Reynolds" },
+    { title: "Дуэйн Джонсон", link: "https://www.imdb.com/find/?q=Dwayne+Johnson&s=nm", svc: "imdb", wiki: "Dwayne_Johnson" },
+    { title: "Вин Дизель", link: "https://www.imdb.com/find/?q=Vin+Diesel&s=nm", svc: "imdb", wiki: "Vin_Diesel" },
+    { title: "Джейсон Стэйтем", link: "https://www.imdb.com/find/?q=Jason+Statham&s=nm", svc: "imdb", wiki: "Jason_Statham" },
+    { title: "Идрис Эльба", link: "https://www.imdb.com/find/?q=Idris+Elba&s=nm", svc: "imdb", wiki: "Idris_Elba" },
+    { title: "Майкл Фассбендер", link: "https://www.imdb.com/find/?q=Michael+Fassbender&s=nm", svc: "imdb", wiki: "Michael_Fassbender" },
+    { title: "Джейк Джилленхол", link: "https://www.imdb.com/find/?q=Jake+Gyllenhaal&s=nm", svc: "imdb", wiki: "Jake_Gyllenhaal" },
+    { title: "Эдвард Нортон", link: "https://www.imdb.com/find/?q=Edward+Norton&s=nm", svc: "imdb", wiki: "Edward_Norton" },
+    { title: "Мэтт Дэймон", link: "https://www.imdb.com/find/?q=Matt+Damon&s=nm", svc: "imdb", wiki: "Matt_Damon" },
+    { title: "Бен Аффлек", link: "https://www.imdb.com/find/?q=Ben+Affleck&s=nm", svc: "imdb", wiki: "Ben_Affleck" },
+    { title: "Шон Пенн", link: "https://www.imdb.com/find/?q=Sean+Penn&s=nm", svc: "imdb", wiki: "Sean_Penn" },
+    { title: "Кевин Спейси", link: "https://www.imdb.com/find/?q=Kevin+Spacey&s=nm", svc: "imdb", wiki: "Kevin_Spacey" },
+    { title: "Рассел Кроу", link: "https://www.imdb.com/find/?q=Russell+Crowe&s=nm", svc: "imdb", wiki: "Russell_Crowe" },
+    { title: "Лиам Нисон", link: "https://www.imdb.com/find/?q=Liam+Neeson&s=nm", svc: "imdb", wiki: "Liam_Neeson" },
+    { title: "Пирс Броснан", link: "https://www.imdb.com/find/?q=Pierce+Brosnan&s=nm", svc: "imdb", wiki: "Pierce_Brosnan" },
+    { title: "Дэниэл Крэйг", link: "https://www.imdb.com/find/?q=Daniel+Craig&s=nm", svc: "imdb", wiki: "Daniel_Craig" },
+    { title: "Колин Фёрт", link: "https://www.imdb.com/find/?q=Colin+Firth&s=nm", svc: "imdb", wiki: "Colin_Firth" },
+    { title: "Хью Грант", link: "https://www.imdb.com/find/?q=Hugh+Grant&s=nm", svc: "imdb", wiki: "Hugh_Grant" },
+    { title: "Рэйф Файнс", link: "https://www.imdb.com/find/?q=Ralph+Fiennes&s=nm", svc: "imdb", wiki: "Ralph_Fiennes" },
+    { title: "Уиллем Дефо", link: "https://www.imdb.com/find/?q=Willem+Dafoe&s=nm", svc: "imdb", wiki: "Willem_Dafoe" },
+    { title: "Хавьер Бардем", link: "https://www.imdb.com/find/?q=Javier+Bardem&s=nm", svc: "imdb", wiki: "Javier_Bardem" },
+    { title: "Антонио Бандерас", link: "https://www.imdb.com/find/?q=Antonio+Banderas&s=nm", svc: "imdb", wiki: "Antonio_Banderas" },
+    { title: "Пенелопа Крус", link: "https://www.imdb.com/find/?q=Penelope+Cruz&s=nm", svc: "imdb", wiki: "Penélope_Cruz" },
+    { title: "Сальма Хайек", link: "https://www.imdb.com/find/?q=Salma+Hayek&s=nm", svc: "imdb", wiki: "Salma_Hayek" },
+    { title: "Ева Грин", link: "https://www.imdb.com/find/?q=Eva+Green&s=nm", svc: "imdb", wiki: "Eva_Green" },
+    { title: "Рэйчел Вайс", link: "https://www.imdb.com/find/?q=Rachel+Weisz&s=nm", svc: "imdb", wiki: "Rachel_Weisz" },
+    { title: "Кейт Уинслет", link: "https://www.imdb.com/find/?q=Kate+Winslet&s=nm", svc: "imdb", wiki: "Kate_Winslet" },
+    { title: "Эмили Блант", link: "https://www.imdb.com/find/?q=Emily+Blunt&s=nm", svc: "imdb", wiki: "Emily_Blunt" },
+    { title: "Аманда Сайфрид", link: "https://www.imdb.com/find/?q=Amanda+Seyfried&s=nm", svc: "imdb", wiki: "Amanda_Seyfried" },
+    { title: "Блейк Лайвли", link: "https://www.imdb.com/find/?q=Blake+Lively&s=nm", svc: "imdb", wiki: "Blake_Lively" },
+    { title: "Галь Гадот", link: "https://www.imdb.com/find/?q=Gal+Gadot&s=nm", svc: "imdb", wiki: "Gal_Gadot" },
+    { title: "Элизабет Олсен", link: "https://www.imdb.com/find/?q=Elizabeth+Olsen&s=nm", svc: "imdb", wiki: "Elizabeth_Olsen" },
+    { title: "Бри Ларсон", link: "https://www.imdb.com/find/?q=Brie+Larson&s=nm", svc: "imdb", wiki: "Brie_Larson" },
+    { title: "Милла Йовович", link: "https://www.imdb.com/find/?q=Milla+Jovovich&s=nm", svc: "imdb", wiki: "Milla_Jovovich" },
+    { title: "Ума Турман", link: "https://www.imdb.com/find/?q=Uma+Thurman&s=nm", svc: "imdb", wiki: "Uma_Thurman" },
+    { title: "Кэмерон Диаз", link: "https://www.imdb.com/find/?q=Cameron+Diaz&s=nm", svc: "imdb", wiki: "Cameron_Diaz" },
+    { title: "Дрю Бэрримор", link: "https://www.imdb.com/find/?q=Drew+Barrymore&s=nm", svc: "imdb", wiki: "Drew_Barrymore" },
+    { title: "Дженнифер Энистон", link: "https://www.imdb.com/find/?q=Jennifer+Aniston&s=nm", svc: "imdb", wiki: "Jennifer_Aniston" },
+    { title: "Джулианна Мур", link: "https://www.imdb.com/find/?q=Julianne+Moore&s=nm", svc: "imdb", wiki: "Julianne_Moore" },
+    { title: "Наоми Уоттс", link: "https://www.imdb.com/find/?q=Naomi+Watts&s=nm", svc: "imdb", wiki: "Naomi_Watts" },
+    { title: "Холли Берри", link: "https://www.imdb.com/find/?q=Halle+Berry&s=nm", svc: "imdb", wiki: "Halle_Berry" },
+    { title: "Зои Салдана", link: "https://www.imdb.com/find/?q=Zoe+Saldana&s=nm", svc: "imdb", wiki: "Zoe_Saldana" },
+    { title: "Мишель Родригес", link: "https://www.imdb.com/find/?q=Michelle+Rodriguez&s=nm", svc: "imdb", wiki: "Michelle_Rodriguez" },
+    { title: "Джессика Альба", link: "https://www.imdb.com/find/?q=Jessica+Alba&s=nm", svc: "imdb", wiki: "Jessica_Alba" },
+    { title: "Меган Фокс", link: "https://www.imdb.com/find/?q=Megan+Fox&s=nm", svc: "imdb", wiki: "Megan_Fox" },
+    { title: "Аня Тейлор-Джой", link: "https://www.imdb.com/find/?q=Anya+Taylor-Joy&s=nm", svc: "imdb", wiki: "Anya_Taylor-Joy" },
+    { title: "Сидни Суини", link: "https://www.imdb.com/find/?q=Sydney+Sweeney&s=nm", svc: "imdb", wiki: "Sydney_Sweeney" },
+    { title: "Ана де Армас", link: "https://www.imdb.com/find/?q=Ana+de+Armas&s=nm", svc: "imdb", wiki: "Ana_de_Armas" },
+    { title: "Пол Радд", link: "https://www.imdb.com/find/?q=Paul+Rudd&s=nm", svc: "imdb", wiki: "Paul_Rudd" },
+    { title: "Крис Пайн", link: "https://www.imdb.com/find/?q=Chris+Pine&s=nm", svc: "imdb", wiki: "Chris_Pine" },
+    { title: "Аарон Пол", link: "https://www.imdb.com/find/?q=Aaron+Paul&s=nm", svc: "imdb", wiki: "Aaron_Paul" },
+    { title: "Брайан Крэнстон", link: "https://www.imdb.com/find/?q=Bryan+Cranston&s=nm", svc: "imdb", wiki: "Bryan_Cranston" },
+    { title: "Вуди Харрельсон", link: "https://www.imdb.com/find/?q=Woody+Harrelson&s=nm", svc: "imdb", wiki: "Woody_Harrelson" },
+    { title: "Оуэн Уилсон", link: "https://www.imdb.com/find/?q=Owen+Wilson&s=nm", svc: "imdb", wiki: "Owen_Wilson" },
+    { title: "Бен Стиллер", link: "https://www.imdb.com/find/?q=Ben+Stiller&s=nm", svc: "imdb", wiki: "Ben_Stiller" },
+    { title: "Стив Карелл", link: "https://www.imdb.com/find/?q=Steve+Carell&s=nm", svc: "imdb", wiki: "Steve_Carell" },
+    { title: "Уилл Феррелл", link: "https://www.imdb.com/find/?q=Will+Ferrell&s=nm", svc: "imdb", wiki: "Will_Ferrell" },
+    { title: "Джим Керри", link: "https://www.imdb.com/find/?q=Jim+Carrey&s=nm", svc: "imdb", wiki: "Jim_Carrey" },
+    { title: "Адам Сэндлер", link: "https://www.imdb.com/find/?q=Adam+Sandler&s=nm", svc: "imdb", wiki: "Adam_Sandler" },
+    { title: "Эдди Мёрфи", link: "https://www.imdb.com/find/?q=Eddie+Murphy&s=nm", svc: "imdb", wiki: "Eddie_Murphy" },
+    { title: "Кевин Харт", link: "https://www.imdb.com/find/?q=Kevin+Hart&s=nm", svc: "imdb", wiki: "Kevin_Hart" },
+    { title: "Робин Уильямс", link: "https://www.imdb.com/find/?q=Robin+Williams&s=nm", svc: "imdb", wiki: "Robin_Williams" },
+    { title: "Джейми Фокс", link: "https://www.imdb.com/find/?q=Jamie+Foxx&s=nm", svc: "imdb", wiki: "Jamie_Foxx" },
+    { title: "Форест Уитакер", link: "https://www.imdb.com/find/?q=Forest+Whitaker&s=nm", svc: "imdb", wiki: "Forest_Whitaker" },
+    { title: "Майкл Б. Джордан", link: "https://www.imdb.com/find/?q=Michael+B+Jordan&s=nm", svc: "imdb", wiki: "Michael_B._Jordan" },
+    { title: "Чедвик Боузман", link: "https://www.imdb.com/find/?q=Chadwick+Boseman&s=nm", svc: "imdb", wiki: "Chadwick_Boseman" },
+    { title: "Дон Чидл", link: "https://www.imdb.com/find/?q=Don+Cheadle&s=nm", svc: "imdb", wiki: "Don_Cheadle" },
+    { title: "Махершала Али", link: "https://www.imdb.com/find/?q=Mahershala+Ali&s=nm", svc: "imdb", wiki: "Mahershala_Ali" },
+    { title: "Джон Бойега", link: "https://www.imdb.com/find/?q=John+Boyega&s=nm", svc: "imdb", wiki: "John_Boyega" },
+    { title: "Дэниэл Калуя", link: "https://www.imdb.com/find/?q=Daniel+Kaluuya&s=nm", svc: "imdb", wiki: "Daniel_Kaluuya" },
+    { title: "Люпита Нионго", link: "https://www.imdb.com/find/?q=Lupita+Nyongo&s=nm", svc: "imdb", wiki: "Lupita_Nyong'o" },
+    { title: "Лоуренс Фишбёрн", link: "https://www.imdb.com/find/?q=Laurence+Fishburne&s=nm", svc: "imdb", wiki: "Laurence_Fishburne" },
+    { title: "Кэрри-Энн Мосс", link: "https://www.imdb.com/find/?q=Carrie-Anne+Moss&s=nm", svc: "imdb", wiki: "Carrie-Anne_Moss" },
+    { title: "Хьюго Уивинг", link: "https://www.imdb.com/find/?q=Hugo+Weaving&s=nm", svc: "imdb", wiki: "Hugo_Weaving" },
+    { title: "Иэн Маккеллен", link: "https://www.imdb.com/find/?q=Ian+McKellen&s=nm", svc: "imdb", wiki: "Ian_McKellen" },
+    { title: "Элайджа Вуд", link: "https://www.imdb.com/find/?q=Elijah+Wood&s=nm", svc: "imdb", wiki: "Elijah_Wood" },
+    { title: "Орландо Блум", link: "https://www.imdb.com/find/?q=Orlando+Bloom&s=nm", svc: "imdb", wiki: "Orlando_Bloom" },
+    { title: "Вигго Мортенсен", link: "https://www.imdb.com/find/?q=Viggo+Mortensen&s=nm", svc: "imdb", wiki: "Viggo_Mortensen" },
+    { title: "Шон Бин", link: "https://www.imdb.com/find/?q=Sean+Bean&s=nm", svc: "imdb", wiki: "Sean_Bean" },
+    { title: "Алан Рикман", link: "https://www.imdb.com/find/?q=Alan+Rickman&s=nm", svc: "imdb", wiki: "Alan_Rickman" },
+    { title: "Дэниэл Рэдклифф", link: "https://www.imdb.com/find/?q=Daniel+Radcliffe&s=nm", svc: "imdb", wiki: "Daniel_Radcliffe" },
+    { title: "Руперт Гринт", link: "https://www.imdb.com/find/?q=Rupert+Grint&s=nm", svc: "imdb", wiki: "Rupert_Grint" },
+    { title: "Роберт Паттинсон", link: "https://www.imdb.com/find/?q=Robert+Pattinson&s=nm", svc: "imdb", wiki: "Robert_Pattinson" },
+    { title: "Кристен Стюарт", link: "https://www.imdb.com/find/?q=Kristen+Stewart&s=nm", svc: "imdb", wiki: "Kristen_Stewart" },
+    { title: "Закари Эфрон", link: "https://www.imdb.com/find/?q=Zac+Efron&s=nm", svc: "imdb", wiki: "Zac_Efron" },
+    { title: "Селена Гомес", link: "https://www.imdb.com/find/?q=Selena+Gomez&s=nm", svc: "imdb", wiki: "Selena_Gomez" },
+    { title: "Дакота Джонсон", link: "https://www.imdb.com/find/?q=Dakota+Johnson&s=nm", svc: "imdb", wiki: "Dakota_Johnson" },
+    { title: "Генри Кавилл", link: "https://www.imdb.com/find/?q=Henry+Cavill&s=nm", svc: "imdb", wiki: "Henry_Cavill" },
+    { title: "Бен Кингсли", link: "https://www.imdb.com/find/?q=Ben+Kingsley&s=nm", svc: "imdb", wiki: "Ben_Kingsley" },
+    { title: "Майкл Кейн", link: "https://www.imdb.com/find/?q=Michael+Caine&s=nm", svc: "imdb", wiki: "Michael_Caine" },
+    { title: "Патрик Стюарт", link: "https://www.imdb.com/find/?q=Patrick+Stewart&s=nm", svc: "imdb", wiki: "Patrick_Stewart" },
+    { title: "Тильда Суинтон", link: "https://www.imdb.com/find/?q=Tilda+Swinton&s=nm", svc: "imdb", wiki: "Tilda_Swinton" },
+    { title: "Крис Рок", link: "https://www.imdb.com/find/?q=Chris+Rock&s=nm", svc: "imdb", wiki: "Chris_Rock" },
+    { title: "Джон Красински", link: "https://www.imdb.com/find/?q=John+Krasinski&s=nm", svc: "imdb", wiki: "John_Krasinski" }
   ]
 };
 
@@ -270,13 +498,58 @@ function imdbPosterMirror(link) {
   const id = imdbId(link);
   return id ? `https://live.metahub.space/poster/small/${id}/img` : null;
 }
-// Строка для атрибута onerror у <img>: сначала пробуем зеркало, и только если
-// оно тоже не сработало — показываем цветную SVG-заглушку.
-function imgOnErrorAttr(link, svc) {
-  const mirror = imdbPosterMirror(link);
-  const placeholder = pImg(svc);
-  if (!mirror) return `this.onerror=null;this.src='${placeholder}';`;
-  return `if(!this.dataset.mirrorTried){this.dataset.mirrorTried='1';this.src='${mirror}';}else{this.onerror=null;this.src='${placeholder}';}`;
+// Строка для атрибута onerror у <img>: используется только для НЕ-imdb карточек
+// (steam и т.д. — там достаточно одной заглушки, третий уровень им не нужен).
+function simpleOnErrorAttr(svc) {
+  return `this.onerror=null;this.src='${pImg(svc)}';`;
+}
+
+// ФИКС КАРТИНОК (последние ~10%): поиск обложки через открытое Wikipedia API по НАЗВАНИЮ.
+// Используется как третья, последняя попытка для фильмов/сериалов, если оба CDN-зеркала
+// не ответили — а также для авто-поиска картинки, когда пользователь добавляет свой фильм.
+export async function searchWikiThumbnail(title) {
+  if (!title) return null;
+  const cacheKey = 'wiki_thumb_' + title.toLowerCase();
+  const cached = sg(cacheKey, null);
+  if (cached) return cached;
+  try {
+    const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=1&namespace=0&format=json&origin=*`);
+    if (!searchRes.ok) throw new Error('search failed');
+    const searchData = await searchRes.json();
+    const pageTitle = searchData && searchData[1] && searchData[1][0];
+    if (!pageTitle) return null;
+    const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
+    if (!sumRes.ok) throw new Error('summary failed');
+    const sumData = await sumRes.json();
+    const url = (sumData.thumbnail && sumData.thumbnail.source) ? sumData.thumbnail.source : null;
+    if (url) ss(cacheKey, url);
+    return url;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ФИКС КАРТИНОК: трёхступенчатый фолбэк для постера (imdb): основной CDN → зеркало →
+// поиск по названию в Wikipedia → и только если совсем ничего не нашлось — заглушка.
+// Экспортируется, чтобы этой же логикой пользовался ui/render.js для карточек,
+// которые уже лежат в тир-листе (не только в пуле шаблонов).
+export function attachPosterFallback(imgEl, item) {
+  imgEl.addEventListener('error', async function handler() {
+    const stage = this.dataset.stage || '0';
+    if (stage === '0') {
+      this.dataset.stage = '1';
+      const mirror = imdbPosterMirror(item.url);
+      if (mirror) { this.src = mirror; return; }
+    }
+    if (stage === '0' || stage === '1') {
+      this.dataset.stage = '2';
+      const wikiUrl = await searchWikiThumbnail(item.title);
+      if (wikiUrl) { this.src = wikiUrl; item.img = wikiUrl; return; }
+    }
+    this.removeEventListener('error', handler);
+    this.onerror = null;
+    this.src = pImg(item.svc);
+  });
 }
 
 // ФИКС КАРТИНОК: официальная обложка игры по appid из ссылки Steam — бесплатный CDN без ключа
@@ -326,6 +599,27 @@ async function hydrateActorPhotos() {
   }
 }
 
+// ФИКС АВТО-ПОИСКА: ищем игру в официальном публичном поиске Steam по названию (без ключа).
+// Возвращает картинку обложки и ссылку на страницу игры, если что-то нашлось.
+async function searchSteamGame(title) {
+  if (!title) return null;
+  const cacheKey = 'steam_search_' + title.toLowerCase();
+  const cached = sg(cacheKey, null);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(title)}&l=russian&cc=RU`);
+    if (!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    const first = data.items && data.items[0];
+    if (!first) return null;
+    const result = { img: steamHeader('/app/' + first.id + '/'), url: 'https://store.steampowered.com/app/' + first.id + '/', title: first.name };
+    ss(cacheKey, result);
+    return result;
+  } catch (e) {
+    return null; // Скорее всего сеть/CORS — ничего страшного, останется ручной ввод
+  }
+}
+
 export function updatePoolItems(type) {
   if (type === 'music') {
     currentPoolItems = [];
@@ -358,7 +652,8 @@ function openCustomItemModal(type) {
     <h3 style="color:var(--gold); margin-bottom: 20px;">Добавить свой элемент</h3>
     <input type="text" id="custom-title" placeholder="Название" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
     <input type="text" id="custom-url" placeholder="Ссылка" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
-    <input type="text" id="custom-img" placeholder="Ссылка на картинку" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text);" />
+    <button class="btn btn-secondary" id="custom-find-img" style="width:100%;margin-bottom:12px;" type="button">Найти картинку по названию</button>
+    <input type="text" id="custom-img" placeholder="Ссылка на картинку (можно вставить свою)" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text);" />
     <div style="margin: 16px 0; text-align: center;">
         <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Превью:</p>
         <img id="custom-preview" src="${pImg(type === 'games' ? 'steam' : 'imdb')}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
@@ -370,16 +665,59 @@ function openCustomItemModal(type) {
   `;
 
   const close = modalManager.open(content);
+  const titleInput = content.querySelector('#custom-title');
+  const urlInput = content.querySelector('#custom-url');
   const imgInput = content.querySelector('#custom-img');
   const preview = content.querySelector('#custom-preview');
+  const findBtn = content.querySelector('#custom-find-img');
+
   imgInput.addEventListener('input', () => {
     preview.src = imgInput.value.trim() || pImg(type === 'games' ? 'steam' : 'imdb');
   });
 
+  // ФИКС АВТО-ПОИСКА: раньше картинку для своего фильма/игры нужно было искать и вставлять
+  // вручную. Теперь стоит начать печатать название — и через секунду сайт сам попробует найти
+  // подходящую обложку (для игр — через поиск Steam, для фильмов — через Wikipedia). Кнопка
+  // "Найти картинку" и поле "Ссылка на картинку" остаются — можно исправить вручную в любой момент.
+  async function autoFindImage(showToastIfEmpty) {
+    const title = titleInput.value.trim();
+    if (!title) { if (showToastIfEmpty) eventBus.emit('toast:show', { text: 'Сначала введите название', type: 'info' }); return; }
+    if (imgInput.value.trim() && !showToastIfEmpty) return; // не перезаписываем то, что уже нашли/вставили
+
+    findBtn.disabled = true;
+    findBtn.textContent = 'Ищу...';
+    let found = null;
+    if (type === 'games') {
+      const game = await searchSteamGame(title);
+      if (game) {
+        found = game.img;
+        if (!urlInput.value.trim()) urlInput.value = game.url; // подставляем и ссылку на страницу игры, если её ещё нет
+      }
+    } else {
+      found = await searchWikiThumbnail(title);
+    }
+    if (found) {
+      imgInput.value = found;
+      preview.src = found;
+    } else {
+      eventBus.emit('toast:show', { text: 'Не нашлось. Вставьте ссылку на картинку вручную.', type: 'error' });
+    }
+    findBtn.disabled = false;
+    findBtn.textContent = 'Найти картинку по названию';
+  }
+
+  findBtn.addEventListener('click', () => { imgInput.value = ''; autoFindImage(true); });
+
+  let autoFindTimer = null;
+  titleInput.addEventListener('input', () => {
+    clearTimeout(autoFindTimer);
+    autoFindTimer = setTimeout(() => autoFindImage(false), 800);
+  });
+
   content.querySelector('#custom-cancel').onclick = close;
   content.querySelector('#custom-add').onclick = () => {
-    const title = window.escapeHTML(content.querySelector('#custom-title').value.trim());
-    const url = content.querySelector('#custom-url').value.trim() || '#';
+    const title = window.escapeHTML(titleInput.value.trim());
+    const url = urlInput.value.trim() || '#';
     const svcType = type === 'games' ? 'steam' : 'imdb';
     const img = imgInput.value.trim() || pImg(svcType);
 
@@ -413,14 +751,15 @@ export function renderTemplatePool() {
     const styleClass = styleSelect ? styleSelect.value : 'gradient';
 
     const itemsHTML = currentPoolItems.map((item, idx) => {
-      // ФИКС КАРТИНОК: раньше при ошибке загрузки сразу показывалась заглушка.
-      // Теперь для постеров (imdb) сначала пробуем запасное зеркало.
-      const onerrorAttr = item.svc === 'imdb' ? imgOnErrorAttr(item.url, item.svc) : `this.onerror=null;this.src='${pImg(item.svc)}';`;
-      return `<div class="item style-${styleClass}" data-item-index="${idx}" title="${item.title}">
+      // ФИКС КАРТИНОК: для постеров (imdb) полная цепочка фолбэков вешается ниже через JS
+      // (attachPosterFallback) — она умеет ходить в Wikipedia, а это невозможно сделать
+      // одной строкой в HTML-атрибуте onerror.
+      const onerrorAttr = item.svc === 'imdb' ? '' : `onerror="${simpleOnErrorAttr(item.svc)}"`;
+      return `<div class="item style-${styleClass}" data-item-index="${idx}" data-tooltip="${item.title}">
         <a href="${item.url}" target="_blank" rel="noopener">
         <img loading="lazy" src="${item.img}" alt="${item.title}" 
              style="width:${sVal}px; height:${sVal}px;"
-             onerror="${onerrorAttr}">
+             ${onerrorAttr}>
         </a></div>`;
     }).join('');
 
@@ -434,6 +773,13 @@ export function renderTemplatePool() {
     }
     lucide.createIcons();
     if (type === 'actors') hydrateActorPhotos();
+    if (type === 'movies') {
+      currentPoolItems.forEach((item, idx) => {
+        if (item.svc !== 'imdb') return;
+        const imgEl = document.querySelector('#templatePool [data-item-index="' + idx + '"] img');
+        if (imgEl) attachPosterFallback(imgEl, item);
+      });
+    }
   }
 }
 
