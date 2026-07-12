@@ -83,6 +83,9 @@ export function clearAllData() {
 }
 
 // Автосохранение при изменении состояния
+// ФИКС 8: эмитим события для индикатора "Сохранено ✓" в сайдбаре
 eventBus.on('state:needsSave', () => {
+  eventBus.emit('save:start');
   saveDrafts();
+  eventBus.emit('save:done');
 });

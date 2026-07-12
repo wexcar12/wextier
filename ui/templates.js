@@ -469,6 +469,110 @@ const TEMPLATES = {
     { title: "Тильда Суинтон", link: "https://www.imdb.com/find/?q=Tilda+Swinton&s=nm", svc: "imdb", wiki: "Tilda_Swinton" },
     { title: "Крис Рок", link: "https://www.imdb.com/find/?q=Chris+Rock&s=nm", svc: "imdb", wiki: "Chris_Rock" },
     { title: "Джон Красински", link: "https://www.imdb.com/find/?q=John+Krasinski&s=nm", svc: "imdb", wiki: "John_Krasinski" }
+  ],
+
+  // ФИКС 22: новые категории шаблонов. Фото берётся через тот же надёжный механизм,
+  // что и у актёров (поиск по Wikipedia), поэтому так же устойчиво к обрывам ссылок.
+  musicians: [
+    { title: "Майкл Джексон", link: "https://www.imdb.com/find/?q=Michael+Jackson&s=nm", svc: "imdb", wiki: "Michael_Jackson" },
+    { title: "Элвис Пресли", link: "https://www.imdb.com/find/?q=Elvis+Presley&s=nm", svc: "imdb", wiki: "Elvis_Presley" },
+    { title: "Фредди Меркьюри", link: "https://www.imdb.com/find/?q=Freddie+Mercury&s=nm", svc: "imdb", wiki: "Freddie_Mercury" },
+    { title: "Боб Марли", link: "https://www.imdb.com/find/?q=Bob+Marley&s=nm", svc: "imdb", wiki: "Bob_Marley" },
+    { title: "Мадонна", link: "https://www.imdb.com/find/?q=Madonna&s=nm", svc: "imdb", wiki: "Madonna" },
+    { title: "Бейонсе", link: "https://www.imdb.com/find/?q=Beyonce&s=nm", svc: "imdb", wiki: "Beyoncé" },
+    { title: "Рианна", link: "https://www.imdb.com/find/?q=Rihanna&s=nm", svc: "imdb", wiki: "Rihanna" },
+    { title: "Тейлор Свифт", link: "https://www.imdb.com/find/?q=Taylor+Swift&s=nm", svc: "imdb", wiki: "Taylor_Swift" },
+    { title: "Эд Ширан", link: "https://www.imdb.com/find/?q=Ed+Sheeran&s=nm", svc: "imdb", wiki: "Ed_Sheeran" },
+    { title: "Адель", link: "https://www.imdb.com/find/?q=Adele&s=nm", svc: "imdb", wiki: "Adele" },
+    { title: "Эминем", link: "https://www.imdb.com/find/?q=Eminem&s=nm", svc: "imdb", wiki: "Eminem" },
+    { title: "Дрейк", link: "https://www.imdb.com/find/?q=Drake&s=nm", svc: "imdb", wiki: "Drake_(musician)" },
+    { title: "Кендрик Ламар", link: "https://www.imdb.com/find/?q=Kendrick+Lamar&s=nm", svc: "imdb", wiki: "Kendrick_Lamar" },
+    { title: "Джей-Зи", link: "https://www.imdb.com/find/?q=Jay-Z&s=nm", svc: "imdb", wiki: "Jay-Z" },
+    { title: "Канье Уэст", link: "https://www.imdb.com/find/?q=Kanye+West&s=nm", svc: "imdb", wiki: "Kanye_West" },
+    { title: "Леди Гага", link: "https://www.imdb.com/find/?q=Lady+Gaga&s=nm", svc: "imdb", wiki: "Lady_Gaga" },
+    { title: "Билли Айлиш", link: "https://www.imdb.com/find/?q=Billie+Eilish&s=nm", svc: "imdb", wiki: "Billie_Eilish" },
+    { title: "Ариана Гранде", link: "https://www.imdb.com/find/?q=Ariana+Grande&s=nm", svc: "imdb", wiki: "Ariana_Grande" },
+    { title: "Джон Леннон", link: "https://www.imdb.com/find/?q=John+Lennon&s=nm", svc: "imdb", wiki: "John_Lennon" },
+    { title: "Дэвид Боуи", link: "https://www.imdb.com/find/?q=David+Bowie&s=nm", svc: "imdb", wiki: "David_Bowie" },
+    { title: "Курт Кобейн", link: "https://www.imdb.com/find/?q=Kurt+Cobain&s=nm", svc: "imdb", wiki: "Kurt_Cobain" },
+    { title: "Эми Уайнхаус", link: "https://www.imdb.com/find/?q=Amy+Winehouse&s=nm", svc: "imdb", wiki: "Amy_Winehouse" },
+    { title: "Уитни Хьюстон", link: "https://www.imdb.com/find/?q=Whitney+Houston&s=nm", svc: "imdb", wiki: "Whitney_Houston" },
+    { title: "Стиви Уандер", link: "https://www.imdb.com/find/?q=Stevie+Wonder&s=nm", svc: "imdb", wiki: "Stevie_Wonder" },
+    { title: "Элтон Джон", link: "https://www.imdb.com/find/?q=Elton+John&s=nm", svc: "imdb", wiki: "Elton_John" },
+    { title: "Шакира", link: "https://www.imdb.com/find/?q=Shakira&s=nm", svc: "imdb", wiki: "Shakira" }
+  ],
+
+  athletes: [
+    { title: "Криштиану Роналду", link: "https://www.imdb.com/find/?q=Cristiano+Ronaldo&s=nm", svc: "imdb", wiki: "Cristiano_Ronaldo" },
+    { title: "Лионель Месси", link: "https://www.imdb.com/find/?q=Lionel+Messi&s=nm", svc: "imdb", wiki: "Lionel_Messi" },
+    { title: "Леброн Джеймс", link: "https://www.imdb.com/find/?q=LeBron+James&s=nm", svc: "imdb", wiki: "LeBron_James" },
+    { title: "Майкл Джордан", link: "https://www.imdb.com/find/?q=Michael+Jordan&s=nm", svc: "imdb", wiki: "Michael_Jordan" },
+    { title: "Усэйн Болт", link: "https://www.imdb.com/find/?q=Usain+Bolt&s=nm", svc: "imdb", wiki: "Usain_Bolt" },
+    { title: "Роджер Федерер", link: "https://www.imdb.com/find/?q=Roger+Federer&s=nm", svc: "imdb", wiki: "Roger_Federer" },
+    { title: "Рафаэль Надаль", link: "https://www.imdb.com/find/?q=Rafael+Nadal&s=nm", svc: "imdb", wiki: "Rafael_Nadal" },
+    { title: "Новак Джокович", link: "https://www.imdb.com/find/?q=Novak+Djokovic&s=nm", svc: "imdb", wiki: "Novak_Djokovic" },
+    { title: "Майк Тайсон", link: "https://www.imdb.com/find/?q=Mike+Tyson&s=nm", svc: "imdb", wiki: "Mike_Tyson" },
+    { title: "Мохаммед Али", link: "https://www.imdb.com/find/?q=Muhammad+Ali&s=nm", svc: "imdb", wiki: "Muhammad_Ali" },
+    { title: "Коби Брайант", link: "https://www.imdb.com/find/?q=Kobe+Bryant&s=nm", svc: "imdb", wiki: "Kobe_Bryant" },
+    { title: "Серена Уильямс", link: "https://www.imdb.com/find/?q=Serena+Williams&s=nm", svc: "imdb", wiki: "Serena_Williams" },
+    { title: "Майкл Фелпс", link: "https://www.imdb.com/find/?q=Michael+Phelps&s=nm", svc: "imdb", wiki: "Michael_Phelps" },
+    { title: "Диего Марадона", link: "https://www.imdb.com/find/?q=Diego+Maradona&s=nm", svc: "imdb", wiki: "Diego_Maradona" },
+    { title: "Пеле", link: "https://www.imdb.com/find/?q=Pele&s=nm", svc: "imdb", wiki: "Pelé" },
+    { title: "Дэвид Бекхэм", link: "https://www.imdb.com/find/?q=David+Beckham&s=nm", svc: "imdb", wiki: "David_Beckham" },
+    { title: "Неймар", link: "https://www.imdb.com/find/?q=Neymar&s=nm", svc: "imdb", wiki: "Neymar" },
+    { title: "Килиан Мбаппе", link: "https://www.imdb.com/find/?q=Kylian+Mbappe&s=nm", svc: "imdb", wiki: "Kylian_Mbappé" },
+    { title: "Стефен Карри", link: "https://www.imdb.com/find/?q=Stephen+Curry&s=nm", svc: "imdb", wiki: "Stephen_Curry" },
+    { title: "Конор Макгрегор", link: "https://www.imdb.com/find/?q=Conor+McGregor&s=nm", svc: "imdb", wiki: "Conor_McGregor" },
+    { title: "Хабиб Нурмагомедов", link: "https://www.imdb.com/find/?q=Khabib+Nurmagomedov&s=nm", svc: "imdb", wiki: "Khabib_Nurmagomedov" },
+    { title: "Льюис Хэмилтон", link: "https://www.imdb.com/find/?q=Lewis+Hamilton&s=nm", svc: "imdb", wiki: "Lewis_Hamilton" },
+    { title: "Майкл Шумахер", link: "https://www.imdb.com/find/?q=Michael+Schumacher&s=nm", svc: "imdb", wiki: "Michael_Schumacher" },
+    { title: "Симона Байлз", link: "https://www.imdb.com/find/?q=Simone+Biles&s=nm", svc: "imdb", wiki: "Simone_Biles" },
+    { title: "Тайгер Вудс", link: "https://www.imdb.com/find/?q=Tiger+Woods&s=nm", svc: "imdb", wiki: "Tiger_Woods" },
+    { title: "Александр Овечкин", link: "https://www.imdb.com/find/?q=Alexander+Ovechkin&s=nm", svc: "imdb", wiki: "Alexander_Ovechkin" }
+  ],
+
+  bloggers: [
+    { title: "PewDiePie", link: "https://www.imdb.com/find/?q=PewDiePie&s=nm", svc: "imdb", wiki: "PewDiePie" },
+    { title: "MrBeast", link: "https://www.imdb.com/find/?q=MrBeast&s=nm", svc: "imdb", wiki: "MrBeast" },
+    { title: "Логан Пол", link: "https://www.imdb.com/find/?q=Logan+Paul&s=nm", svc: "imdb", wiki: "Logan_Paul" },
+    { title: "Джейк Пол", link: "https://www.imdb.com/find/?q=Jake+Paul&s=nm", svc: "imdb", wiki: "Jake_Paul" },
+    { title: "Ninja", link: "https://www.imdb.com/find/?q=Ninja+gamer&s=nm", svc: "imdb", wiki: "Ninja_(gamer)" },
+    { title: "Markiplier", link: "https://www.imdb.com/find/?q=Markiplier&s=nm", svc: "imdb", wiki: "Markiplier" },
+    { title: "KSI", link: "https://www.imdb.com/find/?q=KSI&s=nm", svc: "imdb", wiki: "KSI_(YouTuber)" },
+    { title: "Emma Chamberlain", link: "https://www.imdb.com/find/?q=Emma+Chamberlain&s=nm", svc: "imdb", wiki: "Emma_Chamberlain" },
+    { title: "Casey Neistat", link: "https://www.imdb.com/find/?q=Casey+Neistat&s=nm", svc: "imdb", wiki: "Casey_Neistat" },
+    { title: "David Dobrik", link: "https://www.imdb.com/find/?q=David+Dobrik&s=nm", svc: "imdb", wiki: "David_Dobrik" },
+    { title: "Lilly Singh", link: "https://www.imdb.com/find/?q=Lilly+Singh&s=nm", svc: "imdb", wiki: "Lilly_Singh" },
+    { title: "Shane Dawson", link: "https://www.imdb.com/find/?q=Shane+Dawson&s=nm", svc: "imdb", wiki: "Shane_Dawson" },
+    { title: "Jenna Marbles", link: "https://www.imdb.com/find/?q=Jenna+Marbles&s=nm", svc: "imdb", wiki: "Jenna_Marbles" },
+    { title: "Zoella", link: "https://www.imdb.com/find/?q=Zoe+Sugg&s=nm", svc: "imdb", wiki: "Zoe_Sugg" },
+    { title: "xQc", link: "https://www.imdb.com/find/?q=Felix+Lengyel&s=nm", svc: "imdb", wiki: "Félix_Lengyel" },
+    { title: "Pokimane", link: "https://www.imdb.com/find/?q=Imane+Anys&s=nm", svc: "imdb", wiki: "Imane_Anys" },
+    { title: "Ludwig", link: "https://www.imdb.com/find/?q=Ludwig+Ahgren&s=nm", svc: "imdb", wiki: "Ludwig_Ahgren" },
+    { title: "Dude Perfect", link: "https://www.imdb.com/find/?q=Dude+Perfect&s=nm", svc: "imdb", wiki: "Dude_Perfect" }
+  ],
+
+  anime: [
+    { title: "Наруто", link: "https://www.imdb.com/find/?q=Naruto&s=tt", svc: "imdb", wiki: "Naruto" },
+    { title: "Ван-Пис", link: "https://www.imdb.com/find/?q=One+Piece&s=tt", svc: "imdb", wiki: "One_Piece" },
+    { title: "Атака Титанов", link: "https://www.imdb.com/find/?q=Attack+on+Titan&s=tt", svc: "imdb", wiki: "Attack_on_Titan" },
+    { title: "Клинок, рассекающий демонов", link: "https://www.imdb.com/find/?q=Demon+Slayer&s=tt", svc: "imdb", wiki: "Demon_Slayer:_Kimetsu_no_Yaiba" },
+    { title: "Моя геройская академия", link: "https://www.imdb.com/find/?q=My+Hero+Academia&s=tt", svc: "imdb", wiki: "My_Hero_Academia" },
+    { title: "Тетрадь смерти", link: "https://www.imdb.com/find/?q=Death+Note&s=tt", svc: "imdb", wiki: "Death_Note" },
+    { title: "Стальной алхимик: Братство", link: "https://www.imdb.com/find/?q=Fullmetal+Alchemist+Brotherhood&s=tt", svc: "imdb", wiki: "Fullmetal_Alchemist:_Brotherhood" },
+    { title: "Токийский гуль", link: "https://www.imdb.com/find/?q=Tokyo+Ghoul&s=tt", svc: "imdb", wiki: "Tokyo_Ghoul" },
+    { title: "Хвост Феи", link: "https://www.imdb.com/find/?q=Fairy+Tail&s=tt", svc: "imdb", wiki: "Fairy_Tail" },
+    { title: "Драконий жемчуг", link: "https://www.imdb.com/find/?q=Dragon+Ball&s=tt", svc: "imdb", wiki: "Dragon_Ball" },
+    { title: "Блич", link: "https://www.imdb.com/find/?q=Bleach&s=tt", svc: "imdb", wiki: "Bleach_(manga)" },
+    { title: "Евангелион", link: "https://www.imdb.com/find/?q=Neon+Genesis+Evangelion&s=tt", svc: "imdb", wiki: "Neon_Genesis_Evangelion" },
+    { title: "Магическая битва", link: "https://www.imdb.com/find/?q=Jujutsu+Kaisen&s=tt", svc: "imdb", wiki: "Jujutsu_Kaisen" },
+    { title: "Человек-бензопила", link: "https://www.imdb.com/find/?q=Chainsaw+Man&s=tt", svc: "imdb", wiki: "Chainsaw_Man" },
+    { title: "Психопаспорт", link: "https://www.imdb.com/find/?q=Psycho-Pass&s=tt", svc: "imdb", wiki: "Psycho-Pass" },
+    { title: "Ковбой Бибоп", link: "https://www.imdb.com/find/?q=Cowboy+Bebop&s=tt", svc: "imdb", wiki: "Cowboy_Bebop" },
+    { title: "Берсерк", link: "https://www.imdb.com/find/?q=Berserk&s=tt", svc: "imdb", wiki: "Berserk_(manga)" },
+    { title: "Ванпанчмен", link: "https://www.imdb.com/find/?q=One-Punch+Man&s=tt", svc: "imdb", wiki: "One-Punch_Man" },
+    { title: "Семь смертных грехов", link: "https://www.imdb.com/find/?q=The+Seven+Deadly+Sins&s=tt", svc: "imdb", wiki: "The_Seven_Deadly_Sins_(manga)" },
+    { title: "Сага о Винланде", link: "https://www.imdb.com/find/?q=Vinland+Saga&s=tt", svc: "imdb", wiki: "Vinland_Saga" }
   ]
 };
 
@@ -646,6 +750,17 @@ export function updatePoolItems(type) {
 
 export function getPoolItems() { return currentPoolItems; }
 
+// ФИКС 23: поиск внутри шаблона. ВАЖНО: элементы не удаляются и не переставляются —
+// только скрываются через CSS (display:none), иначе собьются индексы у Sortable/drag&drop,
+// которые опираются на порядок карточек в DOM.
+export function filterPool(query) {
+  const q = (query || '').trim().toLowerCase();
+  document.querySelectorAll('#templatePool .item').forEach(el => {
+    const title = (el.dataset.tooltip || '').toLowerCase();
+    el.classList.toggle('search-hidden', q !== '' && !title.includes(q));
+  });
+}
+
 function openCustomItemModal(type) {
   const content = document.createElement('div');
   content.innerHTML = `
@@ -772,8 +887,11 @@ export function renderTemplatePool() {
         addBtn.onmouseout = () => { addBtn.style.borderColor = 'rgba(255,255,255,0.15)'; addBtn.style.color = 'var(--text-secondary)'; };
     }
     lucide.createIcons();
-    if (type === 'actors') hydrateActorPhotos();
-    if (type === 'movies') {
+    // ФИКС 22: раньше подгрузка фото по Wikipedia запускалась только для type==='actors'.
+    // Теперь работает для ЛЮБОЙ категории, где у элементов есть поле wiki
+    // (музыканты/спортсмены/блогеры используют тот же надёжный механизм).
+    if (currentPoolItems.some(i => i.wiki)) hydrateActorPhotos();
+    if (type === 'movies' || type === 'anime') {
       currentPoolItems.forEach((item, idx) => {
         if (item.svc !== 'imdb') return;
         const imgEl = document.querySelector('#templatePool [data-item-index="' + idx + '"] img');

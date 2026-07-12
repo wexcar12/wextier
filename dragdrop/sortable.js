@@ -7,8 +7,49 @@ import { getPoolItems, updatePoolItems } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
 
 let currentPoolItems = [];
+let lastHighlighted = null;
+
+// ФИКС 2: подсвечиваем тир ЕГО СОБСТВЕННЫМ цветом, когда карточку тащат прямо над ним
+// (раньше подсветка была одинаковая золотая для всех тиров).
+function handleDragMove(evt) {
+  const toRow = evt.to && evt.to.closest ? evt.to.closest('.tier-row') : null;
+  if (lastHighlighted && lastHighlighted !== toRow) {
+    lastHighlighted.style.removeProperty('--drag-glow');
+    lastHighlighted.classList.remove('drag-target');
+  }
+  if (toRow && toRow !== lastHighlighted) {
+    const color = evt.to.dataset.tierColor;
+    if (color) toRow.style.setProperty('--drag-glow', color);
+    toRow.classList.add('drag-target');
+  }
+  lastHighlighted = toRow;
+  return true;
+}
+function clearDragHighlight() {
+  if (lastHighlighted) { lastHighlighted.style.removeProperty('--drag-glow'); lastHighlighted.classList.remove('drag-target'); }
+  lastHighlighted = null;
+}
+
+// ФИКС 3: маленький салют из конфетти, когда весь пул шаблонов разобран по тирам
+function fireConfettiIfPoolEmpty() {
+  if (currentPoolItems.length !== 0) return;
+  const colors = ['#f5c542', '#ff6b6b', '#4d96ff', '#6bffb8', '#c56bff'];
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+    piece.style.animationDelay = (Math.random() * 0.3) + 's';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3200);
+  }
+  eventBus.emit('toast:show', { text: '🎉 Все карточки разложены!', type: 'success' });
+}
 
 function handleSortableMove(evt) {
+  clearDragHighlight();
   const isFromPool = evt.from.id === 'templatePool';
   const isToPool = evt.to.id === 'templatePool';
 
@@ -21,6 +62,7 @@ function handleSortableMove(evt) {
       const newItem = { img: item.img, url: item.url, svc: item.svc, title: item.title };
       const command = new AddItemCommand(toTier, newItem, listNum, evt.newIndex);
       state.executeCommand(command, listNum);
+      fireConfettiIfPoolEmpty();
     } else {
       currentPoolItems.splice(evt.newIndex, 0, item);
     }
@@ -83,12 +125,12 @@ export function initSortable() {
       const disabled = !isEditing();
       document.querySelectorAll('.tier-items').forEach(el => {
         if (el._sortable) el._sortable.destroy();
-        el._sortable = new Sortable(el, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, disabled });
+        el._sortable = new Sortable(el, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, disabled });
       });
       const poolEl = document.getElementById('templatePool');
       if (poolEl) {
         if (poolEl._sortable) poolEl._sortable.destroy();
-        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, disabled });
+        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, disabled });
       }
       lucide.createIcons();
     }, 0);

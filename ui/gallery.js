@@ -10,6 +10,7 @@ import { renderAll } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { getDB } from '../api/firebase-init.js';
+import { unlockAchievement } from './achievements.js';
 
 let ctid = null;
 
@@ -21,11 +22,6 @@ export async function openGallery() {
     eventBus.emit('toast:show', { text: 'Галерея недоступна', type: 'error' });
     return;
   }
-
-  // ФИКС ПОИСКА: раньше в галерее не было строки поиска вообще — можно было только
-  // листать первые 20 тир-листов и всё. Firestore не умеет искать по тексту "из коробки",
-  // поэтому подгружаем список побольше и ищем по названию прямо в браузере.
-  const { items } = await api.fetchTierlists(60);
 
   const content = document.createElement('div');
   content.innerHTML = `
@@ -40,8 +36,18 @@ export async function openGallery() {
   `;
 
   const close = modalManager.open(content);
-
   const list = content.querySelector('#galleryList');
+
+  // ФИКС 7: скелетон-загрузка вместо пустого экрана, пока идёт запрос к серверу
+  list.innerHTML = Array.from({ length: 5 }).map(() =>
+    '<div class="skeleton-row"><div class="skeleton-line" style="width:60%"></div><div class="skeleton-line" style="width:35%"></div></div>'
+  ).join('');
+
+  // ФИКС ПОИСКА: раньше в галерее не было строки поиска вообще — можно было только
+  // листать первые 20 тир-листов и всё. Firestore не умеет искать по тексту "из коробки",
+  // поэтому подгружаем список побольше и ищем по названию прямо в браузере.
+  const { items } = await api.fetchTierlists(60);
+  const likedIds = new Set(JSON.parse(localStorage.getItem('wt_liked_lists') || '[]'));
 
   function renderList(filterText) {
     const q = (filterText || '').trim().toLowerCase();
@@ -58,10 +64,13 @@ export async function openGallery() {
     }
     filtered.forEach(doc => {
       const div = document.createElement('div');
-      div.style.cssText = 'padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;';
+      div.style.cssText = 'padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;justify-content:space-between;align-items:center;';
+      const info = document.createElement('div');
+      info.style.cursor = 'pointer';
+      info.style.flex = '1';
       // XSS-ЗАЩИТА: escapeHTML для всех пользовательских данных
-      div.innerHTML = '<strong>' + escapeHTML(doc.name || 'Без названия') + '</strong> (' + (doc.wins || 0) + ' побед, ' + (doc.trackCount || 0) + ' треков)';
-      div.onclick = async () => {
+      info.innerHTML = '<strong>' + escapeHTML(doc.name || 'Без названия') + '</strong> (' + (doc.wins || 0) + ' побед, ' + (doc.trackCount || 0) + ' треков)';
+      info.onclick = async () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
         if (doc.templateType) {
@@ -72,6 +81,26 @@ export async function openGallery() {
         close();
         renderAll();
       };
+
+      // ФИКС 14: лайки — раньше поле likes в базе существовало, но нигде не показывалось
+      const likeBtn = document.createElement('button');
+      likeBtn.className = 'like-btn' + (likedIds.has(doc.id) ? ' liked' : '');
+      likeBtn.innerHTML = '❤️ <span>' + (doc.likesCount || 0) + '</span>';
+      likeBtn.disabled = likedIds.has(doc.id);
+      likeBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (likedIds.has(doc.id)) return;
+        likeBtn.disabled = true;
+        const newCount = await api.likeTierlist(doc.id);
+        likeBtn.innerHTML = '❤️ <span>' + newCount + '</span>';
+        likeBtn.classList.add('liked');
+        likedIds.add(doc.id);
+        localStorage.setItem('wt_liked_lists', JSON.stringify([...likedIds]));
+        unlockAchievement('liked_list');
+      };
+
+      div.appendChild(info);
+      div.appendChild(likeBtn);
       list.appendChild(div);
     });
   }
@@ -104,10 +133,13 @@ export async function openGallery() {
         likesCount: 0,
         visibility: 'public',
         authorId: user ? user.uid : 'anonymous',
-        authorName: user ? escapeHTML(user.name) : 'Аноним'
+        // ФИКС: у объекта пользователя Firebase Auth нет поля "name" — только displayName.
+        // Раньше имя автора всегда сохранялось пустым для залогиненных пользователей.
+        authorName: user ? escapeHTML(user.displayName || 'Без имени') : 'Аноним'
       });
       ctid = id;
       eventBus.emit('toast:show', { text: 'Опубликовано!', type: 'success' });
+      unlockAchievement('first_publish');
       close();
     } catch (e) {
       eventBus.emit('toast:show', { text: 'Ошибка публикации', type: 'error' });
@@ -181,10 +213,17 @@ export async function openUserDashboard() {
   const content = document.createElement('div');
   content.style.width = '600px';
   content.innerHTML = `
-    <h3 style="color:var(--gold);">Личный кабинет</h3>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <img src="${user.photoURL || ''}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);${user.photoURL ? '' : 'display:none;'}">
+      <div>
+        <h3 style="color:var(--gold);margin:0;">${escapeHTML(user.displayName || 'Личный кабинет')}</h3>
+        <span style="font-size:0.78rem;color:var(--text-secondary);">${escapeHTML(user.email || '')}</span>
+      </div>
+    </div>
     <div style="display:flex;gap:20px;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--input-border);">
       <div>📊 Всего: <strong style="color:var(--gold);" id="statTotalLists">${items.length}</strong></div>
       <div>🏆 Побед: <strong style="color:var(--gold);" id="statTotalWins">${items.reduce((s, d) => s + (d.wins || 0), 0)}</strong></div>
+      <div>❤️ Лайков: <strong style="color:var(--gold);" id="statTotalLikes">${items.reduce((s, d) => s + (d.likesCount || 0), 0)}</strong></div>
     </div>
     <div id="userCreatedLists" style="max-height:250px;overflow-y:auto;"></div>
     <div class="modal-actions" style="margin-top:12px;">

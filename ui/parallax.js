@@ -17,14 +17,15 @@ function ss(k, v) {
   try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {}
 }
 
-// ФИКС: вернул твою любимую картинку (была первой в старом списке фонов) + добавил
-// проверенные вручную рабочие фото с Unsplash (официально разрешено встраивать их
-// напрямую, в отличие от Pinterest — там ссылки время от времени переставали работать).
+// ФИКС: Unsplash с октября 2025 недоступен с российских IP (это подтверждено в новостях,
+// не связано с нашим кодом) — поэтому заменил на Wikimedia Commons. Википедия и её медиа-сервер
+// в России работают нормально, а Special:FilePath — официальный способ встраивания картинок
+// с Commons напрямую, рекомендованный самой Wikimedia.
 const PRESETS = {
   favorite: { type: 'image', url: 'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg' },
-  mountains: { type: 'image', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80' },
-  forest: { type: 'image', url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=80' },
-  space: { type: 'image', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=80' }
+  mountains: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20range.jpg?width=1600' },
+  forest: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Forest%20path%20to%20the%20sun.jpg?width=1600' },
+  space: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Orion%20Nebula%20-%20Hubble%202006%20mosaic.jpg?width=1600' }
 };
 
 function applyPhotoLayer(mode) {
@@ -42,23 +43,31 @@ function applyPhotoLayer(mode) {
     const url = sg('parallax_custom_url', '');
     if (!url) return;
     if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) {
+      videoEl.onerror = () => { videoEl.classList.remove('show'); notifyFail(); };
       videoEl.src = url;
-      videoEl.onerror = () => { videoEl.classList.remove('show'); }; // молча прячем, останется красивый фон
       videoEl.classList.add('show');
       videoEl.play().catch(() => {});
     } else {
-      photoEl.onerror = () => { photoEl.classList.remove('show'); };
+      photoEl.onerror = () => { photoEl.classList.remove('show'); notifyFail(); };
+      photoEl.onload = () => { photoEl.classList.add('show'); };
       photoEl.src = url;
-      photoEl.classList.add('show');
     }
     return;
   }
 
   const preset = PRESETS[mode];
   if (!preset) return;
-  photoEl.onerror = () => { photoEl.classList.remove('show'); };
+  photoEl.onerror = () => { photoEl.classList.remove('show'); notifyFail(); };
+  photoEl.onload = () => { photoEl.classList.add('show'); };
   photoEl.src = preset.url;
-  photoEl.classList.add('show');
+}
+
+// ФИКС: раньше при неудачной загрузке картинка просто молча пряталась — непонятно было,
+// сломалось что-то или просто "не поменялось". Теперь честно говорим об этом.
+function notifyFail() {
+  try {
+    window.dispatchEvent(new CustomEvent('parallax:load-failed'));
+  } catch (e) {}
 }
 
 export function loadParallax() {
@@ -94,7 +103,7 @@ export function toggleParallax(on) {
 // Вызывается при выборе фона в выпадающем списке рядом с кнопкой "Параллакс"
 export function setParallaxBg(mode) {
   if (mode === 'custom') {
-    const url = prompt('Вставь ссылку на картинку или видео (.mp4/.webm) для параллакса:', sg('parallax_custom_url', ''));
+    const url = prompt('Вставь ПРЯМУЮ ссылку на файл картинки или видео (должна заканчиваться на .jpg/.png/.mp4 и т.п., а не на страницу сайта):', sg('parallax_custom_url', ''));
     if (url === null) return; // отмена — оставляем как было
     ss('parallax_custom_url', url.trim());
   }
@@ -130,8 +139,8 @@ export function initParallaxMouse() {
     layer1.style.transform = `translate(${curX * -18}px, ${curY * -18}px)`;
     layer2.style.transform = `translate(${curX * -40}px, ${curY * -40}px)`;
     layer3.style.transform = `translate(${curX * -70}px, ${curY * -70}px) scale(1.04)`;
-    // Фото/видео — "ближний" слой, двигается сильнее всех остальных
-    const photoTransform = `translate(${curX * -95}px, ${curY * -95}px) scale(1.08)`;
+    // Фото/видео — "ближний" слой, двигается сильнее всех остальных, но без чрезмерного зума
+    const photoTransform = `translate(${curX * -55}px, ${curY * -55}px) scale(1.02)`;
     if (photo) photo.style.transform = photoTransform;
     if (video) video.style.transform = photoTransform;
     wrapper.style.transform = `rotateY(${curX * 5}deg) rotateX(${curY * -5}deg)`;

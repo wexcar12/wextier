@@ -38,17 +38,24 @@
         <div id="authSection" style="padding: 10px 4px; border-bottom: 1px solid var(--input-border); margin-bottom: 10px;">
             <button id="loginBtn" class="sidebar-btn primary" style="width: 100%; padding: 10px;"><i data-lucide="log-in"></i> <span>Войти</span></button>
             <div id="userProfile" style="display: none; align-items: center; gap: 12px;">
-                <img id="userAvatar" src="" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold);">
+                <img id="userAvatar" src="" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); cursor: pointer;">
                 <div style="flex: 1; min-width: 0;">
-                    <div id="userName" style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Геймер</div>
+                    <div id="userName" style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">Геймер</div>
                     <span id="logoutLink" style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline;">Выйти</span>
                 </div>
             </div>
         </div>
-        
+
+        <!-- ФИКС 8: индикатор автосохранения — видно, сохранились ли изменения -->
+        <div id="autosaveIndicator" style="font-size: 0.72rem; color: var(--text-secondary); text-align: center; margin: -4px 0 8px; opacity: 0; transition: opacity 0.3s;">Сохранено ✓</div>
+        <!-- ФИКС 6: счётчик "размещено / всего" -->
+        <div id="progressIndicator" style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; margin-bottom: 10px; display: none;"></div>
+
         <div class="sidebar-section">Действия</div>
         <button class="sidebar-btn" id="editBtn" title="Редактировать"><i data-lucide="edit-3"></i> <span>Редактировать</span></button>
         <button class="sidebar-btn" id="undoBtn" disabled title="Отменить"><i data-lucide="undo-2"></i> <span>Отменить</span></button>
+        <button class="sidebar-btn" id="randomizeBtn" title="Собрать случайный тир-лист"><i data-lucide="shuffle"></i> <span>Случайно раскидать</span></button>
+        <button class="sidebar-btn" id="historyBtn" title="История версий"><i data-lucide="history"></i> <span>История версий</span></button>
         <button class="sidebar-btn danger hidden" id="resetBtn" title="Сбросить всё"><i data-lucide="rotate-ccw"></i> <span>Сбросить всё</span></button>
         <button class="sidebar-btn hidden" id="addTierBtn" title="Новый тир"><i data-lucide="plus-square"></i> <span>Новый тир</span></button>
         
@@ -86,7 +93,12 @@
             <option value="movies">🎬 Фильмы и Сериалы</option>
             <option value="games">🎮 Компьютерные Игры</option>
             <option value="actors">🎭 Популярные Актеры</option>
+            <option value="musicians">🎤 Музыканты</option>
+            <option value="athletes">🏅 Спортсмены</option>
+            <option value="bloggers">📹 Блогеры и стримеры</option>
+            <option value="anime">🎌 Аниме</option>
         </select>
+        <input type="text" id="poolSearchInput" class="sidebar-select" placeholder="🔎 Поиск в шаблоне..." autocomplete="off" style="margin-top:6px;">
         
         <div class="sidebar-section">Оформление</div>
         <select id="styleSelect" class="sidebar-select" title="Стиль карточек"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>

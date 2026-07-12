@@ -11,6 +11,7 @@ import { getCurrentTierlistId, setCurrentTierlistId } from './gallery.js';
 import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
 import { escapeHTML } from '../utils/sanitizers.js';
+import { unlockAchievement } from './achievements.js';
 
 let duelLeftId = null;
 let duelRightId = null;
@@ -22,6 +23,7 @@ export async function openDuel() {
   }
 
   const { items } = await api.fetchTierlists(20);
+  unlockAchievement('duel_participant');
 
   const content = document.createElement('div');
   content.style.width = '600px';

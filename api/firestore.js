@@ -5,6 +5,17 @@
 import { getDB } from './firebase-init.js';
 
 export const api = {
+  // ФИКС 14: лайки тир-листов в галерее — атомарный increment (без гонки, как voteFor).
+  // Используем существующее поле likesCount (число), а не likes (это отдельный массив).
+  async likeTierlist(tierlistId) {
+    const db = getDB();
+    if (!db) return 0;
+    const ref = db.collection('tierlists').doc(tierlistId);
+    await ref.update({ likesCount: firebase.firestore.FieldValue.increment(1) });
+    const doc = await ref.get();
+    return doc.exists ? (doc.data().likesCount || 0) : 0;
+  },
+
   async fetchTierlists(limit = 20, startAfterDoc = null) {
     const db = getDB();
     if (!db) return { items: [], lastCursor: null };
@@ -129,16 +140,19 @@ export const api = {
     return comments;
   },
 
-  async addComment(tierlistId, text) {
+  async addComment(tierlistId, text, parentId = null) {
     const db = getDB();
     if (!db) throw new Error('Firebase not available');
+
+    const payload = {
+      text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (parentId) payload.parentId = parentId; // ФИКС 16: треды — ответ на комментарий
 
     await db.collection('tierlists')
       .doc(tierlistId)
       .collection('comments')
-      .add({
-        text,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      .add(payload);
   }
 };

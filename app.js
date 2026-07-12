@@ -9,14 +9,14 @@ import { escapeHTML } from './utils/sanitizers.js';
 import { initFB } from './api/firebase-init.js';
 import { initAuthObserver, loginWithGoogle, logout } from './api/auth.js';
 
-import { renderAll, isEditing, setEditing, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, updateUndo } from './ui/render.js';
+import { renderAll, isEditing, setEditing, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, updateUndo, getSelectedItem, clearSelectedItem, moveSelectedItemToTier, deleteSelectedItem } from './ui/render.js';
 import { openGallery, openTop, openUserDashboard } from './ui/gallery.js';
 import { openDuel, setupDuelButtons } from './ui/duel.js';
 import { openCommentsModal } from './ui/comments.js';
-import { loadAchievements, checkAchievements, openAchievementsModal } from './ui/achievements.js';
+import { loadAchievements, checkAchievements, openAchievementsModal, unlockAchievement } from './ui/achievements.js';
 import { loadNeon, openNeonModal } from './ui/neon.js';
 import { loadParallax, toggleParallax, initParallaxMouse, setParallaxBg } from './ui/parallax.js';
-import { updatePoolItems, renderTemplatePool } from './ui/templates.js';
+import { updatePoolItems, renderTemplatePool, filterPool, getPoolItems } from './ui/templates.js';
 import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from './ui/drafts.js';
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
 import { shareTierlist, loadFromURL } from './ui/share.js';
@@ -25,6 +25,7 @@ import { loadSettings, toggleTheme, toggleSidebar, setupSettingsEvents } from '.
 import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
 import { initTooltips } from './ui/tooltip.js';
+import { openVersionHistory, maybeTakeSnapshot } from './ui/version-history.js';
 
 window.escapeHTML = escapeHTML;
 
@@ -67,8 +68,84 @@ function bindEvents() {
     toggleParallax(!isActive);
   });
   document.getElementById('parallaxBgSelect')?.addEventListener('change', (e) => { setParallaxBg(e.target.value); });
+  window.addEventListener('parallax:load-failed', () => {
+    eventBus.emit('toast:show', { text: 'Эта картинка не загрузилась (возможно, сайт-источник недоступен в твоей сети). Оставлен обычный фон.', type: 'error' });
+  });
   
   document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
+
+  // ФИКС 19: рандомайзер — раскидывает всё, что осталось в пуле шаблонов, по тирам случайно
+  document.getElementById('randomizeBtn')?.addEventListener('click', () => {
+    const poolItemsData = getPoolItems().slice(); // копия, т.к. массив будет меняться по ходу
+    const tierRows = document.querySelectorAll('#list1 .tier-items');
+    if (poolItemsData.length === 0 || tierRows.length === 0) {
+      eventBus.emit('toast:show', { text: 'Нечего раскидывать — пул пуст или выбери шаблон', type: 'info' });
+      return;
+    }
+    if (!isEditing()) { setEditing(true); updateUI(); }
+    poolItemsData.forEach(item => {
+      const tierIndex = Math.floor(Math.random() * state.data1.length);
+      const newItem = { img: item.img, url: item.url, svc: item.svc, title: item.title };
+      const command = new AddItemCommand(tierIndex, newItem, 1, state.data1[tierIndex].items.length);
+      state.executeCommand(command, 1);
+    });
+    updatePoolItems(document.getElementById('templateSelect')?.value || 'music');
+    eventBus.emit('templates:renderPool');
+    unlockAchievement('randomizer_used');
+    checkAchievements(true);
+    renderAll();
+  });
+
+  // ФИКС 9: история версий
+  document.getElementById('historyBtn')?.addEventListener('click', openVersionHistory);
+
+  // ФИКС 23: поиск внутри шаблона
+  document.getElementById('poolSearchInput')?.addEventListener('input', (e) => filterPool(e.target.value));
+
+  // ФИКС 8: индикатор автосохранения "Сохранено ✓"
+  let saveIndicatorTimer = null;
+  eventBus.on('save:start', () => {
+    const el = document.getElementById('autosaveIndicator');
+    if (el) { el.textContent = 'Сохранение...'; el.style.opacity = '1'; }
+  });
+  eventBus.on('save:done', () => {
+    maybeTakeSnapshot(); // ФИКС 9: заодно проверяем, не пора ли сделать снапшот версии
+    const el = document.getElementById('autosaveIndicator');
+    if (!el) return;
+    el.textContent = 'Сохранено ✓';
+    clearTimeout(saveIndicatorTimer);
+    saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1500);
+  });
+
+  // ФИКС 6: счётчик "размещено / всего" в шапке
+  eventBus.on('progress:update', ({ listNum, placed }) => {
+    if (listNum !== 1) return;
+    const el = document.getElementById('progressIndicator');
+    const poolLen = document.querySelectorAll('#templatePool .item').length;
+    const total = placed + poolLen;
+    if (!el) return;
+    if (total === 0) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.textContent = 'Размещено: ' + placed + ' / ' + total;
+  });
+
+  // ФИКС 10: горячие клавиши. Кликни по карточке в режиме редактирования, чтобы выделить,
+  // затем 1-9 — перекинуть в нужный тир, Delete/Backspace — удалить, Escape — снять выделение.
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return; // не мешаем печатать текст
+    if (!getSelectedItem()) return;
+
+    if (e.key >= '1' && e.key <= '9') {
+      const tierIndex = parseInt(e.key, 10) - 1;
+      if (moveSelectedItemToTier(tierIndex)) e.preventDefault();
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deleteSelectedItem();
+    } else if (e.key === 'Escape') {
+      clearSelectedItem();
+    }
+  });
   // ФИКС: раньше в режиме Сравнения Undo всегда откатывал список №2, даже если правили список №1
   document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? state.lastEditedList : 1); renderAll(); updateUndo(); });
 

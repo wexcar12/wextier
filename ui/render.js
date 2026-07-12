@@ -17,6 +17,43 @@ export function setActiveTier(t, l) { state.setUI('activeTier', t); state.setUI(
 
 function sg(k, f) { try { const r = localStorage.getItem('wt_' + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
 
+// ГОРЯЧИЕ КЛАВИШИ: какая карточка сейчас выделена кликом (ключ = "тир-индекс-список")
+let selectedItemKey = null;
+
+export function getSelectedItem() {
+  if (!selectedItemKey) return null;
+  const [tierIndex, itemIndex, listNum] = selectedItemKey.split('-').map(Number);
+  return { tierIndex, itemIndex, listNum };
+}
+export function clearSelectedItem() {
+  selectedItemKey = null;
+  document.querySelectorAll('.item.selected').forEach(el => el.classList.remove('selected'));
+}
+// Двигает выделенную карточку в тир с номером tierIndex (используется клавишами 1-9)
+export function moveSelectedItemToTier(tierIndex) {
+  const sel = getSelectedItem();
+  if (!sel) return false;
+  const data = sel.listNum === 1 ? state.data1 : state.data2;
+  if (!data[tierIndex] || sel.tierIndex === tierIndex) return false;
+  const command = new MoveItemCommand('item', sel.tierIndex, tierIndex, sel.itemIndex, data[tierIndex].items.length, sel.listNum);
+  state.executeCommand(command, sel.listNum);
+  selectedItemKey = tierIndex + '-' + (data[tierIndex].items.length) + '-' + sel.listNum;
+  renderAll();
+  return true;
+}
+// Удаляет выделенную карточку (клавиша Delete/Backspace) — так же, как кнопка "x" на карточке
+export function deleteSelectedItem() {
+  const sel = getSelectedItem();
+  if (!sel) return false;
+  const data = sel.listNum === 1 ? state.data1 : state.data2;
+  const item = data[sel.tierIndex].items[sel.itemIndex];
+  const command = new RemoveItemCommand(sel.tierIndex, sel.itemIndex, item, sel.listNum);
+  state.executeCommand(command, sel.listNum);
+  selectedItemKey = null;
+  renderAll();
+  return true;
+}
+
 export function renderAll() {
   render(1);
   if (isCompare()) render(2);
@@ -33,9 +70,12 @@ export function render(listNum) {
   
   el.innerHTML = '';
 
+  let totalPlaced = 0;
   data.forEach((t, ti) => {
     const row = document.createElement('div');
     row.className = 'tier-row';
+    row.style.setProperty('--tier-glow', t.color || '#ff7f7f');
+    totalPlaced += t.items.length;
 
     const lbl = document.createElement('div');
     lbl.className = 'tier-label';
@@ -83,14 +123,33 @@ export function render(listNum) {
     itemsDiv.className = 'tier-items';
     itemsDiv.dataset.tierIndex = ti;
     itemsDiv.dataset.listNum = listNum;
+    itemsDiv.dataset.tierColor = t.color || '#ff7f7f';
 
     t.items.forEach((item, ii) => {
       const div = document.createElement('div');
       div.className = `item style-${currentStyle}`; // ФИКС 7: Стиль карточки
       div.dataset.svc = item.svc;
+      div.dataset.tierIndex = ti;
+      div.dataset.itemIndex = ii;
+      div.dataset.listNum = listNum;
       // ФИКС: раньше при наведении на фильм/игру в тире подсказка не показывалась вообще
       // (title у актёров в пуле шаблонов был, а у карточек в самом тир-листе — нет).
       if (item.title) div.dataset.tooltip = item.title;
+      // ГОРЯЧИЕ КЛАВИШИ: клик по карточке в режиме редактирования выделяет её —
+      // дальше можно нажать 1-9, чтобы перекинуть в нужный тир, или Delete, чтобы удалить.
+      if (isEditing()) {
+        div.addEventListener('click', (e) => {
+          if (e.target.closest('.del-btn')) return;
+          e.preventDefault();
+          document.querySelectorAll('.item.selected').forEach(el => el.classList.remove('selected'));
+          if (selectedItemKey === div.dataset.tierIndex + '-' + div.dataset.itemIndex + '-' + div.dataset.listNum) {
+            selectedItemKey = null;
+          } else {
+            div.classList.add('selected');
+            selectedItemKey = div.dataset.tierIndex + '-' + div.dataset.itemIndex + '-' + div.dataset.listNum;
+          }
+        });
+      }
 
       const a = document.createElement('a');
       a.href = item.url;
@@ -158,6 +217,9 @@ export function render(listNum) {
 
     el.appendChild(row);
   });
+
+  // ФИКС 6: счётчик "размещено / всего" — слушает app.js, чтобы обновить надпись в шапке
+  eventBus.emit('progress:update', { listNum, placed: totalPlaced });
 }
 
 function pImg(svc) {
