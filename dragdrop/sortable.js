@@ -9,6 +9,12 @@ import { eventBus } from '../core/event-bus.js';
 let currentPoolItems = [];
 let lastHighlighted = null;
 
+// ФИКС 4 (визуальный отклик): помечаем body классом на всё время перетаскивания —
+// по нему CSS подсвечивает все пустые тиры лёгкой пульсацией, чтобы было видно,
+// куда вообще можно бросить карточку, ещё до наведения на конкретный тир.
+function handleDragStart() { document.body.classList.add('wex-dragging'); }
+function handleDragStop() { document.body.classList.remove('wex-dragging'); }
+
 // ФИКС 2: подсвечиваем тир ЕГО СОБСТВЕННЫМ цветом, когда карточку тащат прямо над ним
 // (раньше подсветка была одинаковая золотая для всех тиров).
 function handleDragMove(evt) {
@@ -125,12 +131,12 @@ export function initSortable() {
       const disabled = !isEditing();
       document.querySelectorAll('.tier-items').forEach(el => {
         if (el._sortable) el._sortable.destroy();
-        el._sortable = new Sortable(el, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, disabled });
+        el._sortable = new Sortable(el, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
       });
       const poolEl = document.getElementById('templatePool');
       if (poolEl) {
         if (poolEl._sortable) poolEl._sortable.destroy();
-        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, disabled });
+        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
       }
       lucide.createIcons();
     }, 0);

@@ -18,7 +18,7 @@ class ToastManager {
 
   show(text, type = 'info') {
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = 'toast ' + type;
     toast.textContent = text;
     this.container.appendChild(toast);
 

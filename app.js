@@ -26,6 +26,8 @@ import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
 import { initTooltips } from './ui/tooltip.js';
 import { openVersionHistory, maybeTakeSnapshot } from './ui/version-history.js';
+import { modalManager } from './ui/modal-manager.js';
+import { enhanceAllSelects } from './ui/custom-select.js';
 
 window.escapeHTML = escapeHTML;
 
@@ -42,6 +44,7 @@ async function init() {
   const fbReady = initFB();
   loadSettings(); loadDrafts(); loadAchievements(); loadNeon(); loadParallax();
   setupSearch(); setupPlayer(); setupDuelButtons(); initSortable(); initParallaxMouse(); initTooltips();
+  enhanceAllSelects(); // ФИКС: превращаем все select в тёмный кастомный dropdown
   setupSettingsEvents(); // ФИКС: без этой строки списки "Стиль/Размер/Фон" в сайдбаре ничего не делали
 
   if (fbReady) initAuthObserver();
@@ -55,6 +58,17 @@ async function init() {
 }
 
 function bindEvents() {
+  // ФИКС: панель "Настройки" — физически перемещает существующие элементы
+  // (Тема/Неон/Параллакс/Стиль/Размер/Фон) внутрь модалки и обратно, ничего не пересоздавая.
+  document.getElementById('settingsBtn')?.addEventListener('click', () => {
+    const panel = document.getElementById('settingsPanel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    const close = modalManager.open(panel);
+    const closeBtn = panel.querySelector('#closeSettingsPanel');
+    if (closeBtn) closeBtn.onclick = close;
+    lucide.createIcons();
+  });
   // ФИКС: themeBtn и toggleSidebarBtn уже привязаны в setupSettingsEvents() (см. init()).
   // Раньше они привязывались ЕЩЁ РАЗ здесь — при клике срабатывали два обработчика подряд,
   // и тема/сайдбар переключались туда-обратно за один клик, то есть визуально не менялись вообще.
@@ -72,7 +86,7 @@ function bindEvents() {
     eventBus.emit('toast:show', { text: 'Эта картинка не загрузилась (возможно, сайт-источник недоступен в твоей сети). Оставлен обычный фон.', type: 'error' });
   });
   
-  document.getElementById('editBtn')?.addEventListener('click', () => { setEditing(!isEditing()); renderAll(); updateUI(); });
+  // ФИКС: кнопка "Редактировать" убрана — редактирование теперь всегда включено (см. core/state.js)
 
   // ФИКС 19: рандомайзер — раскидывает всё, что осталось в пуле шаблонов, по тирам случайно
   document.getElementById('randomizeBtn')?.addEventListener('click', () => {
@@ -215,7 +229,7 @@ function bindEvents() {
       const tI = parseInt(addBtn.dataset.tierIndex, 10); const lN = parseInt(addBtn.dataset.listNum, 10);
       if (!isNaN(tI)) {
         setActiveTier(tI, lN);
-        document.getElementById('trackUrl').value = ''; document.getElementById('coverUrl').value = '';
+        document.getElementById('trackUrl').value = ''; document.getElementById('coverUrl').value = ''; document.getElementById('coverUrl').dataset.source = '';
         const preview = document.getElementById('coverPreview'); if(preview) preview.style.display = 'none';
         document.getElementById('addModal')?.classList.add('open');
       }
@@ -251,12 +265,17 @@ function bindEvents() {
     const coverInput = document.getElementById('coverUrl');
     const preview = document.getElementById('coverPreview');
     if (!url) { if (showErrorToast) eventBus.emit('toast:show', { text: 'Вставьте ссылку', type: 'info' }); return; }
-    if (coverInput.value.trim()) return; // пользователь уже сам вставил свою картинку — не перезаписываем
+    // ФИКС БАГА: раньше проверялось "поле не пустое" — но поле оставалось "не пустым" и
+    // после ПРЕДЫДУЩЕГО авто-поиска, поэтому при смене ссылки на трек поиск не запускался
+    // заново. Теперь различаем "я сам вписал картинку" (manual) и "нашлось само" (auto) —
+    // не трогаем только то, что пользователь ввёл своими руками.
+    if (coverInput.value.trim() && coverInput.dataset.source === 'manual') return;
 
     document.getElementById('fetchCoverBtn').disabled = true;
     const cover = await fetchCoverForTrack(svc, url);
     if (cover) {
       coverInput.value = cover;
+      coverInput.dataset.source = 'auto';
       if (preview) { preview.src = cover; preview.style.display = 'block'; }
     } else if (showErrorToast) {
       eventBus.emit('toast:show', { text: 'Не удалось найти обложку автоматически. Вставьте ссылку на картинку вручную.', type: 'error' });
@@ -264,9 +283,14 @@ function bindEvents() {
     document.getElementById('fetchCoverBtn').disabled = false;
   }
 
+  // Если человек сам печатает/вставляет в поле картинки — помечаем как "ручное", чтобы
+  // авто-поиск больше не пытался его перезаписать
+  document.getElementById('coverUrl')?.addEventListener('input', (e) => { e.target.dataset.source = 'manual'; });
+
   // Резервная кнопка — можно нажать вручную в любой момент (например, если авто-поиск не сработал)
   document.getElementById('fetchCoverBtn')?.addEventListener('click', () => {
-    document.getElementById('coverUrl').value = ''; // разрешаем повторный поиск по кнопке
+    const coverInput = document.getElementById('coverUrl');
+    coverInput.value = ''; coverInput.dataset.source = ''; // разрешаем повторный поиск по кнопке
     runCoverAutoSearch(true);
   });
 
@@ -278,7 +302,8 @@ function bindEvents() {
     coverAutoSearchTimer = setTimeout(() => runCoverAutoSearch(false), 700);
   });
   document.getElementById('svc')?.addEventListener('change', () => {
-    document.getElementById('coverUrl').value = '';
+    const coverInput = document.getElementById('coverUrl');
+    coverInput.value = ''; coverInput.dataset.source = '';
     runCoverAutoSearch(false);
   });
 

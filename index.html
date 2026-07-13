@@ -32,6 +32,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">WEX-TIER</div>
+            <button id="settingsBtn" class="sidebar-toggle-btn" title="Настройки"><i data-lucide="settings"></i></button>
             <button id="toggleSidebarBtn" class="sidebar-toggle-btn"><i data-lucide="chevron-left"></i></button>
         </div>
         
@@ -52,7 +53,6 @@
         <div id="progressIndicator" style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; margin-bottom: 10px; display: none;"></div>
 
         <div class="sidebar-section">Действия</div>
-        <button class="sidebar-btn" id="editBtn" title="Редактировать"><i data-lucide="edit-3"></i> <span>Редактировать</span></button>
         <button class="sidebar-btn" id="undoBtn" disabled title="Отменить"><i data-lucide="undo-2"></i> <span>Отменить</span></button>
         <button class="sidebar-btn" id="randomizeBtn" title="Собрать случайный тир-лист"><i data-lucide="shuffle"></i> <span>Случайно раскидать</span></button>
         <button class="sidebar-btn" id="historyBtn" title="История версий"><i data-lucide="history"></i> <span>История версий</span></button>
@@ -60,20 +60,8 @@
         <button class="sidebar-btn hidden" id="addTierBtn" title="Новый тир"><i data-lucide="plus-square"></i> <span>Новый тир</span></button>
         
         <div class="sidebar-section">Инструменты</div>
-        <button class="sidebar-btn" id="themeBtn" title="Сменить тему"><i data-lucide="moon"></i> <span>Тема</span></button>
-        <button class="sidebar-btn" id="neonBtn" title="Настройки неона"><i data-lucide="lightbulb"></i> <span>Неон</span></button>
-        <button class="sidebar-btn" id="parallaxBtn" title="Эффект параллакса"><i data-lucide="layers"></i> <span>Параллакс</span></button>
-        <select id="parallaxBgSelect" class="sidebar-select" title="Фон параллакса">
-          <option value="theme">🎨 Только тема (всегда работает)</option>
-          <option value="favorite">⭐ Мой любимый</option>
-          <option value="mountains">🏔️ Горы</option>
-          <option value="forest">🌲 Лес</option>
-          <option value="space">🌌 Космос</option>
-          <option value="custom">🔗 Своя картинка/видео...</option>
-        </select>
         <button class="sidebar-btn" id="compareBtn" title="Сравнить тир-листы"><i data-lucide="users"></i> <span>Сравнение</span></button>
         <button class="sidebar-btn" id="shareBtn" title="Поделиться ссылкой"><i data-lucide="link"></i> <span>Поделиться</span></button>
-        <button class="sidebar-btn" id="playlistBtn" title="Смотреть плейлист"><i data-lucide="video"></i> <span>YT плейлист</span></button>
         <button class="sidebar-btn" id="galleryBtn" title="Открыть галерею"><i data-lucide="image"></i> <span>Галерея</span></button>
         <button class="sidebar-btn" id="duelBtn" title="Дуэль тир-листов"><i data-lucide="swords"></i> <span>Дуэль</span></button>
         <button class="sidebar-btn" id="topBtn" title="Топ лучших"><i data-lucide="medal"></i> <span>Топ</span></button>
@@ -100,11 +88,6 @@
         </select>
         <input type="text" id="poolSearchInput" class="sidebar-select" placeholder="🔎 Поиск в шаблоне..." autocomplete="off" style="margin-top:6px;">
         
-        <div class="sidebar-section">Оформление</div>
-        <select id="styleSelect" class="sidebar-select" title="Стиль карточек"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
-        <select id="sizeSelect" class="sidebar-select" title="Размер карточек"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
-        <select id="bgSelect" class="sidebar-select" title="Фоновое изображение"><option value="0">🌌 Аврора</option><option value="1">🌅 Закат</option><option value="2">🌊 Океан</option><option value="3">💎 Изумруд</option><option value="4">🔮 Фиолет</option><option value="5">⚫ Графит</option></select>
-        
         <div class="sidebar-section">Черновики</div>
         <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
         <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> <span>Новый черновик</span></button>
@@ -114,6 +97,10 @@
     </aside>
 
     <main class="main-content" id="mainContent">
+        <div id="foreignBanner" class="foreign-banner hidden">
+            <i data-lucide="eye"></i>
+            <span>Ты смотришь чужой тир-лист — изменения можно перетаскивать для интереса, но они никуда не сохранятся.</span>
+        </div>
         <div class="top-bar" id="topBar">
             <input type="text" class="search-bar" id="searchInput" placeholder="Поиск по ссылке...">
             <button class="filter-btn active-filter" data-filter="all">Все</button>
@@ -140,8 +127,45 @@
         <span class="vote-score" id="duelRightWins">0</span>
     </div>
 
-    <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc"><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><input type="text" id="coverUrl" placeholder="Ссылка на картинку"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
+    <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc" data-enhance><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><input type="text" id="coverUrl" placeholder="Ссылка на картинку"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
     <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn btn-secondary" id="closePlayer">Закрыть</button></div></div></div>
+
+    <!-- ФИКС: сюда переехали "Тема / Неон / Параллакс / Стиль / Размер / Фон" из перегруженного
+         сайдбара — открывается по кнопке-шестерёнке. Элементы настоящие (с теми же id), просто
+         физически перемещаются сюда и обратно модальным менеджером — весь код на них продолжает
+         работать без изменений. -->
+    <div id="settingsPanel" style="display:none;">
+        <h3 style="color:var(--gold);margin-bottom:16px;">Настройки</h3>
+        <div class="bento-grid">
+            <div class="bento-card">
+                <div class="bento-card-title"><i data-lucide="palette"></i> Оформление</div>
+                <button class="sidebar-btn" id="themeBtn" title="Сменить тему"><i data-lucide="moon"></i> <span>Тема</span></button>
+                <select id="styleSelect" class="sidebar-select" title="Стиль карточек"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
+                <select id="sizeSelect" class="sidebar-select" title="Размер карточек"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
+            </div>
+            <div class="bento-card">
+                <div class="bento-card-title"><i data-lucide="sparkles"></i> Фон и эффекты</div>
+                <select id="bgSelect" class="sidebar-select" title="Фоновое изображение"><option value="0">🌌 Аврора</option><option value="1">🌅 Закат</option><option value="2">🌊 Океан</option><option value="3">💎 Изумруд</option><option value="4">🔮 Фиолет</option><option value="5">⚫ Графит</option></select>
+                <button class="sidebar-btn" id="neonBtn" title="Настройки неона"><i data-lucide="lightbulb"></i> <span>Неон</span></button>
+                <button class="sidebar-btn" id="parallaxBtn" title="Эффект параллакса"><i data-lucide="layers"></i> <span>Параллакс</span></button>
+                <select id="parallaxBgSelect" class="sidebar-select" title="Фон параллакса">
+                  <option value="theme">🎨 Только тема (всегда работает)</option>
+                  <option value="favorite">⭐ Мой любимый</option>
+                  <option value="mountains">🏔️ Горы</option>
+                  <option value="forest">🌲 Лес</option>
+                  <option value="space">🌌 Космос</option>
+                  <option value="custom">🔗 Своя картинка/видео...</option>
+                </select>
+            </div>
+            <div class="bento-card">
+                <div class="bento-card-title"><i data-lucide="video"></i> Разное</div>
+                <button class="sidebar-btn" id="playlistBtn" title="Смотреть плейлист"><i data-lucide="video"></i> <span>YT плейлист</span></button>
+            </div>
+        </div>
+        <div class="modal-actions" style="margin-top:16px;">
+            <button class="btn btn-secondary" id="closeSettingsPanel">Закрыть</button>
+        </div>
+    </div>
 
     <script type="module" src="./app.js"></script>
 </body>

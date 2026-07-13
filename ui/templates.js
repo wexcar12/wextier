@@ -748,6 +748,14 @@ export function updatePoolItems(type) {
   }
 }
 
+// ФИКС ПОИСКА: категория "Игры" хранится с английскими названиями (так их называют в Steam),
+// а Актёры/Фильмы — с русскими. Чтобы не переводить вручную, добавляем транслитерацию
+// кириллица→латиница "на лету" — запрос "портал" тоже найдёт "Portal".
+const TRANSLIT_MAP = { а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e', ж:'zh', з:'z', и:'i', й:'y', к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f', х:'h', ц:'ts', ч:'ch', ш:'sh', щ:'sch', ъ:'', ы:'y', ь:'', э:'e', ю:'yu', я:'ya' };
+function translit(str) {
+  return str.split('').map(ch => TRANSLIT_MAP[ch] !== undefined ? TRANSLIT_MAP[ch] : ch).join('');
+}
+
 export function getPoolItems() { return currentPoolItems; }
 
 // ФИКС 23: поиск внутри шаблона. ВАЖНО: элементы не удаляются и не переставляются —
@@ -755,9 +763,11 @@ export function getPoolItems() { return currentPoolItems; }
 // которые опираются на порядок карточек в DOM.
 export function filterPool(query) {
   const q = (query || '').trim().toLowerCase();
+  const qTranslit = translit(q);
   document.querySelectorAll('#templatePool .item').forEach(el => {
     const title = (el.dataset.tooltip || '').toLowerCase();
-    el.classList.toggle('search-hidden', q !== '' && !title.includes(q));
+    const matches = q === '' || title.includes(q) || (qTranslit !== q && title.includes(qTranslit));
+    el.classList.toggle('search-hidden', !matches);
   });
 }
 

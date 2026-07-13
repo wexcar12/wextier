@@ -7,6 +7,15 @@ import { eventBus } from '../core/event-bus.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { attachPosterFallback } from './templates.js';
 
+// ФИКС: баннер "ты смотришь чужой тир-лист" — показывается, когда открыли список другого
+// автора (из галереи/топа/дуэли), скрывается при работе со своим черновиком.
+export function showForeignBanner() {
+  document.getElementById('foreignBanner')?.classList.remove('hidden');
+}
+export function hideForeignBanner() {
+  document.getElementById('foreignBanner')?.classList.add('hidden');
+}
+
 export function isEditing() { return state.ui.editing; }
 export function isCompare() { return state.ui.compare; }
 export function setEditing(val) { state.setUI('editing', val); }

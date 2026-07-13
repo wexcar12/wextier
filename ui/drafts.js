@@ -3,7 +3,7 @@
  * @description Черновики (localStorage).
  */
 import { state } from '../core/state.js';
-import { renderAll } from './render.js';
+import { renderAll, hideForeignBanner } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 
 const P = 'wt_';
@@ -33,6 +33,7 @@ export function loadDrafts() {
   if (isNaN(ad) || !DRAFTS[ad]) ad = 0;
   if (!DRAFTS[ad].data) DRAFTS[ad].data = defaultData();
   state.setData(JSON.parse(JSON.stringify(DRAFTS[ad].data)), 1);
+  hideForeignBanner();
 }
 
 export function saveDrafts() {
@@ -55,6 +56,7 @@ export function renderDraftsSidebar() {
       saveDrafts();
       ad = i;
       state.setData(JSON.parse(JSON.stringify(DRAFTS[i].data)), 1);
+      hideForeignBanner();
       renderAll();
     };
     list.appendChild(div);
@@ -67,6 +69,7 @@ export function createNewDraft() {
     DRAFTS.push({ name: name.trim(), data: defaultData() });
     ad = DRAFTS.length - 1;
     state.setData(JSON.parse(JSON.stringify(DRAFTS[ad].data)), 1);
+    hideForeignBanner();
     saveDrafts();
     renderAll();
   }

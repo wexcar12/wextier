@@ -6,13 +6,21 @@ import { api } from '../api/firestore.js';
 import { getCurrentUser } from '../api/auth.js';
 import { modalManager } from './modal-manager.js';
 import { state } from '../core/state.js';
-import { renderAll } from './render.js';
+import { renderAll, showForeignBanner, hideForeignBanner } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { getDB } from '../api/firebase-init.js';
 import { unlockAchievement } from './achievements.js';
 
 let ctid = null;
+
+// ФИКС: показываем баннер "чужой тир-лист", если у документа есть автор и это не текущий
+// пользователь. Для черновиков без authorId (или своих) баннер скрываем.
+function applyForeignBanner(doc) {
+  const user = getCurrentUser();
+  const isForeign = doc.authorId && doc.authorId !== 'anonymous' && (!user || doc.authorId !== user.uid);
+  if (isForeign) showForeignBanner(); else hideForeignBanner();
+}
 
 export function getCurrentTierlistId() { return ctid; }
 export function setCurrentTierlistId(id) { ctid = id; }
@@ -73,6 +81,7 @@ export async function openGallery() {
       info.onclick = async () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
+        applyForeignBanner(doc);
         if (doc.templateType) {
           document.getElementById('templateSelect').value = doc.templateType;
           eventBus.emit('templates:changed', doc.templateType);
@@ -185,6 +194,7 @@ export async function openTop() {
       div.onclick = async () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
+        applyForeignBanner(doc);
         if (doc.templateType) {
           document.getElementById('templateSelect').value = doc.templateType;
           eventBus.emit('templates:changed', doc.templateType);
@@ -246,6 +256,7 @@ export async function openUserDashboard() {
       div.querySelector('button').onclick = () => {
         state.setData(JSON.parse(doc.data), 1);
         ctid = doc.id;
+        applyForeignBanner(doc);
         if (doc.templateType) {
           document.getElementById('templateSelect').value = doc.templateType;
           eventBus.emit('templates:changed', doc.templateType);
