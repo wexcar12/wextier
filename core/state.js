@@ -128,6 +128,7 @@ class StateManager {
     eventBus.emit('state:changed', { listNum }); this._save();
   }
   canUndo(listNum = 1) { return listNum === 1 ? this.index1 >= 0 : this.index2 >= 0; }
+  canRedo(listNum = 1) { return listNum === 1 ? this.index1 < this.history1.length - 1 : this.index2 < this.history2.length - 1; }
   setData(data, listNum = 1) {
     if (listNum === 1) this.data1 = JSON.parse(JSON.stringify(data)); else this.data2 = JSON.parse(JSON.stringify(data));
     if (listNum === 1) { this.history1 = []; this.index1 = -1; } else { this.history2 = []; this.index2 = -1; }

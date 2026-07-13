@@ -4,11 +4,15 @@
  */
 
 let currentFilter = 'all';
+let debounceTimer = null;
 
 export function setupSearch() {
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
-    searchInput.addEventListener('input', filterItems);
+    searchInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(filterItems, 200);
+    });
   }
 
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -23,11 +27,27 @@ export function setupSearch() {
 
 function filterItems() {
   const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  let visibleCount = 0;
 
   document.querySelectorAll('.item').forEach(el => {
-    const a = el.querySelector('a');
-    const u = a ? a.href.toLowerCase() : '';
+    const tooltip = (el.getAttribute('data-tooltip') || '').toLowerCase();
     const sv = el.dataset.svc || '';
-    el.style.opacity = ((!q || u.includes(q)) && (currentFilter === 'all' || sv === currentFilter)) ? '1' : '0.25';
+    const match = (!q || tooltip.includes(q)) && (currentFilter === 'all' || sv === currentFilter);
+    el.classList.toggle('search-hidden', !match);
+    if (match) visibleCount++;
   });
+
+  const container = document.querySelector('.items-container') || document.querySelector('.tier-list');
+  let msg = document.getElementById('search-empty-msg');
+  if (visibleCount === 0) {
+    if (!msg && container) {
+      msg = document.createElement('div');
+      msg.id = 'search-empty-msg';
+      msg.textContent = 'Ничего не найдено';
+      msg.style.cssText = 'text-align:center;padding:20px;color:#888;';
+      container.appendChild(msg);
+    }
+  } else if (msg) {
+    msg.remove();
+  }
 }

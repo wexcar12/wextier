@@ -12,6 +12,7 @@ import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
 import { escapeHTML } from '../utils/sanitizers.js';
 import { unlockAchievement } from './achievements.js';
+import { sg, ss } from '../utils/storage.js';
 
 let duelLeftId = null;
 let duelRightId = null;

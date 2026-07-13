@@ -17,17 +17,18 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.263.1"></script>
 
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+<noscript><div style="text-align:center;padding:40px;color:#fff;background:#0a0a10;min-height:100vh;display:flex;align-items:center;justify-content:center;"><p>Для работы WEX-TIER необходим JavaScript</p></div></noscript>
 
     <div id="parallaxWrapper"><div id="parallaxLayer1" class="pz-layer"></div><div id="parallaxLayer2" class="pz-layer"></div><div id="parallaxLayer3" class="pz-layer"></div><img id="parallaxPhoto" class="pz-layer" alt=""><video id="parallaxVideo" class="pz-layer" muted loop autoplay playsinline></video></div>
     <canvas id="particlesCanvas"></canvas>
     
-    <button class="burger-btn" id="burgerBtn"><i data-lucide="menu"></i></button>
+    <button class="burger-btn" id="burgerBtn" aria-label="Меню"><i data-lucide="menu"></i></button>
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -73,10 +74,10 @@
         <button class="sidebar-btn" id="pngBtn" title="Скачать как картинку"><i data-lucide="download"></i> <span>Скачать PNG</span></button>
         <button class="sidebar-btn" id="exportBtn" title="Сохранить файл"><i data-lucide="save"></i> <span>Экспорт JSON</span></button>
         <button class="sidebar-btn" id="importBtn" title="Загрузить файл"><i data-lucide="folder-open"></i> <span>Импорт JSON</span></button>
-        <input type="file" id="importFile" accept=".json" style="display:none;">
+        <label class="sr-only" for="importFile">Импорт файла</label><input type="file" id="importFile" accept=".json" style="display:none;">
         
         <div class="sidebar-section">Тематика</div>
-        <select id="templateSelect" class="sidebar-select" title="Выбор шаблона">
+        <label class="sr-only" for="templateSelect">Выбор шаблона</label><select id="templateSelect" class="sidebar-select" title="Выбор шаблона">
             <option value="music">🎵 Музыкальные треки</option>
             <option value="movies">🎬 Фильмы и Сериалы</option>
             <option value="games">🎮 Компьютерные Игры</option>
@@ -86,7 +87,7 @@
             <option value="bloggers">📹 Блогеры и стримеры</option>
             <option value="anime">🎌 Аниме</option>
         </select>
-        <input type="text" id="poolSearchInput" class="sidebar-select" placeholder="🔎 Поиск в шаблоне..." autocomplete="off" style="margin-top:6px;">
+        <label class="sr-only" for="poolSearchInput">Поиск в шаблоне</label><input type="text" id="poolSearchInput" class="sidebar-select" placeholder="🔎 Поиск в шаблоне..." autocomplete="off" style="margin-top:6px;">
         
         <div class="sidebar-section">Черновики</div>
         <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
@@ -102,7 +103,7 @@
             <span>Ты смотришь чужой тир-лист — изменения можно перетаскивать для интереса, но они никуда не сохранятся.</span>
         </div>
         <div class="top-bar" id="topBar">
-            <input type="text" class="search-bar" id="searchInput" placeholder="Поиск по ссылке...">
+            <label class="sr-only" for="searchInput">Поиск по ссылке</label><input type="text" class="search-bar" id="searchInput" placeholder="Поиск по ссылке...">
             <button class="filter-btn active-filter" data-filter="all">Все</button>
             <button class="filter-btn" data-filter="youtube">YT</button>
             <button class="filter-btn" data-filter="spotify">SP</button>
@@ -127,7 +128,7 @@
         <span class="vote-score" id="duelRightWins">0</span>
     </div>
 
-    <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><select id="svc" data-enhance><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><input type="text" id="coverUrl" placeholder="Ссылка на картинку"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
+    <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><label class="sr-only" for="svc">Сервис</label><select id="svc" data-enhance><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><label class="sr-only" for="trackUrl">Ссылка на трек</label><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><label class="sr-only" for="coverUrl">Ссылка на картинку</label><input type="text" id="coverUrl" placeholder="Ссылка на картинку"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
     <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn btn-secondary" id="closePlayer">Закрыть</button></div></div></div>
 
     <!-- ФИКС: сюда переехали "Тема / Неон / Параллакс / Стиль / Размер / Фон" из перегруженного

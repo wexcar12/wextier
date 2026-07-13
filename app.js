@@ -5,6 +5,7 @@
 import { eventBus } from './core/event-bus.js';
 import { state, AddItemCommand, RemoveItemCommand } from './core/state.js';
 import { escapeHTML } from './utils/sanitizers.js';
+import { sg, ss } from './utils/storage.js';
 
 import { initFB } from './api/firebase-init.js';
 import { initAuthObserver, loginWithGoogle, logout } from './api/auth.js';
@@ -29,18 +30,11 @@ import { openVersionHistory, maybeTakeSnapshot } from './ui/version-history.js';
 import { modalManager } from './ui/modal-manager.js';
 import { enhanceAllSelects } from './ui/custom-select.js';
 
-window.escapeHTML = escapeHTML;
+if (!sg('version_1_5', false)) {
+  ss('version_1_5', true);
+}
 
 async function init() {
-  const P = 'wt_';
-  function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
-  function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
-
-  if (!sg('version_1_5', false)) {
-    Object.keys(localStorage).filter(k => k.startsWith(P)).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
-    ss('version_1_5', true);
-  }
-
   const fbReady = initFB();
   loadSettings(); loadDrafts(); loadAchievements(); loadNeon(); loadParallax();
   setupSearch(); setupPlayer(); setupDuelButtons(); initSortable(); initParallaxMouse(); initTooltips();
@@ -55,6 +49,20 @@ async function init() {
 
   bindEvents();
   updateUI();
+}
+
+function showConfirmModal(text, onConfirm) {
+  const html = `<div style="text-align:center;padding:20px;">
+    <p style="margin-bottom:20px;font-size:1rem;">${text}</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-secondary" data-action="cancel">Отмена</button>
+      <button class="btn btn-primary" data-action="confirm" style="background:#ff4d6d;">Подтвердить</button>
+    </div>
+  </div>`;
+  const close = modalManager.open(html, { closeOnBackdrop: true, closeOnEscape: true });
+  const container = document.querySelector('[data-action="confirm"]').closest('.modal-content') || document.querySelector('[data-action="confirm"]').parentElement.parentElement;
+  container.querySelector('[data-action="cancel"]').onclick = () => close();
+  container.querySelector('[data-action="confirm"]').onclick = () => { close(); onConfirm(); };
 }
 
 function bindEvents() {
@@ -186,12 +194,12 @@ function bindEvents() {
   // ФИКС: эти две кнопки раньше не были привязаны ни к чему и не реагировали на клик
   document.getElementById('newDraftBtnSidebar')?.addEventListener('click', createNewDraft);
   document.getElementById('resetAllLink')?.addEventListener('click', () => {
-    if (confirm('Точно удалить ВСЕ черновики и настройки без возможности восстановить?')) {
+    showConfirmModal('Точно удалить ВСЕ черновики и настройки без возможности восстановить?', () => {
       clearAllData();
       renderDraftsSidebar();
       renderAll();
       eventBus.emit('toast:show', { text: 'Все данные сброшены', type: 'success' });
-    }
+    });
   });
 
   document.getElementById('compareBtn')?.addEventListener('click', () => {
@@ -202,10 +210,10 @@ function bindEvents() {
   });
 
   document.getElementById('resetBtn')?.addEventListener('click', () => {
-    if (confirm('Сбросить всё?')) {
+    showConfirmModal('Сбросить всё?', () => {
       const emptyData = [ { tier: 'S', label: 'S', color: '#ff7f7f', items: [] }, { tier: 'A', label: 'A', color: '#ffbf7f', items: [] }, { tier: 'B', label: 'B', color: '#ffdf7f', items: [] }, { tier: 'C', label: 'C', color: '#bfff7f', items: [] } ];
       state.setData(emptyData, 1); state.setData(emptyData, 2); checkAchievements(isEditing()); renderAll();
-    }
+    });
   });
 
   document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); });
@@ -231,6 +239,12 @@ function bindEvents() {
         setActiveTier(tI, lN);
         document.getElementById('trackUrl').value = ''; document.getElementById('coverUrl').value = ''; document.getElementById('coverUrl').dataset.source = '';
         const preview = document.getElementById('coverPreview'); if(preview) preview.style.display = 'none';
+        const templateType = document.getElementById('templateSelect')?.value || 'music';
+        const modalTitle = document.querySelector('#addModal .modal-box h3');
+        const titles = { music: 'Добавить трек', movies: 'Добавить фильм', games: 'Добавить игру', actors: 'Добавить актёра', musicians: 'Добавить музыканта', athletes: 'Добавить спортсмена', bloggers: 'Добавить блогера', anime: 'Добавить аниме' };
+        if (modalTitle) modalTitle.textContent = titles[templateType] || 'Добавить элемент';
+        const svcSelect = document.getElementById('svc')?.closest('.custom-select-wrapper') || document.getElementById('svc');
+        if (svcSelect) svcSelect.style.display = templateType === 'music' ? '' : 'none';
         document.getElementById('addModal')?.classList.add('open');
       }
       return;

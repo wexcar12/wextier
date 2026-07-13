@@ -8,13 +8,10 @@ import { state } from '../core/state.js';
 import { renderAll } from './render.js';
 import { modalManager } from './modal-manager.js';
 import { eventBus } from '../core/event-bus.js';
+import { sg, ss } from '../utils/storage.js';
 
-const P = 'wt_';
 const MAX_SNAPSHOTS = 12;
 const MIN_INTERVAL_MS = 5 * 60 * 1000; // не чаще раза в 5 минут
-
-function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
-function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
 
 function getSnapshots() { return sg('version_history', []); }
 function setSnapshots(list) { ss('version_history', list); }
