@@ -18,6 +18,8 @@ export async function exportPNG() {
       a.download = 'wex-tier.png';
       a.href = canvas.toDataURL('image/png');
       a.click();
+    } else {
+      eventBus.emit('toast:show', { text: 'Экспорт PNG недоступен — библиотека не загружена', type: 'error' });
     }
   } catch (e) {
     eventBus.emit('toast:show', { text: 'Ошибка PNG', type: 'error' });
@@ -29,9 +31,11 @@ export async function exportPNG() {
 export function exportJSON() {
   const blob = new Blob([JSON.stringify(state.data1, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  a.href = url;
   a.download = 'wex-tier.json';
   a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function importJSON(file) {
@@ -39,12 +43,23 @@ export function importJSON(file) {
   reader.onload = function(e) {
     try {
       const d = JSON.parse(e.target.result);
-      if (Array.isArray(d)) {
-        state.setData(d, 1);
-        eventBus.emit('achievements:check');
-        renderAll();
-        eventBus.emit('toast:show', { text: 'Загружено!', type: 'success' });
+      if (!Array.isArray(d) || d.length === 0) {
+        eventBus.emit('toast:show', { text: 'Ошибка формата: ожидается массив тиров', type: 'error' });
+        return;
       }
+      const valid = d.every(t => t && (typeof t.tier === 'string' || typeof t.label === 'string') && Array.isArray(t.items) && typeof t.color === 'string');
+      if (!valid) {
+        eventBus.emit('toast:show', { text: 'Ошибка формата: каждый тир должен иметь tier/label, items и color', type: 'error' });
+        return;
+      }
+      d.forEach(t => {
+        if (!t.label) t.label = t.tier;
+        if (!t.tier) t.tier = t.label;
+      });
+      state.setData(d, 1);
+      eventBus.emit('achievements:check');
+      renderAll();
+      eventBus.emit('toast:show', { text: 'Загружено!', type: 'success' });
     } catch (ex) {
       eventBus.emit('toast:show', { text: 'Ошибка формата', type: 'error' });
     }

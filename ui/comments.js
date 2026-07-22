@@ -5,6 +5,7 @@
  */
 import { api } from '../api/firestore.js';
 import { getDB } from '../api/firebase-init.js';
+import { getCurrentUser } from '../api/auth.js';
 import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
 import { escapeHTML } from '../utils/sanitizers.js';
@@ -36,6 +37,7 @@ export async function addComment(text, parentId = null) {
       id: Date.now().toString(),
       text: text,
       parentId: parentId || null,
+      authorName: getCurrentUser()?.name || 'Аноним',
       createdAt: new Date()
     });
     updateCommentsDisplay();
@@ -43,7 +45,7 @@ export async function addComment(text, parentId = null) {
   }
 
   try {
-    await api.addComment(ctid, text, parentId);
+    await api.addComment(ctid, text, parentId, getCurrentUser());
     await loadComments(ctid);
     updateCommentsDisplay();
   } catch (e) {
@@ -80,17 +82,21 @@ export function updateCommentsDisplay() {
 
   list.innerHTML = topLevel.map(c => {
     const childReplies = replies.filter(r => r.parentId === c.id);
-    const repliesHTML = childReplies.map(r => `
+    const authorLabel = c.authorName ? '<strong style="font-size:0.78rem;color:var(--gold);">' + escapeHTML(c.authorName) + '</strong> · ' : '';
+    const repliesHTML = childReplies.map(r => {
+      const replyAuthor = r.authorName ? '<strong style="font-size:0.72rem;color:var(--gold);">' + escapeHTML(r.authorName) + '</strong> · ' : '';
+      return `
       <div style="margin:6px 0 0 20px;padding:6px 8px;background:rgba(255,255,255,0.04);border-left:2px solid var(--gold);border-radius:4px;">
         <div style="font-size:0.8rem;">${escapeHTML(r.text)}</div>
-        <div style="font-size:0.68rem;color:#888;margin-top:2px;">${formatDate(r)}</div>
+        <div style="font-size:0.68rem;color:#888;margin-top:2px;">${replyAuthor}${formatDate(r)}</div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     return '<div style="margin-bottom:8px;padding:8px;background:rgba(255,255,255,0.05);border-radius:6px;">' +
       '<div style="font-size:0.85rem;">' + escapeHTML(c.text) + '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">' +
-      '<span style="font-size:0.7rem;color:#888;">' + formatDate(c) + '</span>' +
+      '<span style="font-size:0.7rem;color:#888;">' + authorLabel + formatDate(c) + '</span>' +
       '<span class="reply-toggle" data-target="' + c.id + '" style="font-size:0.72rem;color:var(--gold);cursor:pointer;">Ответить</span>' +
       '</div>' +
       repliesHTML +
@@ -118,10 +124,16 @@ export function updateCommentsDisplay() {
   });
 }
 
-export function openCommentsModal() {
+export async function openCommentsModal() {
+  if (ctid && getDB()) {
+    await loadComments(ctid);
+  }
+
   const content = document.createElement('div');
+  const notPublished = !ctid || !getDB();
   content.innerHTML = `
     <h3 style="color:var(--gold);">Комментарии</h3>
+    ${notPublished ? '<div style="color:#f0a020;font-size:0.82rem;margin-bottom:10px;padding:8px;background:rgba(240,160,32,0.08);border-radius:8px;">Тир-лист не опубликован — комментарии видны только вам и пропадут после перезагрузки. Опубликуйте тир-лист, чтобы комментарии сохранялись и были видны другим.</div>' : ''}
     <div id="commentsList" style="max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>
     <textarea id="newComment" placeholder="Оставьте комментарий..." style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:var(--text);outline:none;margin-bottom:12px;font-family:inherit;"></textarea>
     <div class="modal-actions">
@@ -139,11 +151,9 @@ export function openCommentsModal() {
     const textarea = content.querySelector('#newComment');
     const text = textarea.value.trim();
     if (!text) return;
-    // ФИКС: поле очищается только ПОСЛЕ успешной отправки — раньше текст стирался сразу
-    // и терялся навсегда, если отправка падала с ошибкой (например, нет сети)
     const before = comments.length;
     await addComment(text);
-    const succeeded = comments.length > before || !ctid; // локальный режим тоже считается успехом
+    const succeeded = comments.length > before || !ctid;
     if (succeeded) { textarea.value = ''; unlockAchievement('commented'); }
     updateCommentsDisplay();
   };

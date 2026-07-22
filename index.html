@@ -4,20 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
+    <meta name="description" content="WEX-TIER — лучший конструктор тир-листов. Создавай, делись и сравнивай тир-листы фильмов, игр, музыки и всего, что любишь.">
+    <meta property="og:title" content="WEX-TIER — Создай свой тир-лист">
+    <meta property="og:description" content="Лучший конструктор тир-листов в рунете. Фильмы, игры, музыка — перетаскивай и делись с друзьями.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="WEX-TIER — Создай свой тир-лист">
+    <meta name="twitter:description" content="Лучший конструктор тир-листов в рунете.">
     <title>WEX-TIER — Создай свой тир-лист</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://unpkg.com/lucide@0.263.1"></script>
+    <script src="https://unpkg.com/lucide@0.330.0/dist/umd/lucide.min.js" defer></script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
     <link rel="stylesheet" href="./style.css">
@@ -26,8 +34,7 @@
 <noscript><div style="text-align:center;padding:40px;color:#fff;background:#0a0a10;min-height:100vh;display:flex;align-items:center;justify-content:center;"><p>Для работы WEX-TIER необходим JavaScript</p></div></noscript>
 
     <div id="parallaxWrapper"><div id="parallaxLayer1" class="pz-layer"></div><div id="parallaxLayer2" class="pz-layer"></div><div id="parallaxLayer3" class="pz-layer"></div><img id="parallaxPhoto" class="pz-layer" alt=""><video id="parallaxVideo" class="pz-layer" muted loop autoplay playsinline></video></div>
-    <canvas id="particlesCanvas"></canvas>
-    
+
     <button class="burger-btn" id="burgerBtn" aria-label="Меню"><i data-lucide="menu"></i></button>
 
     <aside class="sidebar" id="sidebar">
@@ -36,11 +43,11 @@
             <button id="settingsBtn" class="sidebar-toggle-btn" title="Настройки"><i data-lucide="settings"></i></button>
             <button id="toggleSidebarBtn" class="sidebar-toggle-btn"><i data-lucide="chevron-left"></i></button>
         </div>
-        
+
         <div id="authSection" style="padding: 10px 4px; border-bottom: 1px solid var(--input-border); margin-bottom: 10px;">
             <button id="loginBtn" class="sidebar-btn primary" style="width: 100%; padding: 10px;"><i data-lucide="log-in"></i> <span>Войти</span></button>
             <div id="userProfile" style="display: none; align-items: center; gap: 12px;">
-                <img id="userAvatar" src="" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); cursor: pointer;">
+                <img id="userAvatar" alt="Аватар" style="width: 36px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); cursor: pointer;">
                 <div style="flex: 1; min-width: 0;">
                     <div id="userName" style="font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">Геймер</div>
                     <span id="logoutLink" style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; text-decoration: underline;">Выйти</span>
@@ -48,50 +55,104 @@
             </div>
         </div>
 
-        <!-- ФИКС 8: индикатор автосохранения — видно, сохранились ли изменения -->
         <div id="autosaveIndicator" style="font-size: 0.72rem; color: var(--text-secondary); text-align: center; margin: -4px 0 8px; opacity: 0; transition: opacity 0.3s;">Сохранено ✓</div>
-        <!-- ФИКС 6: счётчик "размещено / всего" -->
         <div id="progressIndicator" style="font-size: 0.75rem; color: var(--text-secondary); text-align: center; margin-bottom: 10px; display: none;"></div>
+        <div id="progressBarWrap" style="display:none;margin-bottom:12px;padding:0 12px;">
+          <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;">
+            <div id="progressBarFill" style="height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,var(--gold),#ffcc00);transition:width 0.4s cubic-bezier(0.25,0.8,0.25,1);"></div>
+          </div>
+        </div>
 
-        <div class="sidebar-section">Действия</div>
-        <button class="sidebar-btn" id="undoBtn" disabled title="Отменить"><i data-lucide="undo-2"></i> <span>Отменить</span></button>
-        <button class="sidebar-btn" id="randomizeBtn" title="Собрать случайный тир-лист"><i data-lucide="shuffle"></i> <span>Случайно раскидать</span></button>
-        <button class="sidebar-btn" id="historyBtn" title="История версий"><i data-lucide="history"></i> <span>История версий</span></button>
-        <button class="sidebar-btn danger hidden" id="resetBtn" title="Сбросить всё"><i data-lucide="rotate-ccw"></i> <span>Сбросить всё</span></button>
-        <button class="sidebar-btn hidden" id="addTierBtn" title="Новый тир"><i data-lucide="plus-square"></i> <span>Новый тир</span></button>
-        
-        <div class="sidebar-section">Инструменты</div>
-        <button class="sidebar-btn" id="compareBtn" title="Сравнить тир-листы"><i data-lucide="users"></i> <span>Сравнение</span></button>
-        <button class="sidebar-btn" id="shareBtn" title="Поделиться ссылкой"><i data-lucide="link"></i> <span>Поделиться</span></button>
-        <button class="sidebar-btn" id="galleryBtn" title="Открыть галерею"><i data-lucide="image"></i> <span>Галерея</span></button>
-        <button class="sidebar-btn" id="duelBtn" title="Дуэль тир-листов"><i data-lucide="swords"></i> <span>Дуэль</span></button>
-        <button class="sidebar-btn" id="topBtn" title="Топ лучших"><i data-lucide="medal"></i> <span>Топ</span></button>
-        <button class="sidebar-btn" id="achievementsBtn" title="Мои достижения"><i data-lucide="trophy"></i> <span>Достижения</span></button>
-        <button class="sidebar-btn" id="commentsBtn" title="Комментарии"><i data-lucide="message-square"></i> <span>Комментарии</span></button>
-        <button class="sidebar-btn" id="profileDashboardBtn" style="display: none;" title="Личный кабинет"><i data-lucide="folder-open"></i> <span>Мои тир-листы</span></button>
-        
-        <div class="sidebar-section">Экспорт</div>
-        <button class="sidebar-btn" id="pngBtn" title="Скачать как картинку"><i data-lucide="download"></i> <span>Скачать PNG</span></button>
-        <button class="sidebar-btn" id="exportBtn" title="Сохранить файл"><i data-lucide="save"></i> <span>Экспорт JSON</span></button>
-        <button class="sidebar-btn" id="importBtn" title="Загрузить файл"><i data-lucide="folder-open"></i> <span>Импорт JSON</span></button>
-        <label class="sr-only" for="importFile">Импорт файла</label><input type="file" id="importFile" accept=".json" style="display:none;">
-        
-        <div class="sidebar-section">Тематика</div>
-        <label class="sr-only" for="templateSelect">Выбор шаблона</label><select id="templateSelect" class="sidebar-select" title="Выбор шаблона">
-            <option value="music">🎵 Музыкальные треки</option>
-            <option value="movies">🎬 Фильмы и Сериалы</option>
-            <option value="games">🎮 Компьютерные Игры</option>
-            <option value="actors">🎭 Популярные Актеры</option>
-            <option value="musicians">🎤 Музыканты</option>
-            <option value="athletes">🏅 Спортсмены</option>
-            <option value="bloggers">📹 Блогеры и стримеры</option>
-            <option value="anime">🎌 Аниме</option>
-        </select>
-        <label class="sr-only" for="poolSearchInput">Поиск в шаблоне</label><input type="text" id="poolSearchInput" class="sidebar-select" placeholder="🔎 Поиск в шаблоне..." autocomplete="off" style="margin-top:6px;">
-        
-        <div class="sidebar-section">Черновики</div>
-        <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
-        <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> <span>Новый черновик</span></button>
+        <div class="sidebar-group" data-group="editor">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="pen-tool"></i></span>
+                <span class="sidebar-group-title">Редактор</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <button class="sidebar-btn" id="undoBtn" disabled title="Отменить (Ctrl+Z)"><i data-lucide="undo-2"></i> <span>Отменить</span></button>
+                <button class="sidebar-btn" id="redoBtn" disabled title="Повторить (Ctrl+Y)"><i data-lucide="redo-2"></i> <span>Повторить</span></button>
+                <button class="sidebar-btn" id="randomizeBtn" title="Собрать случайный тир-лист"><i data-lucide="shuffle"></i> <span>Случайно раскидать</span></button>
+                <button class="sidebar-btn" id="historyBtn" title="История версий"><i data-lucide="history"></i> <span>История версий</span></button>
+                <button class="sidebar-btn danger hidden" id="resetBtn" title="Сбросить всё"><i data-lucide="rotate-ccw"></i> <span>Сбросить всё</span></button>
+                <button class="sidebar-btn hidden" id="addTierBtn" title="Новый тир"><i data-lucide="plus-square"></i> <span>Новый тир</span></button>
+            </div>
+        </div>
+
+        <div class="sidebar-group" data-group="tools">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="share-2"></i></span>
+                <span class="sidebar-group-title">Инструменты</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <button class="sidebar-btn" id="compareBtn" title="Сравнить тир-листы"><i data-lucide="users"></i> <span>Сравнение</span></button>
+                <button class="sidebar-btn" id="shareBtn" title="Поделиться ссылкой"><i data-lucide="link"></i> <span>Поделиться</span></button>
+            </div>
+        </div>
+
+        <div class="sidebar-group" data-group="community">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="globe"></i></span>
+                <span class="sidebar-group-title">Сообщество</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <button class="sidebar-btn" id="galleryBtn" title="Открыть галерею"><i data-lucide="image"></i> <span>Галерея</span></button>
+                <button class="sidebar-btn" id="topBtn" title="Топ лучших"><i data-lucide="medal"></i> <span>Топ</span></button>
+                <button class="sidebar-btn" id="achievementsBtn" title="Мои достижения"><i data-lucide="trophy"></i> <span>Достижения</span></button>
+                <button class="sidebar-btn" id="commentsBtn" title="Комментарии"><i data-lucide="message-square"></i> <span>Комментарии</span></button>
+                <button class="sidebar-btn" id="profileDashboardBtn" style="display: none;" title="Личный кабинет"><i data-lucide="folder-open"></i> <span>Мои тир-листы</span></button>
+            </div>
+        </div>
+
+        <div class="sidebar-group" data-group="export">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="package"></i></span>
+                <span class="sidebar-group-title">Экспорт</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <button class="sidebar-btn" id="pngBtn" title="Скачать как картинку"><i data-lucide="download"></i> <span>Скачать PNG</span></button>
+                <button class="sidebar-btn" id="exportBtn" title="Сохранить файл"><i data-lucide="save"></i> <span>Экспорт JSON</span></button>
+                <button class="sidebar-btn" id="importBtn" title="Загрузить файл"><i data-lucide="folder-open"></i> <span>Импорт JSON</span></button>
+                <label class="sr-only" for="importFile">Импорт файла</label><input type="file" id="importFile" accept=".json" style="display:none;">
+            </div>
+        </div>
+
+        <div class="sidebar-group" data-group="template">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="layout-grid"></i></span>
+                <span class="sidebar-group-title">Шаблоны</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <label class="sr-only" for="templateSelect">Выбор шаблона</label><select id="templateSelect" class="sidebar-select" title="Выбор шаблона">
+                    <option value="music">🎵 Музыкальные треки</option>
+                    <option value="movies">🎬 Фильмы и Сериалы</option>
+                    <option value="games">🎮 Компьютерные Игры</option>
+                    <option value="actors">🎭 Популярные Актеры</option>
+                    <option value="musicians">🎤 Музыканты</option>
+                    <option value="athletes">🏅 Спортсмены</option>
+                    <option value="bloggers">📹 Блогеры и стримеры</option>
+                    <option value="anime">🎌 Аниме</option>
+                </select>
+                <button class="sidebar-btn" id="openCommunityTemplatesBtn" style="margin-top:6px;"><i data-lucide="globe"></i> <span>Шаблоны сообщества</span></button>
+            </div>
+        </div>
+
+        <div class="sidebar-group" data-group="drafts">
+            <button class="sidebar-group-header" type="button">
+                <span class="sidebar-group-icon"><i data-lucide="file-text"></i></span>
+                <span class="sidebar-group-title">Черновики</span>
+                <i data-lucide="chevron-down" class="sidebar-group-chevron"></i>
+            </button>
+            <div class="sidebar-group-body">
+                <div id="draftListSidebar" style="display:flex;flex-direction:column;gap:2px;"></div>
+                <button class="sidebar-btn" id="newDraftBtnSidebar" style="font-size:0.75rem;"><i data-lucide="plus"></i> <span>Новый черновик</span></button>
+            </div>
+        </div>
+
         <div class="sidebar-spacer"></div>
         <button class="sidebar-btn danger" id="resetAllLink" style="margin-top:8px;" title="Удалить все данные"><i data-lucide="trash-2"></i> <span>Сбросить данные</span></button>
         <div class="footer">© WEX-TIER</div>
@@ -103,30 +164,19 @@
             <span>Ты смотришь чужой тир-лист — изменения можно перетаскивать для интереса, но они никуда не сохранятся.</span>
         </div>
         <div class="top-bar" id="topBar">
-            <label class="sr-only" for="searchInput">Поиск по ссылке</label><input type="text" class="search-bar" id="searchInput" placeholder="Поиск по ссылке...">
-            <button class="filter-btn active-filter" data-filter="all">Все</button>
-            <button class="filter-btn" data-filter="youtube">YT</button>
-            <button class="filter-btn" data-filter="spotify">SP</button>
-            <button class="filter-btn" data-filter="apple">AP</button>
-            <button class="filter-btn" data-filter="yandex">YM</button>
+            <label class="sr-only" for="searchInput">Поиск</label><input type="text" class="search-bar" id="searchInput" placeholder="🔎 Поиск по названию...">
         </div>
         <div class="compare-wrap" id="compareWrap">
             <div class="column" id="col1"><div class="column-title">Тир-лист 1</div><div id="list1"></div></div>
             <div class="column" id="col2" style="display:none;"><div class="column-title">Тир-лист 2</div><div id="list2"></div></div>
         </div>
         <div id="templatePoolContainer" class="top-bar" style="margin-top: 30px; max-width: 1200px; display: none; flex-direction: column; gap: 12px; width: 100%;">
+            <div class="bs-handle" id="bsHandle"></div>
             <div style="font-size: 0.9rem; color: var(--gold); font-weight: 600;">📦 Доступные элементы шаблона (перетащите в нужный тир):</div>
             <div id="templatePool" class="tier-items" style="min-height: 80px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed var(--input-border);"></div>
         </div>
+        <button id="bsToggleBtn" aria-label="Показать пул элементов"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
     </main>
-
-    <div id="duelVoteBar">
-        <span class="vote-score" id="duelLeftWins">0</span>
-        <button class="vote-btn left" id="voteLeftBtn"><i data-lucide="arrow-left"></i> Левый</button>
-        <span style="color:var(--text-secondary);">VS</span>
-        <button class="vote-btn right" id="voteRightBtn">Правый <i data-lucide="arrow-right"></i></button>
-        <span class="vote-score" id="duelRightWins">0</span>
-    </div>
 
     <div class="modal" id="addModal"><div class="modal-box"><h3>Добавить трек</h3><label class="sr-only" for="svc">Сервис</label><select id="svc" data-enhance><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple">Apple Music</option><option value="yandex">Яндекс Музыка</option></select><label class="sr-only" for="trackUrl">Ссылка на трек</label><input type="text" id="trackUrl" placeholder="Ссылка на трек"><button class="btn btn-secondary" id="fetchCoverBtn" style="width:100%;margin-bottom:6px;">Авто-поиск обложки</button><label class="sr-only" for="coverUrl">Ссылка на картинку</label><input type="text" id="coverUrl" placeholder="Ссылка на картинку"><img class="cover-preview" id="coverPreview" src="" alt="Превью" style="display:none;"><div class="modal-actions"><button class="btn btn-secondary" id="cancelAdd">Отмена</button><button class="btn btn-primary" id="okAdd">Добавить</button></div></div></div>
     <div class="modal" id="playerModal"><div class="modal-box" style="width:600px;"><h3>YouTube</h3><iframe class="player-frame" id="playerFrame" src="" allowfullscreen></iframe><div class="modal-actions"><button class="btn btn-secondary" id="closePlayer">Закрыть</button></div></div></div>
@@ -157,10 +207,6 @@
                   <option value="space">🌌 Космос</option>
                   <option value="custom">🔗 Своя картинка/видео...</option>
                 </select>
-            </div>
-            <div class="bento-card">
-                <div class="bento-card-title"><i data-lucide="video"></i> Разное</div>
-                <button class="sidebar-btn" id="playlistBtn" title="Смотреть плейлист"><i data-lucide="video"></i> <span>YT плейлист</span></button>
             </div>
         </div>
         <div class="modal-actions" style="margin-top:16px;">

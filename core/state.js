@@ -81,6 +81,22 @@ class RemoveItemCommand extends Command {
   }
 }
 
+class AddTierCommand extends Command {
+  constructor(tier, listNum) {
+    super(); this.tier = tier; this.listNum = listNum;
+  }
+  execute(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    data.push(this.tier);
+    return state;
+  }
+  undo(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    data.pop();
+    return state;
+  }
+}
+
 class StateManager {
   constructor() {
     this.history1 = []; this.history2 = []; this.index1 = -1; this.index2 = -1;
@@ -129,13 +145,17 @@ class StateManager {
   }
   canUndo(listNum = 1) { return listNum === 1 ? this.index1 >= 0 : this.index2 >= 0; }
   canRedo(listNum = 1) { return listNum === 1 ? this.index1 < this.history1.length - 1 : this.index2 < this.history2.length - 1; }
+  getDefaultData() { return this._defaultData(); }
   setData(data, listNum = 1) {
-    if (listNum === 1) this.data1 = JSON.parse(JSON.stringify(data)); else this.data2 = JSON.parse(JSON.stringify(data));
+    if (listNum === 1) this.data1 = structuredClone(data); else this.data2 = structuredClone(data);
     if (listNum === 1) { this.history1 = []; this.index1 = -1; } else { this.history2 = []; this.index2 = -1; }
     eventBus.emit('state:changed', { listNum }); this._save();
   }
-  _save() { eventBus.emit('state:needsSave', { data1: this.data1, data2: this.data2 }); }
+  _save() {
+    if (this._saveTimer) return;
+    this._saveTimer = setTimeout(() => { this._saveTimer = null; eventBus.emit('state:needsSave', { data1: this.data1, data2: this.data2 }); }, 100);
+  }
 }
 
 export const state = new StateManager();
-export { MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand };
+export { MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand, AddTierCommand };

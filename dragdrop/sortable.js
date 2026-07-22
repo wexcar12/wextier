@@ -3,7 +3,7 @@
  */
 import { state, MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand } from '../core/state.js';
 import { renderAll, isEditing } from '../ui/render.js';
-import { getPoolItems, updatePoolItems } from '../ui/templates.js';
+import { getPoolItems, renderTemplatePool } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
 
 let currentPoolItems = [];
@@ -13,7 +13,7 @@ let lastHighlighted = null;
 // по нему CSS подсвечивает все пустые тиры лёгкой пульсацией, чтобы было видно,
 // куда вообще можно бросить карточку, ещё до наведения на конкретный тир.
 function handleDragStart() { document.body.classList.add('wex-dragging'); }
-function handleDragStop() { document.body.classList.remove('wex-dragging'); }
+function handleDragStop() { document.body.classList.remove('wex-dragging'); clearDragHighlight(); }
 
 // ФИКС 2: подсвечиваем тир ЕГО СОБСТВЕННЫМ цветом, когда карточку тащат прямо над ним
 // (раньше подсветка была одинаковая золотая для всех тиров).
@@ -39,17 +39,21 @@ function clearDragHighlight() {
 // ФИКС 3: маленький салют из конфетти, когда весь пул шаблонов разобран по тирам
 function fireConfettiIfPoolEmpty() {
   if (currentPoolItems.length !== 0) return;
-  const colors = ['#f5c542', '#ff6b6b', '#4d96ff', '#6bffb8', '#c56bff'];
-  for (let i = 0; i < 40; i++) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = Math.random() * 100 + 'vw';
-    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-    piece.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
-    piece.style.animationDelay = (Math.random() * 0.3) + 's';
-    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
-    document.body.appendChild(piece);
-    setTimeout(() => piece.remove(), 3200);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const colors = ['#f5c542', '#ff6b6b', '#4d96ff', '#6bffb8', '#c56bff'];
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 40; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDuration = (1.6 + Math.random() * 1.2) + 's';
+      piece.style.animationDelay = (Math.random() * 0.3) + 's';
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      frag.appendChild(piece);
+      setTimeout(() => piece.remove(), 3200);
+    }
+    document.body.appendChild(frag);
   }
   eventBus.emit('toast:show', { text: '🎉 Все карточки разложены!', type: 'success' });
 }
@@ -61,7 +65,14 @@ function handleSortableMove(evt) {
 
   // Из пула -> В тир
   if (isFromPool) {
-    const item = currentPoolItems.splice(evt.oldIndex, 1)[0];
+    const poolId = evt.item.dataset.poolId || '';
+    const realIndex = currentPoolItems.findIndex(i => i.id === poolId);
+    if (realIndex === -1) {
+      renderAll();
+      renderTemplatePool();
+      return;
+    }
+    const item = currentPoolItems.splice(realIndex, 1)[0];
     if (!isToPool) {
       const toTier = parseInt(evt.to.dataset.tierIndex, 10);
       const listNum = parseInt(evt.to.dataset.listNum, 10) || 1;
@@ -75,6 +86,7 @@ function handleSortableMove(evt) {
     if (typeof gsap !== 'undefined') gsap.fromTo(evt.item, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.7)' });
     eventBus.emit('achievements:check');
     renderAll();
+    renderTemplatePool();
     return;
   }
 
@@ -83,14 +95,20 @@ function handleSortableMove(evt) {
     const fromTier = parseInt(evt.from.dataset.tierIndex, 10);
     const fromList = parseInt(evt.from.dataset.listNum, 10) || 1;
     const data = fromList === 1 ? state.data1 : state.data2;
-    const item = data[fromTier].items[evt.oldIndex];
-    
+    const item = data[fromTier]?.items[evt.oldIndex];
+    if (!item) {
+      renderAll();
+      renderTemplatePool();
+      return;
+    }
+
     const command = new RemoveItemCommand(fromTier, evt.oldIndex, item, fromList);
     state.executeCommand(command, fromList);
-    
-    currentPoolItems.splice(evt.newIndex, 0, { img: item.img, url: item.url, svc: item.svc, title: item.title || '' });
+
+    currentPoolItems.splice(evt.newIndex, 0, { id: crypto.randomUUID(), img: item.img, url: item.url, svc: item.svc, title: item.title || '' });
     eventBus.emit('achievements:check');
     renderAll();
+    renderTemplatePool();
     return;
   }
 
@@ -130,15 +148,20 @@ export function initSortable() {
     setTimeout(() => {
       const disabled = !isEditing();
       document.querySelectorAll('.tier-items').forEach(el => {
-        if (el._sortable) el._sortable.destroy();
-        el._sortable = new Sortable(el, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
+        if (el._sortable) {
+          el._sortable.option('disabled', disabled);
+        } else {
+          el._sortable = new Sortable(el, { group: 'shared', draggable: '.item', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
+        }
       });
       const poolEl = document.getElementById('templatePool');
       if (poolEl) {
-        if (poolEl._sortable) poolEl._sortable.destroy();
-        poolEl._sortable = new Sortable(poolEl, { group: 'shared', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
+        if (poolEl._sortable) {
+          poolEl._sortable.option('disabled', disabled);
+        } else {
+          poolEl._sortable = new Sortable(poolEl, { group: 'shared', draggable: '.item', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
+        }
       }
-      lucide.createIcons();
     }, 0);
   });
 

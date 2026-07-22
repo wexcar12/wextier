@@ -20,6 +20,7 @@ export function initAuthObserver() {
       currentUser = {
         uid: user.uid,
         name: user.displayName,
+        email: user.email,
         photo: user.photoURL
       };
     } else {

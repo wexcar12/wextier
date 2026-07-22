@@ -7,22 +7,16 @@
  * видны красивые градиентные слои под ним. Ничего "битого" пользователь никогда не увидит.
  */
 
-const P = 'wt_';
-let parallaxOn = false;
+import { sg, ss } from '../utils/storage.js';
 
-function sg(k, f) {
-  try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
-}
-function ss(k, v) {
-  try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {}
-}
+let parallaxOn = false;
 
 // ФИКС: Unsplash с октября 2025 недоступен с российских IP (это подтверждено в новостях,
 // не связано с нашим кодом) — поэтому заменил на Wikimedia Commons. Википедия и её медиа-сервер
 // в России работают нормально, а Special:FilePath — официальный способ встраивания картинок
 // с Commons напрямую, рекомендованный самой Wikimedia.
 const PRESETS = {
-  favorite: { type: 'image', url: 'https://i.pinimg.com/originals/f2/86/bb/f286bb13e259a1565b0154d7a9310d16.jpg' },
+  favorite: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Milky%20Way%20Night%20Sky%20Black%20Rock%20Desert%20Nevada.jpg?width=1600' },
   mountains: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20range.jpg?width=1600' },
   forest: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Forest%20path%20to%20the%20sun.jpg?width=1600' },
   space: { type: 'image', url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Orion%20Nebula%20-%20Hubble%202006%20mosaic.jpg?width=1600' }
@@ -104,8 +98,13 @@ export function toggleParallax(on) {
 export function setParallaxBg(mode) {
   if (mode === 'custom') {
     const url = prompt('Вставь ПРЯМУЮ ссылку на файл картинки или видео (должна заканчиваться на .jpg/.png/.mp4 и т.п., а не на страницу сайта):', sg('parallax_custom_url', ''));
-    if (url === null) return; // отмена — оставляем как было
-    ss('parallax_custom_url', url.trim());
+    if (url === null) return;
+    const trimmed = url.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      window.dispatchEvent(new CustomEvent('parallax:load-failed'));
+      return;
+    }
+    ss('parallax_custom_url', trimmed);
   }
   ss('parallax_bg', mode);
   if (parallaxOn) applyPhotoLayer(mode);

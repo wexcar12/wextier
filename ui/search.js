@@ -1,9 +1,19 @@
 /**
  * @module ui/search
- * @description Поиск и фильтры.
+ * @description Единый поиск по элементам тир-листа и шаблонному пулу.
  */
 
-let currentFilter = 'all';
+const TRANSLIT_MAP = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i',
+  'й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t',
+  'у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y',
+  'ь':'','э':'e','ю':'yu','я':'ya'
+};
+
+function translit(str) {
+  return str.split('').map(ch => TRANSLIT_MAP[ch] !== undefined ? TRANSLIT_MAP[ch] : ch).join('');
+}
+
 let debounceTimer = null;
 
 export function setupSearch() {
@@ -11,35 +21,33 @@ export function setupSearch() {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(filterItems, 200);
+      debounceTimer = setTimeout(filterAll, 200);
     });
   }
-
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
-      this.classList.add('active-filter');
-      currentFilter = this.dataset.filter;
-      filterItems();
-    });
-  });
 }
 
-function filterItems() {
-  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
-  let visibleCount = 0;
+function filterAll() {
+  const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+  const qTranslit = q ? translit(q) : '';
 
-  document.querySelectorAll('.item').forEach(el => {
+  let tierVisible = 0;
+  document.querySelectorAll('.tier-items .item, .compare-wrap .item').forEach(el => {
+    if (el.closest('#templatePool')) return;
     const tooltip = (el.getAttribute('data-tooltip') || '').toLowerCase();
-    const sv = el.dataset.svc || '';
-    const match = (!q || tooltip.includes(q)) && (currentFilter === 'all' || sv === currentFilter);
+    const match = !q || tooltip.includes(q) || (qTranslit !== q && tooltip.includes(qTranslit));
     el.classList.toggle('search-hidden', !match);
-    if (match) visibleCount++;
+    if (match) tierVisible++;
   });
 
-  const container = document.querySelector('.items-container') || document.querySelector('.tier-list');
+  document.querySelectorAll('#templatePool .item').forEach(el => {
+    const title = (el.dataset.tooltip || '').toLowerCase();
+    const matches = !q || title.includes(q) || (qTranslit !== q && title.includes(qTranslit));
+    el.classList.toggle('search-hidden', !matches);
+  });
+
+  const container = document.querySelector('.compare-wrap') || document.querySelector('.tier-list');
   let msg = document.getElementById('search-empty-msg');
-  if (visibleCount === 0) {
+  if (q && tierVisible === 0) {
     if (!msg && container) {
       msg = document.createElement('div');
       msg.id = 'search-empty-msg';

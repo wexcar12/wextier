@@ -7,6 +7,7 @@ import { renderAll, hideForeignBanner } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { sg, ss } from '../utils/storage.js';
 import { modalManager } from './modal-manager.js';
+import { escapeHTML } from '../utils/sanitizers.js';
 
 let DRAFTS = [];
 let ad = 0;
@@ -97,7 +98,7 @@ function openRenameDraftModal(index) {
   content.style.padding = '20px';
   content.innerHTML = `
     <h3 style="margin-bottom:16px;">Переименовать черновик</h3>
-    <input type="text" id="renameDraftInput" class="modal-input" value="${draft.name}"
+    <input type="text" id="renameDraftInput" class="modal-input" value="${escapeHTML(draft.name)}"
       style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--input-border);background:var(--input-bg);color:var(--text);font-size:0.95rem;margin-bottom:16px;"
       maxlength="30" autofocus>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
@@ -129,7 +130,7 @@ function openDeleteDraftModal(index) {
   content.style.padding = '20px';
   content.innerHTML = `
     <h3 style="margin-bottom:16px;">Удалить черновик</h3>
-    <p style="margin-bottom:16px;color:var(--text-secondary);">Удалить черновик «${draft.name}»? Это действие нельзя отменить.</p>
+    <p style="margin-bottom:16px;color:var(--text-secondary);">Удалить черновик «${escapeHTML(draft.name)}»? Это действие нельзя отменить.</p>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-secondary" data-action="cancel">Отмена</button>
       <button class="btn btn-primary" data-action="ok" style="background:var(--danger,#e74c3c);">Удалить</button>

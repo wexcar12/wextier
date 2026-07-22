@@ -5,6 +5,7 @@
 import { state } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
 import { modalManager } from './modal-manager.js';
+import { sg, ss } from '../utils/storage.js';
 
 const ACH = [
   { id: 'first_edit', icon: 'trophy', name: 'Первый среди всех', desc: 'Внести первое изменение' },
@@ -15,22 +16,13 @@ const ACH = [
   { id: 'all_empty', icon: 'skull', name: 'Бесконечная Пустота', desc: 'Все тиры пустые' },
   { id: 'first_publish', icon: 'globe', name: 'Публичная персона', desc: 'Опубликовать тир-лист в галерее' },
   { id: 'commented', icon: 'message-circle', name: 'Есть мнение', desc: 'Оставить комментарий' },
-  { id: 'duel_participant', icon: 'swords', name: 'На арену!', desc: 'Поучаствовать в дуэли тир-листов' },
   { id: 'liked_list', icon: 'heart', name: 'Доброе сердце', desc: 'Поставить лайк чужому тир-листу' },
   { id: 'randomizer_used', icon: 'shuffle', name: 'Доверяю судьбе', desc: 'Использовать случайную раскладку' },
   { id: 'ten_tiers', icon: 'layers', name: 'Архитектор', desc: 'Создать 10 и более тиров' },
   { id: 'night_owl', icon: 'moon-star', name: 'Полуночник', desc: 'Редактировать тир-лист после полуночи' }
 ];
 
-const P = 'wt_';
 let unlocked = [];
-
-function sg(k, f) {
-  try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
-}
-function ss(k, v) {
-  try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {}
-}
 
 export function loadAchievements() {
   unlocked = sg('achievements', []);
@@ -98,9 +90,13 @@ export function openAchievementsModal() {
   }).join('');
 
   content.querySelector('#closeAchievements').onclick = close;
-  lucide.createIcons();
+  try { if (typeof lucide !== 'undefined') lucide.createIcons({ root: content }); } catch (e) { /* ignore */ }
 }
 
 eventBus.on('achievements:check', () => {
   checkAchievements(true);
+});
+
+eventBus.on('achievements:shared', () => {
+  unlockAchievement('shared');
 });

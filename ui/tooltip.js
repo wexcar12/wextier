@@ -40,9 +40,11 @@ export function initTooltips() {
     tip.classList.add('show');
   });
 
+  let moveRaf = null;
   document.addEventListener('mousemove', (e) => {
     if (!currentTarget) return;
-    positionTip(e);
+    if (moveRaf) return;
+    moveRaf = requestAnimationFrame(() => { positionTip(e); moveRaf = null; });
   });
 
   document.addEventListener('mouseout', (e) => {

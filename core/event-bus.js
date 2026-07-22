@@ -23,7 +23,9 @@ class EventBus {
   }
 
   emit(event, payload) {
-    this.listeners.get(event)?.forEach(cb => cb(payload));
+    this.listeners.get(event)?.forEach(cb => {
+      try { cb(payload); } catch(e) { console.error(`EventBus [${event}]:`, e); }
+    });
   }
 }
 

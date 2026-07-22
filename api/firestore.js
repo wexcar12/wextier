@@ -5,11 +5,17 @@
 import { getDB } from './firebase-init.js';
 
 export const api = {
-  // ФИКС 14: лайки тир-листов в галерее — атомарный increment (без гонки, как voteFor).
+  // Лайки тир-листов в галерее — атомарный increment.
   // Используем существующее поле likesCount (число), а не likes (это отдельный массив).
   async likeTierlist(tierlistId) {
     const db = getDB();
     if (!db) return 0;
+    let likedIds;
+    try { likedIds = new Set(JSON.parse(localStorage.getItem('wt_liked_lists') || '[]')); } catch { likedIds = new Set(); }
+    if (likedIds.has(tierlistId)) return 0;
+    const lastLike = parseInt(localStorage.getItem('wt_last_like') || '0', 10);
+    if (Date.now() - lastLike < 5000) return 0;
+    localStorage.setItem('wt_last_like', String(Date.now()));
     const ref = db.collection('tierlists').doc(tierlistId);
     await ref.update({ likesCount: firebase.firestore.FieldValue.increment(1) });
     const doc = await ref.get();
@@ -47,7 +53,7 @@ export const api = {
     try {
       const snap = await db.collection('tierlists')
         .where('visibility', '==', 'public')
-        .orderBy('wins', 'desc')
+        .orderBy('likesCount', 'desc')
         .limit(limit)
         .get();
 
@@ -64,8 +70,9 @@ export const api = {
     const db = getDB();
     if (!db) throw new Error('Firebase not available');
 
+    const allowed = { name: data.name, templateType: data.templateType, data: data.data, trackCount: data.trackCount, wins: data.wins || 0, likes: data.likes || [], likesCount: data.likesCount || 0, visibility: data.visibility || 'public', authorId: data.authorId, authorName: data.authorName };
     const docRef = await db.collection('tierlists').add({
-      ...data,
+      ...allowed,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     return docRef.id;
@@ -87,7 +94,8 @@ export const api = {
     if (!db) return null;
 
     const doc = await db.collection('shared').doc(id).get();
-    return doc.exists ? JSON.parse(doc.data().data) : null;
+    if (!doc.exists) return null;
+    try { return JSON.parse(doc.data().data); } catch { return null; }
   },
 
   async loadTierlist(id) {
@@ -98,24 +106,13 @@ export const api = {
     return doc.exists ? { id: doc.id, ...doc.data() } : null;
   },
 
-  async voteFor(tierlistId) {
-    const db = getDB();
-    if (!db) throw new Error('Firebase not available');
-
-    const ref = db.collection('tierlists').doc(tierlistId);
-    // ФИКС: раньше было "прочитать число -> прибавить 1 -> записать" — если два человека
-    // голосовали одновременно, один голос терялся. increment() — атомарная операция на сервере.
-    await ref.update({ wins: firebase.firestore.FieldValue.increment(1) });
-    const doc = await ref.get();
-    return doc.exists ? (doc.data().wins || 0) : 0;
-  },
-
   async fetchUserLists(userId) {
     const db = getDB();
     if (!db) return [];
 
     const snap = await db.collection('tierlists')
       .where('authorId', '==', userId)
+      .limit(50)
       .get();
 
     const items = [];
@@ -140,19 +137,58 @@ export const api = {
     return comments;
   },
 
-  async addComment(tierlistId, text, parentId = null) {
+  async addComment(tierlistId, text, parentId = null, user = null) {
     const db = getDB();
     if (!db) throw new Error('Firebase not available');
 
+    const safeText = (text || '').slice(0, 2000);
     const payload = {
-      text,
+      text: safeText,
+      authorName: user ? user.name : 'Аноним',
+      authorId: user ? user.uid : null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    if (parentId) payload.parentId = parentId; // ФИКС 16: треды — ответ на комментарий
+    if (parentId) payload.parentId = parentId;
 
     await db.collection('tierlists')
       .doc(tierlistId)
       .collection('comments')
       .add(payload);
+  },
+
+  // --- Community Templates ---
+
+  async publishTemplate(data) {
+    const db = getDB();
+    if (!db) throw new Error('Firebase not available');
+    const docRef = await db.collection('community_templates').add({
+      ...data,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return docRef.id;
+  },
+
+  async fetchCommunityTemplates(includeAdult = false) {
+    const db = getDB();
+    if (!db) return [];
+    try {
+      let query = db.collection('community_templates');
+      if (!includeAdult) query = query.where('isAdult', '==', false);
+      query = query.orderBy('createdAt', 'desc').limit(50);
+      const snap = await query.get();
+      const items = [];
+      snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      return items;
+    } catch (e) {
+      console.error('fetchCommunityTemplates failed:', e);
+      return [];
+    }
+  },
+
+  async loadCommunityTemplate(id) {
+    const db = getDB();
+    if (!db) return null;
+    const doc = await db.collection('community_templates').doc(id).get();
+    return doc.exists ? { id: doc.id, ...doc.data() } : null;
   }
 };

@@ -3,16 +3,9 @@
  * @description Неон-эффекты.
  */
 import { modalManager } from './modal-manager.js';
+import { sg, ss } from '../utils/storage.js';
 
-const P = 'wt_';
 let neonS = { enabled: false, color: 'rainbow', target: 'all' };
-
-function sg(k, f) {
-  try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
-}
-function ss(k, v) {
-  try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {}
-}
 
 export function loadNeon() {
   neonS = sg('neon', { enabled: false, color: 'rainbow', target: 'all' });
@@ -20,31 +13,13 @@ export function loadNeon() {
 }
 
 export function applyNeon() {
-  // ФИКС: раньше эта функция только высчитывала цвет свечения в переменную --neon-glow,
-  // но НИ ОДНО правило в style.css эту переменную не использовало и класс "цели" неона
-  // (target: обложки/тиры/заголовок) нигде не проставлялся — включение неона визуально
-  // не делало вообще ничего. Теперь проставляем класс, который реально стилизован в CSS.
-  document.body.classList.remove('neon-target-all', 'neon-target-items', 'neon-target-tiers', 'neon-target-title');
+  document.body.classList.remove('neon-target-all', 'neon-target-items', 'neon-target-tiers', 'neon-target-title', 'neon-rainbow');
   if (neonS.enabled) {
     document.body.classList.add('neon-active');
     document.body.classList.add('neon-target-' + (neonS.target || 'all'));
     if (neonS.color === 'rainbow') {
-      if (!window._neonRI) {
-        const colors = [
-          'rgba(255,100,100,0.9)',
-          'rgba(255,200,50,0.9)',
-          'rgba(100,255,100,0.9)',
-          'rgba(50,150,255,0.9)',
-          'rgba(200,50,255,0.9)'
-        ];
-        let ci = 0;
-        window._neonRI = setInterval(() => {
-          ci = (ci + 1) % colors.length;
-          document.documentElement.style.setProperty('--neon-glow', '0 0 20px ' + colors[ci]);
-        }, 600);
-      }
+      document.body.classList.add('neon-rainbow');
     } else {
-      if (window._neonRI) { clearInterval(window._neonRI); window._neonRI = null; }
       let c = 'rgba(245,200,66,0.9)';
       if (neonS.color === 'cyan') c = 'rgba(0,200,255,0.9)';
       else if (neonS.color === 'magenta') c = 'rgba(255,0,200,0.9)';
@@ -53,7 +28,6 @@ export function applyNeon() {
   } else {
     document.body.classList.remove('neon-active');
     document.documentElement.style.setProperty('--neon-glow', 'none');
-    if (window._neonRI) { clearInterval(window._neonRI); window._neonRI = null; }
   }
 
   const nb = document.getElementById('neonBtn');

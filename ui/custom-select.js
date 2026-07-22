@@ -15,9 +15,30 @@
  * ничего не поменялось. Это безопаснее и почти вдвое меньше кода, чем полная замена.
  */
 
+let globalListenersAdded = false;
+function ensureGlobalListeners() {
+  if (globalListenersAdded) return;
+  globalListenersAdded = true;
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+      if (!w.contains(e.target)) {
+        w.querySelector('.custom-select-panel')?.classList.remove('open');
+        w.querySelector('.custom-select-trigger')?.classList.remove('open');
+      }
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.custom-select-panel.open').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.custom-select-trigger.open').forEach(t => t.classList.remove('open'));
+    }
+  });
+}
+
 export function enhanceSelect(select) {
   if (!select || select.dataset.enhanced) return;
   select.dataset.enhanced = '1';
+  ensureGlobalListeners();
 
   const wrapper = document.createElement('div');
   wrapper.className = 'custom-select-wrapper';
@@ -34,7 +55,7 @@ export function enhanceSelect(select) {
   function syncTriggerLabel() {
     const opt = select.options[select.selectedIndex];
     trigger.innerHTML = '<span>' + (opt ? opt.textContent : '') + '</span><i data-lucide="chevron-down"></i>';
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons({ root: trigger });
   }
 
   function buildPanel() {
@@ -68,10 +89,6 @@ export function enhanceSelect(select) {
     e.stopPropagation();
     panel.classList.contains('open') ? closePanel() : openPanel();
   });
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) closePanel();
-  });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
 
   // ФИКС СИНХРОНИЗАЦИИ: раньше здесь стоял MutationObserver — но он не видит программную
   // запись select.value (это JS-свойство, а не HTML-атрибут, MutationObserver его не ловит).

@@ -2,24 +2,19 @@
  * @module ui/settings
  * @description Тема, стиль, размер, фон.
  */
+import { sg, ss } from '../utils/storage.js';
 
-const P = 'wt_';
-// ФИКС: раньше здесь были ссылки на чужой Pinterest/Steam — они периодически переставали
-// грузиться (хотлинк-защита, удалённые пины) и фон сайта ломался. Теперь фон рисуется
-// самим CSS (см. style.css, .bg-preset-N) — никакой внешний сервис ему для этого не нужен.
 const B = ['aurora', 'sunset', 'ocean', 'emerald', 'violet', 'graphite'];
 
-function sg(k, f) {
-  try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; }
-}
-function ss(k, v) {
-  try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {}
-}
-
 export function loadSettings() {
-  // Тема
-  if (sg('theme', 'dark') === 'light') {
+  // Тема — auto по системе, если нет сохранённого значения
+  const savedTheme = sg('theme', null);
+  if (savedTheme === 'light') {
     document.body.classList.add('light-theme');
+  } else if (savedTheme === null) {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.body.classList.add('light-theme');
+    }
   }
 
   // Стиль
@@ -56,23 +51,13 @@ export function applyBg(idx) {
 }
 
 export function applyStyle(style) {
-  document.querySelectorAll('.item').forEach(el => {
-    el.classList.remove('style-gradient', 'style-shadow', 'style-border', 'style-circle');
-    el.classList.add('style-' + style);
-  });
+  const containers = [document.getElementById('compareWrap'), document.getElementById('templatePoolContainer')];
+  containers.forEach(el => { if (el) el.dataset.itemStyle = style; });
   ss('style', style);
 }
 
 export function applySize(size) {
-  document.querySelectorAll('.item img').forEach(img => {
-    img.style.width = size + 'px';
-    img.style.height = size + 'px';
-  });
-  const customBtn = document.getElementById('addCustomPoolItemBtn');
-  if (customBtn) {
-    customBtn.style.width = size + 'px';
-    customBtn.style.height = size + 'px';
-  }
+  document.documentElement.style.setProperty('--item-size', size + 'px');
   ss('size', size);
 }
 
@@ -82,6 +67,14 @@ export function toggleTheme() {
   ss('theme', isLight ? 'light' : 'dark');
 }
 
+function listenSystemTheme() {
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+    const saved = sg('theme', null);
+    if (saved !== null) return;
+    document.body.classList.toggle('light-theme', e.matches);
+  });
+}
+
 export function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
@@ -89,7 +82,7 @@ export function toggleSidebar() {
   const collapsed = sidebar.classList.contains('collapsed');
   ss('sidebar_collapsed', collapsed);
   document.documentElement.style.setProperty('--sidebar-width', collapsed ? '72px' : '260px');
-  setTimeout(() => lucide.createIcons(), 100);
+  setTimeout(() => { try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) { /* ignore */ } }, 100);
 }
 
 export function setupSettingsEvents() {
@@ -104,4 +97,5 @@ export function setupSettingsEvents() {
   if (sizeSelect) sizeSelect.addEventListener('change', function() { applySize(this.value); });
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
   if (toggleSidebarBtn) toggleSidebarBtn.addEventListener('click', toggleSidebar);
+  listenSystemTheme();
 }

@@ -8,6 +8,7 @@ import { eventBus } from '../core/event-bus.js';
 import { state } from '../core/state.js';
 import { renderAll } from './render.js';
 import { modalManager } from './modal-manager.js';
+import { escapeHTML } from '../utils/sanitizers.js';
 
 const P = 'wt_';
 
@@ -577,6 +578,8 @@ const TEMPLATES = {
 };
 
 let currentPoolItems = [];
+let lastPoolFingerprint = '';
+let lastPoolType = '';
 
 function pImg(svc) {
   const c = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00', steam: '#171a21', imdb: '#f5c518' };
@@ -608,6 +611,50 @@ function simpleOnErrorAttr(svc) {
   return `this.onerror=null;this.src='${pImg(svc)}';`;
 }
 
+// Универсальный поиск картинки по тексту через серверную функцию (DuckDuckGo Images).
+let ddgApiAvailable = true;
+export async function searchDuckDuckGo(query) {
+  if (!ddgApiAvailable) return null;
+  if (!query || query.length < 2) return null;
+  const cacheKey = 'ddg_img_' + query.toLowerCase();
+  const cached = sg(cacheKey, null);
+  if (cached) {
+    if (typeof cached === 'object' && cached.url && cached.ts) {
+      if (Date.now() - cached.ts < 7 * 24 * 60 * 60 * 1000) return cached.url;
+    } else if (typeof cached === 'string') {
+      return cached;
+    }
+  }
+  try {
+    const res = await fetch(`/api/image-search?q=${encodeURIComponent(query)}&n=8`);
+    if (!res.ok) {
+      if (res.status === 404) ddgApiAvailable = false;
+      return null;
+    }
+    let data;
+    try { data = await res.json(); } catch { ddgApiAvailable = false; return null; }
+    if (!data.results || !Array.isArray(data.results) || data.results.length === 0) return null;
+    const validExts = /\.(jpg|jpeg|png|webp|gif)/i;
+    for (const r of data.results) {
+      const url = r.thumbnail || r.image;
+      if (!url) continue;
+      if (url.startsWith('data:')) continue;
+      if (validExts.test(url) || url.includes('image') || url.includes('img') || url.includes('photo') || url.includes('poster') || url.includes('thumb')) {
+        ss(cacheKey, { url, ts: Date.now() });
+        return url;
+      }
+    }
+    const fallback = data.results[0].thumbnail || data.results[0].image;
+    if (fallback) {
+      ss(cacheKey, { url: fallback, ts: Date.now() });
+      return fallback;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ФИКС КАРТИНОК (последние ~10%): поиск обложки через открытое Wikipedia API по НАЗВАНИЮ.
 // Используется как третья, последняя попытка для фильмов/сериалов, если оба CDN-зеркала
 // не ответили — а также для авто-поиска картинки, когда пользователь добавляет свой фильм.
@@ -616,21 +663,25 @@ export async function searchWikiThumbnail(title) {
   const cacheKey = 'wiki_thumb_' + title.toLowerCase();
   const cached = sg(cacheKey, null);
   if (cached) return cached;
-  try {
-    const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=1&namespace=0&format=json&origin=*`);
-    if (!searchRes.ok) throw new Error('search failed');
-    const searchData = await searchRes.json();
-    const pageTitle = searchData && searchData[1] && searchData[1][0];
-    if (!pageTitle) return null;
-    const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
-    if (!sumRes.ok) throw new Error('summary failed');
-    const sumData = await sumRes.json();
-    const url = (sumData.thumbnail && sumData.thumbnail.source) ? sumData.thumbnail.source : null;
-    if (url) ss(cacheKey, url);
-    return url;
-  } catch (e) {
-    return null;
+  const hasCyrillic = /[а-яёА-ЯЁ]/.test(title);
+  const langs = hasCyrillic ? ['ru', 'en'] : ['en', 'ru'];
+  for (const lang of langs) {
+    try {
+      const searchRes = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=1&namespace=0&format=json&origin=*`);
+      if (!searchRes.ok) continue;
+      const searchData = await searchRes.json();
+      const pageTitle = searchData && searchData[1] && searchData[1][0];
+      if (!pageTitle) continue;
+      const sumRes = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
+      if (!sumRes.ok) continue;
+      const sumData = await sumRes.json();
+      const url = (sumData.thumbnail && sumData.thumbnail.source) ? sumData.thumbnail.source : null;
+      if (url) { ss(cacheKey, url); return url; }
+    } catch (e) {
+      continue;
+    }
   }
+  return null;
 }
 
 // ФИКС КАРТИНОК: трёхступенчатый фолбэк для постера (imdb): основной CDN → зеркало →
@@ -647,6 +698,11 @@ export function attachPosterFallback(imgEl, item) {
     }
     if (stage === '0' || stage === '1') {
       this.dataset.stage = '2';
+      const ddgUrl = await searchDuckDuckGo(item.title + ' poster');
+      if (ddgUrl) { this.src = ddgUrl; item.img = ddgUrl; return; }
+    }
+    if (parseInt(this.dataset.stage) <= 2) {
+      this.dataset.stage = '3';
       const wikiUrl = await searchWikiThumbnail(item.title);
       if (wikiUrl) { this.src = wikiUrl; item.img = wikiUrl; return; }
     }
@@ -738,6 +794,7 @@ export function updatePoolItems(type) {
         if (!img && item.svc === 'imdb') img = imdbPoster(item.link);
         if (!img && item.svc === 'steam') img = steamHeader(item.link);
         return {
+          id: crypto.randomUUID(),
           img: img || pImg(item.svc),
           url: item.link || item.url || '#',
           svc: item.svc,
@@ -761,26 +818,17 @@ export function getPoolItems() { return currentPoolItems; }
 // ФИКС 23: поиск внутри шаблона. ВАЖНО: элементы не удаляются и не переставляются —
 // только скрываются через CSS (display:none), иначе собьются индексы у Sortable/drag&drop,
 // которые опираются на порядок карточек в DOM.
-export function filterPool(query) {
-  const q = (query || '').trim().toLowerCase();
-  const qTranslit = translit(q);
-  document.querySelectorAll('#templatePool .item').forEach(el => {
-    const title = (el.dataset.tooltip || '').toLowerCase();
-    const matches = q === '' || title.includes(q) || (qTranslit !== q && title.includes(qTranslit));
-    el.classList.toggle('search-hidden', !matches);
-  });
-}
 
 function openCustomItemModal(type) {
   const content = document.createElement('div');
   content.innerHTML = `
     <h3 style="color:var(--gold); margin-bottom: 20px;">Добавить свой элемент</h3>
-    <input type="text" id="custom-title" placeholder="Название" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
+    <input type="text" id="custom-title" placeholder="Название (мин. 3 символа для автопоиска)" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
     <input type="text" id="custom-url" placeholder="Ссылка" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
     <button class="btn btn-secondary" id="custom-find-img" style="width:100%;margin-bottom:12px;" type="button">Найти картинку по названию</button>
     <input type="text" id="custom-img" placeholder="Ссылка на картинку (можно вставить свою)" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text);" />
-    <div style="margin: 16px 0; text-align: center;">
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Превью:</p>
+    <div id="custom-drop-zone" style="margin: 16px 0; text-align: center; border: 2px dashed transparent; border-radius: 14px; padding: 12px; transition: border-color 0.2s, background 0.2s; cursor:pointer;" title="Перетащите картинку сюда или нажмите Ctrl+V">
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Превью (Ctrl+V или перетащите файл):</p>
         <img id="custom-preview" src="${pImg(type === 'games' ? 'steam' : 'imdb')}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
     </div>
     <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px;">
@@ -795,9 +843,56 @@ function openCustomItemModal(type) {
   const imgInput = content.querySelector('#custom-img');
   const preview = content.querySelector('#custom-preview');
   const findBtn = content.querySelector('#custom-find-img');
+  const dropZone = content.querySelector('#custom-drop-zone');
+
+  let autoFoundImage = false;
+  let searchVersion = 0;
 
   imgInput.addEventListener('input', () => {
+    autoFoundImage = false;
     preview.src = imgInput.value.trim() || pImg(type === 'games' ? 'steam' : 'imdb');
+  });
+
+  // --- Plan Б: Ctrl+V вставка изображения из буфера ---
+  function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imgInput.value = e.target.result;
+      preview.src = e.target.result;
+      autoFoundImage = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  content.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        handleImageFile(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  // --- Plan Б: Drag-and-Drop файла на превью ---
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--gold)';
+    dropZone.style.background = 'rgba(245, 197, 66, 0.05)';
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = 'transparent';
+    dropZone.style.background = '';
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'transparent';
+    dropZone.style.background = '';
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleImageFile(file);
   });
 
   // ФИКС АВТО-ПОИСКА: раньше картинку для своего фильма/игры нужно было искать и вставлять
@@ -807,48 +902,66 @@ function openCustomItemModal(type) {
   async function autoFindImage(showToastIfEmpty) {
     const title = titleInput.value.trim();
     if (!title) { if (showToastIfEmpty) eventBus.emit('toast:show', { text: 'Сначала введите название', type: 'info' }); return; }
-    if (imgInput.value.trim() && !showToastIfEmpty) return; // не перезаписываем то, что уже нашли/вставили
+    if (!showToastIfEmpty && title.length < 3) return;
+    // Пропускаем авто-поиск если пользователь ВРУЧНУЮ вставил/написал свою ссылку.
+    // Если картинка была найдена автоматически ранее — перезаписываем (чтобы при смене названия обновлялась).
+    if (imgInput.value.trim() && !showToastIfEmpty && !autoFoundImage) return;
 
+    const thisVersion = ++searchVersion;
     findBtn.disabled = true;
     findBtn.textContent = 'Ищу...';
     let found = null;
-    if (type === 'games') {
+
+    // Wikipedia — самый надёжный источник (работает без CORS/backend)
+    found = await searchWikiThumbnail(title);
+    if (thisVersion !== searchVersion) return;
+
+    // Steam поиск для игр (может не работать из-за CORS без прокси, но пробуем)
+    if (!found && type === 'games') {
       const game = await searchSteamGame(title);
+      if (thisVersion !== searchVersion) return;
       if (game) {
         found = game.img;
-        if (!urlInput.value.trim()) urlInput.value = game.url; // подставляем и ссылку на страницу игры, если её ещё нет
+        if (!urlInput.value.trim()) urlInput.value = game.url;
       }
-    } else {
-      found = await searchWikiThumbnail(title);
     }
+
+    // DuckDuckGo Images — только если есть серверный API (Vercel)
+    if (!found) {
+      found = await searchDuckDuckGo(title + (type === 'games' ? ' game cover' : type === 'movies' ? ' poster' : ' photo'));
+      if (thisVersion !== searchVersion) return;
+    }
+
     if (found) {
       imgInput.value = found;
       preview.src = found;
-    } else {
-      eventBus.emit('toast:show', { text: 'Не нашлось. Вставьте ссылку на картинку вручную.', type: 'error' });
+      autoFoundImage = true;
+    } else if (showToastIfEmpty) {
+      eventBus.emit('toast:show', { text: 'Не нашлось. Вставьте картинку вручную (Ctrl+V или перетащите файл).', type: 'error' });
     }
     findBtn.disabled = false;
     findBtn.textContent = 'Найти картинку по названию';
   }
 
-  findBtn.addEventListener('click', () => { imgInput.value = ''; autoFindImage(true); });
+  findBtn.addEventListener('click', () => { imgInput.value = ''; autoFoundImage = false; autoFindImage(true); });
 
   let autoFindTimer = null;
   titleInput.addEventListener('input', () => {
     clearTimeout(autoFindTimer);
-    autoFindTimer = setTimeout(() => autoFindImage(false), 800);
+    autoFindTimer = setTimeout(() => autoFindImage(false), 600);
   });
 
   content.querySelector('#custom-cancel').onclick = close;
   content.querySelector('#custom-add').onclick = () => {
-    const title = window.escapeHTML(titleInput.value.trim());
+    const title = titleInput.value.trim();
     const url = urlInput.value.trim() || '#';
     const svcType = type === 'games' ? 'steam' : 'imdb';
     const img = imgInput.value.trim() || pImg(svcType);
 
     if (!title) { eventBus.emit('toast:show', { text: 'Введите название!', type: 'error' }); return; }
+    if (url !== '#' && !/^https?:\/\//i.test(url)) { eventBus.emit('toast:show', { text: 'Некорректная ссылка', type: 'error' }); return; }
 
-    const newItem = { title, img, url, svc: svcType };
+    const newItem = { id: crypto.randomUUID(), title, img, url, svc: svcType };
     currentPoolItems.push(newItem);
 
     const customStorageKey = 'custom_items_' + type;
@@ -868,48 +981,141 @@ export function renderTemplatePool() {
   if (!container || !pool) return;
 
   if (type === 'music') {
-    container.style.display = 'none';
-  } else {
     container.style.display = 'flex';
-    const sVal = document.getElementById('sizeSelect')?.value || '60';
-    const styleSelect = document.getElementById('styleSelect');
-    const styleClass = styleSelect ? styleSelect.value : 'gradient';
+    pool.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);width:100%;">Для музыки шаблон не предусмотрен — добавляйте треки вручную через кнопку <strong>+</strong> на тире или используйте «Добавить» в сайдбаре.</div>';
+    lastPoolFingerprint = '';
+    lastPoolType = 'music';
+    return;
+  }
 
-    const itemsHTML = currentPoolItems.map((item, idx) => {
-      // ФИКС КАРТИНОК: для постеров (imdb) полная цепочка фолбэков вешается ниже через JS
-      // (attachPosterFallback) — она умеет ходить в Wikipedia, а это невозможно сделать
-      // одной строкой в HTML-атрибуте onerror.
-      const onerrorAttr = item.svc === 'imdb' ? '' : `onerror="${simpleOnErrorAttr(item.svc)}"`;
-      return `<div class="item style-${styleClass}" data-item-index="${idx}" data-tooltip="${item.title}">
-        <a href="${item.url}" target="_blank" rel="noopener">
-        <img loading="lazy" src="${item.img}" alt="${item.title}" 
-             style="width:${sVal}px; height:${sVal}px;"
-             ${onerrorAttr}>
-        </a></div>`;
-    }).join('');
+  container.style.display = 'flex';
 
-    pool.innerHTML = itemsHTML + `<button id="addCustomPoolItemBtn" style="width:${sVal}px;height:${sVal}px;background:rgba(255,255,255,0.02);border:2px dashed rgba(255,255,255,0.15);border-radius:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);"><i data-lucide="plus"></i></button>`;
+  const newFingerprint = type + '|' + currentPoolItems.map(i => i.id).join(';');
+  if (newFingerprint === lastPoolFingerprint && lastPoolType === type) return;
 
-    const addBtn = document.getElementById('addCustomPoolItemBtn');
-    if (addBtn) {
-        addBtn.onclick = () => openCustomItemModal(type);
-        addBtn.onmouseover = () => { addBtn.style.borderColor = 'var(--gold)'; addBtn.style.color = 'var(--gold)'; };
-        addBtn.onmouseout = () => { addBtn.style.borderColor = 'rgba(255,255,255,0.15)'; addBtn.style.color = 'var(--text-secondary)'; };
+  const typeChanged = lastPoolType !== type;
+  lastPoolType = type;
+
+  if (typeChanged || !pool.querySelector('.item')) {
+    fullRenderPool(pool, type);
+    lastPoolFingerprint = newFingerprint;
+    return;
+  }
+
+  const existingItems = pool.querySelectorAll('.item');
+  const existingIds = new Map();
+  existingItems.forEach(el => existingIds.set(el.dataset.poolId || '', el));
+
+  const newIds = new Set(currentPoolItems.map(i => i.id));
+
+  existingIds.forEach((el, id) => {
+    if (!id || !newIds.has(id)) el.remove();
+  });
+
+  const addBtn = document.getElementById('addCustomPoolItemBtn');
+  currentPoolItems.forEach((item, idx) => {
+    const existingEl = existingIds.get(item.id);
+    if (existingEl) {
+      existingEl.dataset.itemIndex = idx;
+      existingEl.className = 'item';
+    } else {
+      const div = createPoolItemElement(item, idx);
+      if (addBtn) pool.insertBefore(div, addBtn);
+      else pool.appendChild(div);
+      if (item.svc === 'imdb') {
+        const img = div.querySelector('img');
+        if (img) attachPosterFallback(img, item);
+      }
     }
-    lucide.createIcons();
-    // ФИКС 22: раньше подгрузка фото по Wikipedia запускалась только для type==='actors'.
-    // Теперь работает для ЛЮБОЙ категории, где у элементов есть поле wiki
-    // (музыканты/спортсмены/блогеры используют тот же надёжный механизм).
-    if (currentPoolItems.some(i => i.wiki)) hydrateActorPhotos();
-    if (type === 'movies' || type === 'anime') {
-      currentPoolItems.forEach((item, idx) => {
-        if (item.svc !== 'imdb') return;
-        const imgEl = document.querySelector('#templatePool [data-item-index="' + idx + '"] img');
-        if (imgEl) attachPosterFallback(imgEl, item);
-      });
-    }
+  });
+
+  const emptyMsg = pool.querySelector('#pool-empty-msg');
+  if (currentPoolItems.length === 0 && !emptyMsg) {
+    const msg = document.createElement('div');
+    msg.id = 'pool-empty-msg';
+    msg.style.cssText = 'text-align:center;padding:16px;color:var(--text-secondary);width:100%;font-size:0.85rem;';
+    msg.innerHTML = 'Все карточки разложены! Перетащите обратно из тира или добавьте свои через <strong>+</strong>';
+    pool.insertBefore(msg, pool.firstChild);
+  } else if (currentPoolItems.length > 0 && emptyMsg) {
+    emptyMsg.remove();
+  }
+
+  lastPoolFingerprint = newFingerprint;
+}
+
+function createPoolItemElement(item, idx) {
+  const div = document.createElement('div');
+  div.className = 'item skeleton fade-in';
+  div.dataset.itemIndex = idx;
+  div.dataset.poolId = item.id;
+  div.dataset.tooltip = item.title || '';
+  const a = document.createElement('a');
+  a.href = item.url || '#';
+  a.target = '_blank';
+  a.rel = 'noopener';
+  const img = document.createElement('img');
+  img.loading = 'lazy';
+  img.src = item.img;
+  img.alt = escapeHTML(item.title || '');
+  img.onload = function() { div.classList.remove('skeleton'); };
+  if (item.svc !== 'imdb') {
+    img.onerror = function() { this.onerror = null; this.src = pImg(item.svc); div.classList.remove('skeleton'); };
+  } else {
+    img.onerror = function() { div.classList.remove('skeleton'); };
+  }
+  a.appendChild(img);
+  div.appendChild(a);
+  return div;
+}
+
+function fullRenderPool(pool, type) {
+  const emptyMsg = currentPoolItems.length === 0
+    ? '<div id="pool-empty-msg" style="text-align:center;padding:16px;color:var(--text-secondary);width:100%;font-size:0.85rem;">Все карточки разложены! Перетащите обратно из тира или добавьте свои через <strong>+</strong></div>'
+    : '';
+
+  const itemsHTML = currentPoolItems.map((item, idx) => {
+    const onerrorAttr = item.svc === 'imdb' ? `onerror="this.parentElement.parentElement.classList.remove('skeleton')"` : `onerror="this.onerror=null;this.src='${pImg(item.svc)}';this.parentElement.parentElement.classList.remove('skeleton')"`;
+    const safeTitle = escapeHTML(item.title || '');
+    const safeUrl = escapeHTML(item.url || '#');
+    return `<div class="item skeleton fade-in" data-item-index="${idx}" data-pool-id="${item.id}" data-tooltip="${safeTitle}" style="animation-delay:${Math.min(idx * 30, 600)}ms">
+      <a href="${safeUrl}" target="_blank" rel="noopener">
+      <img loading="lazy" src="${item.img}" alt="${safeTitle}"
+           onload="this.parentElement.parentElement.classList.remove('skeleton')"
+           ${onerrorAttr}>
+      </a></div>`;
+  }).join('');
+
+  pool.innerHTML = emptyMsg + itemsHTML + `<button id="addCustomPoolItemBtn" style="width:var(--item-size, 60px);height:var(--item-size, 60px);background:rgba(255,255,255,0.02);border:2px dashed rgba(255,255,255,0.15);border-radius:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>`;
+
+  const addBtn = document.getElementById('addCustomPoolItemBtn');
+  if (addBtn) {
+    addBtn.onclick = () => openCustomItemModal(type);
+    addBtn.onmouseover = () => { addBtn.style.borderColor = 'var(--gold)'; addBtn.style.color = 'var(--gold)'; };
+    addBtn.onmouseout = () => { addBtn.style.borderColor = 'rgba(255,255,255,0.15)'; addBtn.style.color = 'var(--text-secondary)'; };
+  }
+  if (currentPoolItems.some(i => i.wiki)) hydrateActorPhotos();
+  if (type === 'movies' || type === 'anime') {
+    currentPoolItems.forEach((item, idx) => {
+      if (item.svc !== 'imdb') return;
+      const imgEl = document.querySelector('#templatePool [data-item-index="' + idx + '"] img');
+      if (imgEl) attachPosterFallback(imgEl, item);
+    });
   }
 }
 
 eventBus.on('templates:changed', (type) => { updatePoolItems(type); renderTemplatePool(); });
 eventBus.on('templates:renderPool', renderTemplatePool);
+
+// Шаблоны сообщества: загрузка внешнего набора элементов в пул
+eventBus.on('community:pool:set', (items) => {
+  currentPoolItems = items.map(item => ({
+    id: crypto.randomUUID(),
+    img: item.img || pImg('imdb'),
+    url: item.url || '#',
+    svc: item.svc || 'imdb',
+    title: item.title || '',
+    wiki: null
+  }));
+  lastPoolFingerprint = '';
+  renderTemplatePool();
+});

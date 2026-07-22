@@ -64,12 +64,25 @@ export function openVersionHistory() {
       restoreBtn.textContent = 'Восстановить';
       restoreBtn.style.padding = '6px 12px';
       restoreBtn.onclick = () => {
-        if (!confirm('Вернуться к этой версии? Текущие изменения будут заменены (их тоже можно будет найти здесь же чуть позже).')) return;
-        state.setData(JSON.parse(snap.dataStr), 1);
-        state._save();
-        renderAll();
-        close();
-        eventBus.emit('toast:show', { text: 'Версия восстановлена', type: 'success' });
+        const confirmContent = document.createElement('div');
+        confirmContent.style.padding = '20px';
+        confirmContent.innerHTML = `
+          <p style="margin-bottom:16px;color:var(--text);">Вернуться к этой версии? Текущие изменения будут заменены (их тоже можно будет найти здесь же чуть позже).</p>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn btn-secondary" data-action="cancel">Отмена</button>
+            <button class="btn btn-primary" data-action="ok" style="background:#ff4d6d;">Восстановить</button>
+          </div>
+        `;
+        const closeConfirm = modalManager.open(confirmContent, { closeOnEscape: true });
+        confirmContent.querySelector('[data-action="cancel"]').onclick = () => closeConfirm();
+        confirmContent.querySelector('[data-action="ok"]').onclick = () => {
+          closeConfirm();
+          state.setData(JSON.parse(snap.dataStr), 1);
+          state._save();
+          renderAll();
+          close();
+          eventBus.emit('toast:show', { text: 'Версия восстановлена', type: 'success' });
+        };
       };
       row.appendChild(restoreBtn);
       listEl.appendChild(row);

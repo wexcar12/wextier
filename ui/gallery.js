@@ -55,7 +55,9 @@ export async function openGallery() {
   // листать первые 20 тир-листов и всё. Firestore не умеет искать по тексту "из коробки",
   // поэтому подгружаем список побольше и ищем по названию прямо в браузере.
   const { items } = await api.fetchTierlists(60);
-  const likedIds = new Set(JSON.parse(localStorage.getItem('wt_liked_lists') || '[]'));
+  let likedIds;
+  try { likedIds = new Set(JSON.parse(localStorage.getItem('wt_liked_lists') || '[]')); }
+  catch { likedIds = new Set(); }
 
   function renderList(filterText) {
     const q = (filterText || '').trim().toLowerCase();
@@ -79,7 +81,9 @@ export async function openGallery() {
       // XSS-ЗАЩИТА: escapeHTML для всех пользовательских данных
       info.innerHTML = '<strong>' + escapeHTML(doc.name || 'Без названия') + '</strong> (' + (doc.wins || 0) + ' побед, ' + (doc.trackCount || 0) + ' треков)';
       info.onclick = async () => {
-        state.setData(JSON.parse(doc.data), 1);
+        let parsed;
+        try { parsed = JSON.parse(doc.data); } catch { eventBus.emit('toast:show', { text: 'Ошибка загрузки тир-листа', type: 'error' }); return; }
+        state.setData(parsed, 1);
         ctid = doc.id;
         applyForeignBanner(doc);
         if (doc.templateType) {
@@ -101,6 +105,7 @@ export async function openGallery() {
         if (likedIds.has(doc.id)) return;
         likeBtn.disabled = true;
         const newCount = await api.likeTierlist(doc.id);
+        if (newCount === 0) { likeBtn.disabled = false; return; }
         likeBtn.innerHTML = '❤️ <span>' + newCount + '</span>';
         likeBtn.classList.add('liked');
         likedIds.add(doc.id);
@@ -133,7 +138,7 @@ export async function openGallery() {
     try {
       const templateType = document.getElementById('templateSelect')?.value || 'music';
       const id = await api.publishTierlist({
-        name: escapeHTML(name),
+        name: name,
         templateType: templateType,
         data: JSON.stringify(data),
         trackCount: data.reduce((s, t) => s + t.items.length, 0),
@@ -144,9 +149,10 @@ export async function openGallery() {
         authorId: user ? user.uid : 'anonymous',
         // ФИКС: у объекта пользователя Firebase Auth нет поля "name" — только displayName.
         // Раньше имя автора всегда сохранялось пустым для залогиненных пользователей.
-        authorName: user ? escapeHTML(user.displayName || 'Без имени') : 'Аноним'
+        authorName: user ? (user.name || 'Без имени') : 'Аноним'
       });
       ctid = id;
+      eventBus.emit('comments:load', id);
       eventBus.emit('toast:show', { text: 'Опубликовано!', type: 'success' });
       unlockAchievement('first_publish');
       close();
@@ -192,7 +198,9 @@ export async function openTop() {
       // XSS-ЗАЩИТА
       div.innerHTML = medal + ' <strong>#' + rank + '</strong> ' + escapeHTML(doc.name || 'Без названия') + ' (' + (doc.wins || 0) + ' побед)';
       div.onclick = async () => {
-        state.setData(JSON.parse(doc.data), 1);
+        let parsed;
+        try { parsed = JSON.parse(doc.data); } catch { eventBus.emit('toast:show', { text: 'Ошибка загрузки тир-листа', type: 'error' }); return; }
+        state.setData(parsed, 1);
         ctid = doc.id;
         applyForeignBanner(doc);
         if (doc.templateType) {
@@ -224,9 +232,9 @@ export async function openUserDashboard() {
   content.style.width = '600px';
   content.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <img src="${user.photoURL || ''}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);${user.photoURL ? '' : 'display:none;'}">
+      <img src="${escapeHTML(user.photo || '')}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);${user.photo ? '' : 'display:none;'}">
       <div>
-        <h3 style="color:var(--gold);margin:0;">${escapeHTML(user.displayName || 'Личный кабинет')}</h3>
+        <h3 style="color:var(--gold);margin:0;">${escapeHTML(user.name || 'Личный кабинет')}</h3>
         <span style="font-size:0.78rem;color:var(--text-secondary);">${escapeHTML(user.email || '')}</span>
       </div>
     </div>
@@ -254,7 +262,9 @@ export async function openUserDashboard() {
       div.innerHTML = '<div><strong>' + escapeHTML(doc.name || 'Без названия') + '</strong><br><span style="font-size:0.75rem;color:var(--gold);">Побед: ' + (doc.wins || 0) + '</span></div>' +
         '<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.8rem;">Открыть</button>';
       div.querySelector('button').onclick = () => {
-        state.setData(JSON.parse(doc.data), 1);
+        let parsed;
+        try { parsed = JSON.parse(doc.data); } catch { eventBus.emit('toast:show', { text: 'Ошибка загрузки тир-листа', type: 'error' }); return; }
+        state.setData(parsed, 1);
         ctid = doc.id;
         applyForeignBanner(doc);
         if (doc.templateType) {
