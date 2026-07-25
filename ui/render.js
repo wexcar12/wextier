@@ -121,6 +121,91 @@ export function render(listNum) {
   eventBus.emit('progress:update', { listNum, placed: totalPlaced });
 }
 
+const TIER_PRESET_COLORS = ['#ff7f7f','#ffbf7f','#ffdf7f','#ffff7f','#bfff7f','#7fff7f','#7fffff','#7fbfff','#bf7fff','#ff7fbf','#ffffff','#888888'];
+
+function openTierEditor(t, lbl) {
+  document.querySelector('.tier-edit-popover')?.remove();
+  const pop = document.createElement('div');
+  pop.className = 'tier-edit-popover';
+  const rect = lbl.getBoundingClientRect();
+  pop.style.cssText = `position:fixed;z-index:9999;top:${rect.top}px;left:${rect.right + 8}px;background:var(--modal-bg,#1a1a2e);border:1px solid var(--input-border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
+
+  const labelRow = document.createElement('div');
+  labelRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
+  const labelInput = document.createElement('input');
+  labelInput.type = 'text';
+  labelInput.value = t.label;
+  labelInput.maxLength = 12;
+  labelInput.style.cssText = 'flex:1;padding:7px 10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:1rem;font-weight:700;text-align:center;outline:none;width:0;';
+  labelRow.appendChild(labelInput);
+  pop.appendChild(labelRow);
+
+  const swatches = document.createElement('div');
+  swatches.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:5px;';
+  let currentColor = t.color || '#ff7f7f';
+  TIER_PRESET_COLORS.forEach(c => {
+    const sw = document.createElement('button');
+    sw.style.cssText = `width:26px;height:26px;border-radius:6px;border:2px solid ${c === currentColor ? '#fff' : 'transparent'};background:${c};cursor:pointer;transition:border-color 0.15s;`;
+    sw.title = c;
+    sw.onclick = () => {
+      currentColor = c;
+      colorInput.value = c;
+      swatches.querySelectorAll('button').forEach(b => { b.style.borderColor = b.title === c ? '#fff' : 'transparent'; });
+    };
+    swatches.appendChild(sw);
+  });
+  pop.appendChild(swatches);
+
+  const colorRow = document.createElement('div');
+  colorRow.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-secondary);';
+  colorRow.textContent = 'Свой цвет: ';
+  const colorInput = document.createElement('input');
+  colorInput.type = 'color';
+  colorInput.value = currentColor;
+  colorInput.style.cssText = 'width:36px;height:28px;border:none;background:none;cursor:pointer;padding:0;border-radius:6px;';
+  colorInput.oninput = () => {
+    currentColor = colorInput.value;
+    swatches.querySelectorAll('button').forEach(b => { b.style.borderColor = 'transparent'; });
+  };
+  colorRow.appendChild(colorInput);
+  pop.appendChild(colorRow);
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Отмена';
+  cancelBtn.className = 'btn btn-secondary';
+  cancelBtn.style.cssText = 'flex:1;padding:7px;font-size:0.82rem;';
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = 'Сохранить';
+  saveBtn.className = 'btn btn-primary';
+  saveBtn.style.cssText = 'flex:1;padding:7px;font-size:0.82rem;';
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(saveBtn);
+  pop.appendChild(btnRow);
+
+  document.body.appendChild(pop);
+  labelInput.focus();
+  labelInput.select();
+
+  const save = () => {
+    t.label = labelInput.value.trim() || t.label;
+    t.color = currentColor;
+    state._save();
+    eventBus.emit('achievements:check');
+    pop.remove();
+    renderAll();
+  };
+  saveBtn.onclick = save;
+  cancelBtn.onclick = () => pop.remove();
+  labelInput.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') pop.remove(); };
+
+  setTimeout(() => {
+    const outside = e => { if (!pop.contains(e.target) && e.target !== lbl) { save(); document.removeEventListener('mousedown', outside); } };
+    document.addEventListener('mousedown', outside);
+  }, 0);
+}
+
 function buildTierRow(t, ti, listNum) {
   const row = document.createElement('div');
   row.className = 'tier-row';
@@ -136,37 +221,7 @@ function buildTierRow(t, ti, listNum) {
     <div class="tier-count">${t.items.length}</div>
   `;
 
-  lbl.ondblclick = () => {
-    if (!isEditing() || lbl.querySelector('input')) return;
-
-    lbl.innerHTML = '';
-    lbl.style.display = 'flex';
-    lbl.style.flexDirection = 'column';
-    lbl.style.padding = '0';
-
-    const ci = document.createElement('input');
-    ci.type = 'color';
-    ci.value = t.color || '#ff7f7f';
-    ci.style.cssText = 'flex:1;width:100%;border:none;cursor:pointer;padding:0;min-height:0;';
-
-    const ni = document.createElement('input');
-    ni.value = t.label;
-    ni.style.cssText = 'flex:1;width:100%;background:transparent;border:1px solid rgba(0,0,0,0.3);text-align:center;font-weight:900;font-size:1.1rem;color:#111;outline:none;min-height:0;';
-
-    lbl.appendChild(ci);
-    lbl.appendChild(ni);
-    ci.focus();
-
-    const done = () => {
-      t.label = ni.value.trim() || t.label;
-      t.color = ci.value;
-      state._save();
-      eventBus.emit('achievements:check');
-      renderAll();
-    };
-    ni.onblur = done;
-    ni.onkeypress = e => { if (e.key === 'Enter') ni.blur(); };
-  };
+  lbl.ondblclick = () => { if (!isEditing()) return; openTierEditor(t, lbl); };
 
   row.appendChild(lbl);
 
@@ -178,7 +233,7 @@ function buildTierRow(t, ti, listNum) {
 
   t.items.forEach((item, ii) => {
     const div = document.createElement('div');
-    div.className = 'item';
+    div.className = 'item skeleton';
     div.dataset.svc = item.svc;
     div.dataset.tierIndex = ti;
     div.dataset.itemIndex = ii;
@@ -196,6 +251,7 @@ function buildTierRow(t, ti, listNum) {
     img.alt = '';
     img.loading = 'lazy';
     img.decoding = 'async';
+    img.onload = () => div.classList.remove('skeleton');
     if (item.svc === 'imdb') {
       attachPosterFallback(img, item);
     } else {

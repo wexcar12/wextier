@@ -4,6 +4,8 @@
  */
 import { getDB } from './firebase-init.js';
 
+let _ctCache = {};
+
 export const api = {
   // Лайки тир-листов в галерее — атомарный increment.
   // Используем существующее поле likesCount (число), а не likes (это отдельный массив).
@@ -161,6 +163,7 @@ export const api = {
   async publishTemplate(data) {
     const db = getDB();
     if (!db) throw new Error('Firebase not available');
+    _ctCache = {};
     const docRef = await db.collection('community_templates').add({
       ...data,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -171,6 +174,9 @@ export const api = {
   async fetchCommunityTemplates(includeAdult = false) {
     const db = getDB();
     if (!db) return [];
+    const key = includeAdult ? '1' : '0';
+    const cached = _ctCache[key];
+    if (cached && Date.now() - cached.ts < 300000) return cached.data;
     try {
       let query = db.collection('community_templates');
       if (!includeAdult) query = query.where('isAdult', '==', false);
@@ -178,6 +184,7 @@ export const api = {
       const snap = await query.get();
       const items = [];
       snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      _ctCache[key] = { ts: Date.now(), data: items };
       return items;
     } catch (e) {
       console.error('fetchCommunityTemplates failed:', e);

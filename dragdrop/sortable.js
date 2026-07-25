@@ -1,7 +1,7 @@
 /**
  * @module dragdrop/sortable
  */
-import { state, MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand } from '../core/state.js';
+import { state, MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand, MoveTierCommand } from '../core/state.js';
 import { renderAll, isEditing } from '../ui/render.js';
 import { getPoolItems, renderTemplatePool } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
@@ -133,13 +133,15 @@ function handleSortableMove(evt) {
 }
 
 function refreshSortableInstances() {
-  // ФИКС: перетаскивание разрешено только в режиме "Редактировать"
   const disabled = !isEditing();
   document.querySelectorAll('.tier-items').forEach(el => {
     if (el._sortable) el._sortable.option('disabled', disabled);
   });
   const poolEl = document.getElementById('templatePool');
   if (poolEl && poolEl._sortable) poolEl._sortable.option('disabled', disabled);
+  [document.getElementById('list1'), document.getElementById('list2')].forEach(listEl => {
+    if (listEl && listEl._tierSortable) listEl._tierSortable.option('disabled', disabled);
+  });
 }
 
 export function initSortable() {
@@ -162,10 +164,30 @@ export function initSortable() {
           poolEl._sortable = new Sortable(poolEl, { group: 'shared', draggable: '.item', animation: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', onEnd: handleSortableMove, onMove: handleDragMove, onStart: handleDragStart, onUnchoose: handleDragStop, disabled });
         }
       }
+      [document.getElementById('list1'), document.getElementById('list2')].forEach(listEl => {
+        if (!listEl) return;
+        const listNum = listEl.id === 'list1' ? 1 : 2;
+        if (listEl._tierSortable) {
+          listEl._tierSortable.option('disabled', disabled);
+        } else {
+          listEl._tierSortable = new Sortable(listEl, {
+            draggable: '.tier-row',
+            handle: '.tier-label',
+            animation: 200,
+            easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            disabled,
+            onEnd(evt) {
+              if (evt.oldIndex === evt.newIndex) return;
+              const cmd = new MoveTierCommand(evt.oldIndex, evt.newIndex, listNum);
+              state.executeCommand(cmd, listNum);
+              renderAll();
+            }
+          });
+        }
+      });
     }, 0);
   });
 
-  // ФИКС: когда переключают "Редактировать" — сразу включаем/выключаем перетаскивание, без пересборки Sortable
   eventBus.on('ui:state:changed', ({ key }) => {
     if (key === 'editing') refreshSortableInstances();
   });

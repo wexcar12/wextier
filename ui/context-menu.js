@@ -2,6 +2,8 @@ import { state, AddItemCommand, RemoveItemCommand, MoveItemCommand } from '../co
 import { renderAll } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { isEditing } from './render.js';
+import { searchDuckDuckGo, searchWikiThumbnail } from './templates.js';
+import { modalManager } from './modal-manager.js';
 
 let menu = null;
 let longPressTimer = null;
@@ -44,6 +46,8 @@ function show(x, y, item) {
   }
 
   if (isEditing()) {
+    addAction('✏️ Редактировать', () => openItemEditor(currentTarget));
+
     data.forEach((tier, idx) => {
       if (idx === tI) return;
       addAction(`➡️ В тир ${tier.label}`, () => {
@@ -80,6 +84,64 @@ function addAction(label, fn, danger) {
   btn.textContent = label;
   btn.onclick = () => { hide(); fn(); };
   menu.appendChild(btn);
+}
+
+function openItemEditor({ tI, iI, listNum, itemData }) {
+  const content = document.createElement('div');
+  content.style.minWidth = '300px';
+  content.innerHTML = `
+    <h3 style="color:var(--gold);margin-bottom:14px;">Редактировать элемент</h3>
+    <input type="text" id="ie-title" placeholder="Название" value="${itemData.title ? itemData.title.replace(/"/g,'&quot;') : ''}"
+      style="width:100%;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);margin-bottom:10px;">
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input type="text" id="ie-img" placeholder="URL картинки" value="${(itemData.img||'').replace(/"/g,'&quot;')}"
+        style="flex:1;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:0.85rem;">
+      <button class="btn btn-secondary" id="ie-search" style="white-space:nowrap;">🔍 Найти</button>
+    </div>
+    <div id="ie-preview" style="${itemData.img ? '' : 'display:none;'}margin-bottom:10px;text-align:center;">
+      <img id="ie-preview-img" src="${itemData.img||''}" style="max-height:80px;border-radius:8px;border:1px solid var(--input-border);" alt="">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="ie-cancel">Отмена</button>
+      <button class="btn btn-primary" id="ie-save">Сохранить</button>
+    </div>
+  `;
+  const close = modalManager.open(content);
+  const imgInput = content.querySelector('#ie-img');
+  const preview = content.querySelector('#ie-preview');
+  const previewImg = content.querySelector('#ie-preview-img');
+
+  imgInput.addEventListener('input', () => {
+    const v = imgInput.value.trim();
+    if (v) { previewImg.src = v; preview.style.display = 'block'; }
+    else preview.style.display = 'none';
+  });
+
+  content.querySelector('#ie-search').onclick = async () => {
+    const title = content.querySelector('#ie-title').value.trim() || itemData.title || '';
+    if (!title) return;
+    const btn = content.querySelector('#ie-search');
+    btn.disabled = true; btn.textContent = '⏳';
+    const found = await searchDuckDuckGo(title + ' photo') || await searchDuckDuckGo(title) || await searchWikiThumbnail(title);
+    btn.disabled = false; btn.textContent = '🔍 Найти';
+    if (found) { imgInput.value = found; previewImg.src = found; preview.style.display = 'block'; }
+    else eventBus.emit('toast:show', { text: 'Не нашлось — вставьте URL вручную', type: 'error' });
+  };
+
+  content.querySelector('#ie-cancel').onclick = close;
+  content.querySelector('#ie-save').onclick = () => {
+    const data = listNum === 1 ? state.data1 : state.data2;
+    const item = data[tI]?.items[iI];
+    if (!item) { close(); return; }
+    const newTitle = content.querySelector('#ie-title').value.trim();
+    const newImg = imgInput.value.trim();
+    if (newTitle) item.title = newTitle;
+    if (newImg) item.img = newImg;
+    state._save();
+    eventBus.emit('achievements:check');
+    renderAll();
+    close();
+  };
 }
 
 export function initContextMenu() {

@@ -97,6 +97,24 @@ class AddTierCommand extends Command {
   }
 }
 
+class MoveTierCommand extends Command {
+  constructor(fromIndex, toIndex, listNum) {
+    super(); this.fromIndex = fromIndex; this.toIndex = toIndex; this.listNum = listNum;
+  }
+  execute(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    const [tier] = data.splice(this.fromIndex, 1);
+    data.splice(this.toIndex, 0, tier);
+    return state;
+  }
+  undo(state) {
+    const data = this.listNum === 1 ? state.data1 : state.data2;
+    const [tier] = data.splice(this.toIndex, 1);
+    data.splice(this.fromIndex, 0, tier);
+    return state;
+  }
+}
+
 class StateManager {
   constructor() {
     this.history1 = []; this.history2 = []; this.index1 = -1; this.index2 = -1;
@@ -158,4 +176,4 @@ class StateManager {
 }
 
 export const state = new StateManager();
-export { MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand, AddTierCommand };
+export { MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand, AddTierCommand, MoveTierCommand };

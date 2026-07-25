@@ -580,6 +580,7 @@ const TEMPLATES = {
 let currentPoolItems = [];
 let lastPoolFingerprint = '';
 let lastPoolType = '';
+let communityPoolActive = false;
 
 function pImg(svc) {
   const c = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00', steam: '#171a21', imdb: '#f5c518' };
@@ -781,6 +782,7 @@ async function searchSteamGame(title) {
 }
 
 export function updatePoolItems(type) {
+  communityPoolActive = false;
   if (type === 'music') {
     currentPoolItems = [];
   } else {
@@ -980,7 +982,7 @@ export function renderTemplatePool() {
   const pool = document.getElementById('templatePool');
   if (!container || !pool) return;
 
-  if (type === 'music') {
+  if (type === 'music' && !communityPoolActive) {
     container.style.display = 'flex';
     pool.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);width:100%;">Для музыки шаблон не предусмотрен — добавляйте треки вручную через кнопку <strong>+</strong> на тире или используйте «Добавить» в сайдбаре.</div>';
     lastPoolFingerprint = '';
@@ -1108,6 +1110,7 @@ eventBus.on('templates:renderPool', renderTemplatePool);
 
 // Шаблоны сообщества: загрузка внешнего набора элементов в пул
 eventBus.on('community:pool:set', (items) => {
+  communityPoolActive = true;
   currentPoolItems = items.map(item => ({
     id: crypto.randomUUID(),
     img: item.img || pImg('imdb'),
@@ -1117,5 +1120,6 @@ eventBus.on('community:pool:set', (items) => {
     wiki: null
   }));
   lastPoolFingerprint = '';
+  lastPoolType = '__community__';
   renderTemplatePool();
 });
