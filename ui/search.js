@@ -45,7 +45,7 @@ function filterAll() {
     el.classList.toggle('search-hidden', !matches);
   });
 
-  const container = document.querySelector('.compare-wrap') || document.querySelector('.tier-list');
+  const container = document.querySelector('.compare-wrap');
   let msg = document.getElementById('search-empty-msg');
   if (q && tierVisible === 0) {
     if (!msg && container) {

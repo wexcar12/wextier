@@ -38,7 +38,7 @@ export function saveDrafts() {
 }
 
 export function renderDraftsSidebar() {
-  const list = document.getElementById('draftListSidebar');
+  const list = document.getElementById('draftListDropdown');
   if (!list) return;
 
   list.innerHTML = '';
@@ -47,7 +47,7 @@ export function renderDraftsSidebar() {
     div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;';
 
     const btn = document.createElement('button');
-    btn.className = 'sidebar-btn' + (i === ad ? ' primary' : '');
+    btn.className = 'header-dropdown-item' + (i === ad ? ' active' : '');
     btn.style.flex = '1';
     btn.textContent = (i === ad ? '● ' : '') + d.name;
     btn.onclick = () => {
@@ -63,8 +63,8 @@ export function renderDraftsSidebar() {
 
     // Rename button (pencil icon)
     const renameBtn = document.createElement('button');
-    renameBtn.className = 'sidebar-btn';
-    renameBtn.style.cssText = 'padding:4px 8px;font-size:0.85rem;flex:none;';
+    renameBtn.className = 'header-dropdown-item';
+    renameBtn.style.cssText = 'padding:6px;font-size:0.85rem;flex:none;width:auto;min-width:32px;justify-content:center;';
     renameBtn.textContent = '✏️';
     renameBtn.title = 'Переименовать';
     renameBtn.onclick = (e) => {
@@ -76,8 +76,8 @@ export function renderDraftsSidebar() {
     // Delete button (trash icon) - not shown if this is the only draft
     if (DRAFTS.length > 1) {
       const delBtn = document.createElement('button');
-      delBtn.className = 'sidebar-btn';
-      delBtn.style.cssText = 'padding:4px 8px;font-size:0.85rem;flex:none;';
+      delBtn.className = 'header-dropdown-item';
+      delBtn.style.cssText = 'padding:6px;font-size:0.85rem;flex:none;width:auto;min-width:32px;justify-content:center;';
       delBtn.textContent = '🗑️';
       delBtn.title = 'Удалить';
       delBtn.onclick = (e) => {

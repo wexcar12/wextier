@@ -19,15 +19,19 @@ export function applyNeon() {
     document.body.classList.add('neon-target-' + (neonS.target || 'all'));
     if (neonS.color === 'rainbow') {
       document.body.classList.add('neon-rainbow');
+      document.documentElement.style.setProperty('--neon-glow', 'none');
+      document.documentElement.style.setProperty('--neon-filter', 'none');
     } else {
       let c = 'rgba(245,200,66,0.9)';
       if (neonS.color === 'cyan') c = 'rgba(0,200,255,0.9)';
       else if (neonS.color === 'magenta') c = 'rgba(255,0,200,0.9)';
       document.documentElement.style.setProperty('--neon-glow', '0 0 20px ' + c);
+      document.documentElement.style.setProperty('--neon-filter', 'drop-shadow(0 0 12px ' + c + ')');
     }
   } else {
     document.body.classList.remove('neon-active');
     document.documentElement.style.setProperty('--neon-glow', 'none');
+    document.documentElement.style.setProperty('--neon-filter', 'none');
   }
 
   const nb = document.getElementById('neonBtn');

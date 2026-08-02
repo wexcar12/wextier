@@ -85,7 +85,7 @@ export function toggleParallax(on) {
   } else {
     document.body.classList.remove('parallax-active');
     if (btn) btn.classList.remove('primary');
-    if (wrapper) { wrapper.style.display = 'none'; wrapper.style.transform = ''; }
+    if (wrapper) { wrapper.style.display = 'none'; }
     ['parallaxLayer1', 'parallaxLayer2', 'parallaxLayer3', 'parallaxPhoto', 'parallaxVideo'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.transform = '';
@@ -122,32 +122,52 @@ export function initParallaxMouse() {
   if (!wrapper || !layer1 || !layer2 || !layer3) return;
 
   let targetX = 0, targetY = 0, curX = 0, curY = 0;
-  let ticking = false;
+  let rafId = 0;
 
-  window.addEventListener('mousemove', function(e) {
-    if (!parallaxOn) return;
+  function onMouseMove(e) {
     targetX = (e.clientX / window.innerWidth) - 0.5;
     targetY = (e.clientY / window.innerHeight) - 0.5;
-    if (!ticking) { requestAnimationFrame(applyFrame); ticking = true; }
+    if (!rafId) rafId = requestAnimationFrame(applyFrame);
+  }
+
+  // Подписываемся/отписываемся при включении/выключении параллакса
+  let listening = false;
+  function startListening() {
+    if (listening) return;
+    listening = true;
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+  }
+  function stopListening() {
+    if (!listening) return;
+    listening = false;
+    window.removeEventListener('mousemove', onMouseMove);
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    curX = 0; curY = 0; targetX = 0; targetY = 0;
+  }
+
+  // Реагируем на включение/выключение
+  if (parallaxOn) startListening();
+  // Слушаем изменение класса через MutationObserver — минимальный overhead.
+  const observer = new MutationObserver(() => {
+    if (document.body.classList.contains('parallax-active')) startListening();
+    else stopListening();
   });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   function applyFrame() {
+    rafId = 0;
     curX += (targetX - curX) * 0.08;
     curY += (targetY - curY) * 0.08;
 
-    layer1.style.transform = `translate(${curX * -18}px, ${curY * -18}px)`;
-    layer2.style.transform = `translate(${curX * -40}px, ${curY * -40}px)`;
-    layer3.style.transform = `translate(${curX * -70}px, ${curY * -70}px) scale(1.04)`;
-    // Фото/видео — "ближний" слой, двигается сильнее всех остальных, но без чрезмерного зума
-    const photoTransform = `translate(${curX * -55}px, ${curY * -55}px) scale(1.02)`;
+    layer1.style.transform = `translate3d(${curX * -10}px, ${curY * -10}px, 0)`;
+    layer2.style.transform = `translate3d(${curX * -22}px, ${curY * -22}px, 0)`;
+    layer3.style.transform = `translate3d(${curX * -38}px, ${curY * -38}px, 0)`;
+    const photoTransform = `translate3d(${curX * -30}px, ${curY * -30}px, 0)`;
     if (photo) photo.style.transform = photoTransform;
     if (video) video.style.transform = photoTransform;
-    wrapper.style.transform = `rotateY(${curX * 5}deg) rotateX(${curY * -5}deg)`;
 
     if (Math.abs(targetX - curX) > 0.001 || Math.abs(targetY - curY) > 0.001) {
-      requestAnimationFrame(applyFrame);
-    } else {
-      ticking = false;
+      rafId = requestAnimationFrame(applyFrame);
     }
   }
 }

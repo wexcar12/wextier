@@ -3,21 +3,18 @@
  * @description Точка входа WEX-TIER.
  */
 import { eventBus } from './core/event-bus.js';
-import { state, AddItemCommand, RemoveItemCommand, AddTierCommand } from './core/state.js';
-
-import { escapeHTML } from './utils/sanitizers.js';
+import { state, AddItemCommand, RemoveItemCommand } from './core/state.js';
 
 import { initFB } from './api/firebase-init.js';
 import { initAuthObserver, loginWithGoogle, logout } from './api/auth.js';
 
-import { renderAll, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, updateUndo, getSelectedItem, clearSelectedItem, moveSelectedItemToTier, deleteSelectedItem, setSelectedItemKey, getSelectedItemKey } from './ui/render.js';
+import { renderAll, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, getSelectedItem, clearSelectedItem, moveSelectedItemToTier, deleteSelectedItem, setSelectedItemKey, getSelectedItemKey } from './ui/render.js';
 import { openGallery, openTop, openUserDashboard } from './ui/gallery.js';
 import { openCommentsModal } from './ui/comments.js';
-import { loadAchievements, checkAchievements, openAchievementsModal, unlockAchievement } from './ui/achievements.js';
+import { loadAchievements, checkAchievements, openAchievementsModal } from './ui/achievements.js';
 import { loadNeon, openNeonModal } from './ui/neon.js';
 import { loadParallax, toggleParallax, initParallaxMouse, setParallaxBg } from './ui/parallax.js';
-import { updatePoolItems, getPoolItems } from './ui/templates.js';
-import { loadDrafts, createNewDraft, clearAllData, renderDraftsSidebar } from './ui/drafts.js';
+import { loadDrafts, createNewDraft, renderDraftsSidebar } from './ui/drafts.js';
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
 import { shareTierlist, loadFromURL } from './ui/share.js';
 import { setupSearch } from './ui/search.js';
@@ -25,16 +22,14 @@ import { loadSettings, setupSettingsEvents } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
 import { initTooltips } from './ui/tooltip.js';
-import { openVersionHistory, maybeTakeSnapshot } from './ui/version-history.js';
+import { maybeTakeSnapshot } from './ui/version-history.js';
 import { modalManager } from './ui/modal-manager.js';
 import { enhanceAllSelects } from './ui/custom-select.js';
-import { initSidebarAnimations } from './ui/sidebar-anim.js';
 import { initBottomSheet } from './ui/bottom-sheet.js';
 import { initContextMenu } from './ui/context-menu.js';
 import { initCommunityTemplates } from './ui/community-templates.js';
 import './ui/toast.js';
 
-/** Безопасный вызов lucide.createIcons() — не крашит приложение, если CDN не загрузился */
 function safeCreateIcons() {
   try { if (typeof lucide !== 'undefined') lucide.createIcons(); }
   catch (e) { console.warn('Lucide icons error:', e); }
@@ -62,7 +57,6 @@ async function init() {
 
   try { enhanceAllSelects(); } catch (e) { console.warn('enhanceAllSelects failed:', e); }
   safeCreateIcons();
-  try { initSidebarAnimations(); } catch (e) { console.warn('initSidebarAnimations failed:', e); }
   try { initBottomSheet(); } catch (e) { console.warn('initBottomSheet failed:', e); }
   try { initContextMenu(); } catch (e) { console.warn('initContextMenu failed:', e); }
   try { initCommunityTemplates(); } catch (e) { console.warn('initCommunityTemplates failed:', e); }
@@ -74,50 +68,70 @@ async function init() {
   renderAll();
   try { renderDraftsSidebar(); } catch (e) { console.warn('renderDraftsSidebar failed:', e); }
 
+  window.addEventListener('beforeunload', () => state.flushSave());
+
   bindEvents();
   updateUI();
 }
 
-function showConfirmModal(text, onConfirm) {
-  const el = document.createElement('div');
-  el.style.cssText = 'text-align:center;padding:20px;';
-  el.innerHTML = `
-    <p style="margin-bottom:20px;font-size:1rem;">${escapeHTML(text)}</p>
-    <div style="display:flex;gap:10px;justify-content:center;">
-      <button class="btn btn-secondary" data-action="cancel">Отмена</button>
-      <button class="btn btn-primary" data-action="confirm" style="background:#ff4d6d;">Подтвердить</button>
-    </div>`;
-  const close = modalManager.open(el, { closeOnBackdrop: true, closeOnEscape: true });
-  el.querySelector('[data-action="cancel"]').onclick = () => close();
-  el.querySelector('[data-action="confirm"]').onclick = () => { close(); onConfirm(); };
+function initHeaderDropdowns() {
+  const triggers = document.querySelectorAll('.header-dropdown-trigger');
+
+  triggers.forEach(trigger => {
+    const wrap = trigger.closest('.header-dropdown-wrap');
+    const dropdown = wrap?.querySelector('.header-dropdown');
+    if (!dropdown) return;
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!isOpen) {
+        dropdown.classList.add('open');
+        trigger.classList.add('active');
+      }
+    });
+  });
+
+  // Аватар тоже открывает dropdown
+  const avatar = document.getElementById('userAvatar');
+  const userDropdown = document.getElementById('userDropdown');
+  if (avatar && userDropdown) {
+    avatar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = userDropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!isOpen) userDropdown.classList.add('open');
+    });
+  }
+
+  document.addEventListener('click', closeAllDropdowns);
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.header-dropdown.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.header-dropdown-trigger.active').forEach(t => t.classList.remove('active'));
 }
 
 function bindEvents() {
-  // ФИКС: панель "Настройки" — физически перемещает существующие элементы
-  // (Тема/Неон/Параллакс/Стиль/Размер/Фон) внутрь модалки и обратно, ничего не пересоздавая.
+  initHeaderDropdowns();
+
   document.getElementById('settingsBtn')?.addEventListener('click', () => {
     const panel = document.getElementById('settingsPanel');
     if (!panel) return;
     panel.style.display = 'block';
-    const close = modalManager.open(panel);
+    panel._cleanup = () => {
+      document.body.appendChild(panel);
+      panel.style.display = 'none';
+    };
+    const close = modalManager.open(panel, { closeOnEscape: true });
     const closeBtn = panel.querySelector('#closeSettingsPanel');
-    if (closeBtn) closeBtn.onclick = close;
+    if (closeBtn) closeBtn.onclick = () => close();
     safeCreateIcons();
-  });
-  // ФИКС: themeBtn и toggleSidebarBtn уже привязаны в setupSettingsEvents() (см. init()).
-  // Раньше они привязывались ЕЩЁ РАЗ здесь — при клике срабатывали два обработчика подряд,
-  // и тема/сайдбар переключались туда-обратно за один клик, то есть визуально не менялись вообще.
-  document.getElementById('burgerBtn')?.addEventListener('click', () => { document.getElementById('sidebar')?.classList.toggle('open'); });
-
-  // Закрытие мобильного сайдбара по клику вне его
-  document.getElementById('mainContent')?.addEventListener('click', () => {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && sidebar.classList.contains('open')) sidebar.classList.remove('open');
   });
 
   document.getElementById('neonBtn')?.addEventListener('click', openNeonModal);
-  
-  // ФИКС: Параллакс корректно переключается
+
   document.getElementById('parallaxBtn')?.addEventListener('click', () => {
     const isActive = document.body.classList.contains('parallax-active');
     toggleParallax(!isActive);
@@ -126,78 +140,13 @@ function bindEvents() {
   window.addEventListener('parallax:load-failed', () => {
     eventBus.emit('toast:show', { text: 'Эта картинка не загрузилась (возможно, сайт-источник недоступен в твоей сети). Оставлен обычный фон.', type: 'error' });
   });
-  
-  // ФИКС: кнопка "Редактировать" убрана — редактирование теперь всегда включено (см. core/state.js)
 
-  // Рандомайзер — раскидывает всё, что осталось в пуле шаблонов, по тирам случайно
-  document.getElementById('randomizeBtn')?.addEventListener('click', () => {
-    const poolItemsData = getPoolItems().slice();
-    if (poolItemsData.length === 0 || state.data1.length === 0) {
-      eventBus.emit('toast:show', { text: 'Нечего раскидывать — пул пуст или выбери шаблон', type: 'info' });
-      return;
-    }
-    const data = structuredClone(state.data1);
-    poolItemsData.forEach(item => {
-      const tierIndex = Math.floor(Math.random() * data.length);
-      data[tierIndex].items.push({ img: item.img, url: item.url, svc: item.svc, title: item.title });
-    });
-    state.setData(data, 1);
-    updatePoolItems(document.getElementById('templateSelect')?.value || 'music');
-    eventBus.emit('templates:renderPool');
-    unlockAchievement('randomizer_used');
-    checkAchievements(true);
-    renderAll();
-  });
+  // Автосохранение — snapshot при каждом сохранении
+  eventBus.on('save:done', () => { maybeTakeSnapshot(); });
 
-  // ФИКС 9: история версий
-  document.getElementById('historyBtn')?.addEventListener('click', openVersionHistory);
-
-
-  // ФИКС 8: индикатор автосохранения "Сохранено ✓"
-  let saveIndicatorTimer = null;
-  eventBus.on('save:start', () => {
-    const el = document.getElementById('autosaveIndicator');
-    if (el) { el.textContent = 'Сохранение...'; el.style.opacity = '1'; }
-  });
-  eventBus.on('save:done', () => {
-    maybeTakeSnapshot(); // ФИКС 9: заодно проверяем, не пора ли сделать снапшот версии
-    const el = document.getElementById('autosaveIndicator');
-    if (!el) return;
-    el.textContent = 'Сохранено ✓';
-    clearTimeout(saveIndicatorTimer);
-    saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1500);
-  });
-
-  // ФИКС 6: счётчик "размещено / всего" в шапке + прогресс-бар
-  eventBus.on('progress:update', ({ listNum, placed }) => {
-    if (listNum !== 1) return;
-    const el = document.getElementById('progressIndicator');
-    const barWrap = document.getElementById('progressBarWrap');
-    const barFill = document.getElementById('progressBarFill');
-    const poolLen = document.querySelectorAll('#templatePool .item').length;
-    const total = placed + poolLen;
-    if (!el) return;
-    if (total === 0) {
-      el.style.display = 'none';
-      if (barWrap) barWrap.style.display = 'none';
-      return;
-    }
-    el.style.display = 'block';
-    el.textContent = 'Размещено: ' + placed + ' / ' + total;
-    if (barWrap && barFill) {
-      barWrap.style.display = 'block';
-      const pct = Math.round((placed / total) * 100);
-      barFill.style.width = pct + '%';
-      if (pct === 100) barFill.style.background = 'linear-gradient(90deg, #6bffb8, #4d96ff)';
-      else barFill.style.background = 'linear-gradient(90deg, var(--gold), #ffcc00)';
-    }
-  });
-
-  // ФИКС 10: горячие клавиши. Кликни по карточке в режиме редактирования, чтобы выделить,
-  // затем 1-9 — перекинуть в нужный тир, Delete/Backspace — удалить, Escape — снять выделение.
   document.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return; // не мешаем печатать текст
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
     if (!getSelectedItem()) return;
 
     if (e.key >= '1' && e.key <= '9') {
@@ -210,15 +159,12 @@ function bindEvents() {
       clearSelectedItem();
     }
   });
-  // ФИКС: раньше в режиме Сравнения Undo всегда откатывал список №2, даже если правили список №1
-  document.getElementById('undoBtn')?.addEventListener('click', () => { state.undo(isCompare() ? state.lastEditedList : 1); renderAll(); updateUndo(); });
-  document.getElementById('redoBtn')?.addEventListener('click', () => { state.redo(isCompare() ? state.lastEditedList : 1); renderAll(); updateUndo(); });
 
   document.getElementById('galleryBtn')?.addEventListener('click', openGallery);
   document.getElementById('topBtn')?.addEventListener('click', openTop);
   document.getElementById('achievementsBtn')?.addEventListener('click', openAchievementsModal);
   document.getElementById('commentsBtn')?.addEventListener('click', openCommentsModal);
-  
+
   document.getElementById('shareBtn')?.addEventListener('click', shareTierlist);
   document.getElementById('pngBtn')?.addEventListener('click', exportPNG);
   document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
@@ -226,45 +172,20 @@ function bindEvents() {
   document.getElementById('importFile')?.addEventListener('change', function () { if (this.files[0]) importJSON(this.files[0]); this.value = ''; });
 
   document.getElementById('loginBtn')?.addEventListener('click', async () => {
-    // ФИКС: раньше ошибка входа (заблокирован попап, отмена окна) не показывала пользователю ничего
     try { await loginWithGoogle(); }
     catch (e) { eventBus.emit('toast:show', { text: 'Не удалось войти. Проверьте, не блокирует ли браузер всплывающее окно.', type: 'error' }); }
   });
-  document.getElementById('logoutLink')?.addEventListener('click', logout);
+  document.getElementById('logoutLink')?.addEventListener('click', () => { logout(); closeAllDropdowns(); });
   document.getElementById('profileDashboardBtn')?.addEventListener('click', openUserDashboard);
 
-  // ФИКС: эти две кнопки раньше не были привязаны ни к чему и не реагировали на клик
   document.getElementById('newDraftBtnSidebar')?.addEventListener('click', createNewDraft);
-  document.getElementById('resetAllLink')?.addEventListener('click', () => {
-    clearAllData();
-  });
 
   document.getElementById('compareBtn')?.addEventListener('click', () => {
     setCompare(!isCompare());
     if (isCompare()) state.setData(JSON.parse(JSON.stringify(state.data1)), 2);
     renderAll();
     updateUI();
-  });
-
-  document.getElementById('resetBtn')?.addEventListener('click', () => {
-    showConfirmModal('Сбросить всё?', () => {
-      state.setData(state.getDefaultData(), 1); state.setData(state.getDefaultData(), 2); checkAchievements(true); renderAll();
-    });
-  });
-
-  document.getElementById('addTierBtn')?.addEventListener('click', () => {
-    const data = state.data1;
-    const letters = 'SABCDEF';
-    const colors = ['#ff7f7f','#ffbf7f','#ffdf7f','#ffff7f','#bfff7f','#7fff7f','#7fffff'];
-    const used = new Set(data.map(t => t.tier));
-    let label = 'New';
-    let color = '#cccccc';
-    for (let i = 0; i < letters.length; i++) {
-      if (!used.has(letters[i])) { label = letters[i]; color = colors[i]; break; }
-    }
-    const cmd = new AddTierCommand({ tier: label, label, color, items: [] }, 1);
-    state.executeCommand(cmd, 1);
-    renderAll();
+    closeAllDropdowns();
   });
 
   document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); });
@@ -286,6 +207,7 @@ function bindEvents() {
         }
         if (!isNaN(tI) && !isNaN(iI) && !isNaN(listN)) {
           const data = listN === 1 ? state.data1 : state.data2;
+          if (!data[tI] || iI >= data[tI].items.length) return;
           const itemToRemove = data[tI].items[iI];
           const command = new RemoveItemCommand(tI, iI, itemToRemove, listN);
           state.executeCommand(command, listN); checkAchievements(true); renderAll();
@@ -298,7 +220,10 @@ function bindEvents() {
         const tI = parseInt(addBtn.dataset.tierIndex, 10); const lN = parseInt(addBtn.dataset.listNum, 10);
         if (!isNaN(tI)) {
           setActiveTier(tI, lN);
-          document.getElementById('trackUrl').value = ''; document.getElementById('coverUrl').value = ''; document.getElementById('coverUrl').dataset.source = '';
+          const trackUrlEl = document.getElementById('trackUrl');
+          const coverUrlEl = document.getElementById('coverUrl');
+          if (trackUrlEl) trackUrlEl.value = '';
+          if (coverUrlEl) { coverUrlEl.value = ''; coverUrlEl.dataset.source = ''; }
           const preview = document.getElementById('coverPreview'); if(preview) preview.style.display = 'none';
           const templateType = document.getElementById('templateSelect')?.value || 'music';
           const modalTitle = document.querySelector('#addModal .modal-box h3');
@@ -319,8 +244,12 @@ function bindEvents() {
         const v = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
         if (v) {
           e.preventDefault();
-          document.getElementById('playerFrame').src = 'https://www.youtube.com/embed/' + v[1] + '?autoplay=1';
-          document.getElementById('playerModal').classList.add('open');
+          const frame = document.getElementById('playerFrame');
+          const modal = document.getElementById('playerModal');
+          if (frame && modal) {
+            frame.src = 'https://www.youtube.com/embed/' + v[1] + '?autoplay=1';
+            modal.classList.add('open');
+          }
           return;
         }
       }
@@ -343,11 +272,6 @@ function bindEvents() {
     });
   }
 
-  // ФИКС АВТО-ПОИСКА ОБЛОЖКИ: раньше "Авто-поиск" умел находить картинку только для YouTube,
-  // а для Spotify/Apple/Yandex всегда писал "не удалось найти". Теперь для Spotify обложка
-  // тоже находится автоматически (через официальный публичный oEmbed Spotify, без ключа).
-  // Apple Music и Яндекс.Музыка не отдают обложку без личного API-ключа разработчика — для них
-  // остаётся ручная вставка ссылки (это ограничение самих сервисов, а не сайта).
   async function fetchCoverForTrack(svc, url) {
     if (!url) return null;
     if (svc === 'youtube') {
@@ -371,10 +295,7 @@ function bindEvents() {
     const coverInput = document.getElementById('coverUrl');
     const preview = document.getElementById('coverPreview');
     if (!url) { if (showErrorToast) eventBus.emit('toast:show', { text: 'Вставьте ссылку', type: 'info' }); return; }
-    // ФИКС БАГА: раньше проверялось "поле не пустое" — но поле оставалось "не пустым" и
-    // после ПРЕДЫДУЩЕГО авто-поиска, поэтому при смене ссылки на трек поиск не запускался
-    // заново. Теперь различаем "я сам вписал картинку" (manual) и "нашлось само" (auto) —
-    // не трогаем только то, что пользователь ввёл своими руками.
+    if (!coverInput) return;
     if (coverInput.value.trim() && coverInput.dataset.source === 'manual') return;
 
     const fetchBtn = document.getElementById('fetchCoverBtn');
@@ -390,19 +311,15 @@ function bindEvents() {
     if (fetchBtn) fetchBtn.disabled = false;
   }
 
-  // Если человек сам печатает/вставляет в поле картинки — помечаем как "ручное", чтобы
-  // авто-поиск больше не пытался его перезаписать
   document.getElementById('coverUrl')?.addEventListener('input', (e) => { e.target.dataset.source = 'manual'; });
 
-  // Резервная кнопка — можно нажать вручную в любой момент (например, если авто-поиск не сработал)
   document.getElementById('fetchCoverBtn')?.addEventListener('click', () => {
     const coverInput = document.getElementById('coverUrl');
-    coverInput.value = ''; coverInput.dataset.source = ''; // разрешаем повторный поиск по кнопке
+    if (!coverInput) return;
+    coverInput.value = ''; coverInput.dataset.source = '';
     runCoverAutoSearch(true);
   });
 
-  // ГЛАВНЫЙ ФИКС: обложка теперь ищется САМА, как только вставлена ссылка — без нажатий.
-  // Кнопка и поле "Ссылка на картинку" остаются как резерв, если авто-поиск не найдёт обложку.
   let coverAutoSearchTimer = null;
   document.getElementById('trackUrl')?.addEventListener('input', () => {
     clearTimeout(coverAutoSearchTimer);
@@ -410,6 +327,7 @@ function bindEvents() {
   });
   document.getElementById('svc')?.addEventListener('change', () => {
     const coverInput = document.getElementById('coverUrl');
+    if (!coverInput) return;
     coverInput.value = ''; coverInput.dataset.source = '';
     runCoverAutoSearch(false);
   });
@@ -418,13 +336,10 @@ function bindEvents() {
 
   document.getElementById('okAdd')?.addEventListener('click', () => {
     const svc = document.getElementById('svc')?.value || 'youtube';
-    // ФИКС: МЫ БОЛЬШЕ НЕ ЭКРАНИРУЕМ URL, ИНАЧЕ ССЫЛКИ ЛОМАЮТСЯ!
     const url = document.getElementById('trackUrl')?.value.trim();
     let img = document.getElementById('coverUrl')?.value.trim();
 
     if (!url) { eventBus.emit('toast:show', { text: 'Вставьте ссылку!', type: 'error' }); return; }
-    // ФИКС: раньше можно было вставить ссылку с любой схемой (например javascript:...).
-    // Теперь принимаем только обычные веб-ссылки.
     if (!/^https?:\/\//i.test(url)) { eventBus.emit('toast:show', { text: 'Ссылка должна начинаться с http:// или https://', type: 'error' }); return; }
 
     if (!img) {
@@ -441,11 +356,6 @@ function bindEvents() {
 
     document.getElementById('addModal')?.classList.remove('open');
     checkAchievements(true); renderAll();
-  });
-
-  window.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); document.getElementById('undoBtn')?.click(); }
-    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); document.getElementById('redoBtn')?.click(); }
   });
 }
 
@@ -466,5 +376,4 @@ eventBus.on('auth:changed', (user) => {
   safeCreateIcons();
 });
 
-eventBus.on('state:changed', updateUndo);
 document.addEventListener('DOMContentLoaded', init);

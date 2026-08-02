@@ -10,7 +10,7 @@ class ModalManager {
     this.overlay.style.cssText = `
       position: fixed; inset: 0; background: rgba(0,0,0,0.8);
       display: none; z-index: 1000; justify-content: center;
-      align-items: flex-start; padding: 40px 16px; overflow-y: auto;
+      align-items: center; padding: 20px 16px; overflow-y: auto;
       backdrop-filter: blur(4px);
     `;
     document.body.appendChild(this.overlay);
@@ -99,10 +99,6 @@ class ModalManager {
     if (this.stack.length > 0) {
       this._removeFromStack(this.stack[this.stack.length - 1].container);
     }
-  }
-
-  closeAll() {
-    while (this.stack.length > 0) this.close();
   }
 }
 

@@ -13,6 +13,11 @@ const SVG_TRASH = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14
 
 const tierCache = new Map();
 
+// Сброс кэша диффа — нужен после операций, меняющих ПОРЯДОК строк-тиров в DOM
+// (перетаскивание тиров), чтобы render() пересобрал все .tier-items с верными
+// dataset.tierIndex, а не переиспользовал старые узлы по индексу.
+export function invalidateRenderCache() { tierCache.clear(); }
+
 // Баннер "ты смотришь чужой тир-лист" — показывается, когда открыли список другого
 // автора (из галереи/топа), скрывается при работе со своим черновиком.
 export function showForeignBanner() {
@@ -83,6 +88,19 @@ export function render(listNum) {
   const data = listNum === 1 ? state.data1 : state.data2;
   const cacheKey = listNum;
 
+  // Самоизлечение: убираем битые тиры/элементы (undefined, без items), чтобы
+  // одна повреждённая запись не роняла весь рендер и всё приложение.
+  let healed = false;
+  for (let ti = data.length - 1; ti >= 0; ti--) {
+    const t = data[ti];
+    if (!t || typeof t !== 'object') { data.splice(ti, 1); healed = true; continue; }
+    if (!Array.isArray(t.items)) { t.items = []; healed = true; }
+    const before = t.items.length;
+    t.items = t.items.filter(i => i && typeof i === 'object');
+    if (t.items.length !== before) healed = true;
+  }
+  if (healed) { tierCache.delete(cacheKey); state._save(); }
+
   function tierFingerprint(t, ti) {
     return t.label + '|' + (t.color || '') + '|' + t.items.map(i => i.img + '|' + i.url + '|' + i.svc + '|' + (i.title || '')).join(';') + '|' + ti;
   }
@@ -91,11 +109,7 @@ export function render(listNum) {
   const oldFingerprints = tierCache.get(cacheKey);
   const tierCountChanged = !oldFingerprints || oldFingerprints.length !== newFingerprints.length;
 
-  let totalPlaced = 0;
-  data.forEach(t => { totalPlaced += t.items.length; });
-
   if (!tierCountChanged && oldFingerprints.every((fp, i) => fp === newFingerprints[i])) {
-    eventBus.emit('progress:update', { listNum, placed: totalPlaced });
     return;
   }
 
@@ -107,7 +121,6 @@ export function render(listNum) {
     });
     el.appendChild(frag);
     tierCache.set(cacheKey, newFingerprints);
-    eventBus.emit('progress:update', { listNum, placed: totalPlaced });
     return;
   }
 
@@ -118,7 +131,6 @@ export function render(listNum) {
     }
   });
   tierCache.set(cacheKey, newFingerprints);
-  eventBus.emit('progress:update', { listNum, placed: totalPlaced });
 }
 
 const TIER_PRESET_COLORS = ['#ff7f7f','#ffbf7f','#ffdf7f','#ffff7f','#bfff7f','#7fff7f','#7fffff','#7fbfff','#bf7fff','#ff7fbf','#ffffff','#888888'];
@@ -145,12 +157,12 @@ function openTierEditor(t, lbl) {
   let currentColor = t.color || '#ff7f7f';
   TIER_PRESET_COLORS.forEach(c => {
     const sw = document.createElement('button');
-    sw.style.cssText = `width:26px;height:26px;border-radius:6px;border:2px solid ${c === currentColor ? '#fff' : 'transparent'};background:${c};cursor:pointer;transition:border-color 0.15s;`;
+    sw.style.cssText = `width:26px;height:26px;border-radius:6px;border:2px solid ${c === currentColor ? 'var(--gold)' : 'transparent'};box-shadow:${c === currentColor ? '0 0 0 1px var(--gold)' : 'none'};background:${c};cursor:pointer;transition:border-color 0.15s;`;
     sw.title = c;
     sw.onclick = () => {
       currentColor = c;
       colorInput.value = c;
-      swatches.querySelectorAll('button').forEach(b => { b.style.borderColor = b.title === c ? '#fff' : 'transparent'; });
+      swatches.querySelectorAll('button').forEach(b => { const on = b.title === c; b.style.borderColor = on ? 'var(--gold)' : 'transparent'; b.style.boxShadow = on ? '0 0 0 1px var(--gold)' : 'none'; });
     };
     swatches.appendChild(sw);
   });
@@ -165,7 +177,7 @@ function openTierEditor(t, lbl) {
   colorInput.style.cssText = 'width:36px;height:28px;border:none;background:none;cursor:pointer;padding:0;border-radius:6px;';
   colorInput.oninput = () => {
     currentColor = colorInput.value;
-    swatches.querySelectorAll('button').forEach(b => { b.style.borderColor = 'transparent'; });
+    swatches.querySelectorAll('button').forEach(b => { b.style.borderColor = 'transparent'; b.style.boxShadow = 'none'; });
   };
   colorRow.appendChild(colorInput);
   pop.appendChild(colorRow);
@@ -188,20 +200,30 @@ function openTierEditor(t, lbl) {
   labelInput.focus();
   labelInput.select();
 
+  let saved = false;
   const save = () => {
+    if (saved) return;
+    saved = true;
     t.label = labelInput.value.trim() || t.label;
     t.color = currentColor;
     state._save();
     eventBus.emit('achievements:check');
     pop.remove();
+    document.removeEventListener('mousedown', outside);
     renderAll();
   };
+  const dismiss = () => {
+    if (saved) return;
+    saved = true;
+    pop.remove();
+    document.removeEventListener('mousedown', outside);
+  };
+  const outside = e => { if (!pop.contains(e.target) && e.target !== lbl) save(); };
   saveBtn.onclick = save;
-  cancelBtn.onclick = () => pop.remove();
-  labelInput.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') pop.remove(); };
+  cancelBtn.onclick = dismiss;
+  labelInput.onkeydown = e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') dismiss(); };
 
   setTimeout(() => {
-    const outside = e => { if (!pop.contains(e.target) && e.target !== lbl) { save(); document.removeEventListener('mousedown', outside); } };
     document.addEventListener('mousedown', outside);
   }, 0);
 }
@@ -312,13 +334,6 @@ export function updateUI() {
   const col2 = document.getElementById('col2');
   if (col2) col2.style.display = compare ? 'block' : 'none';
 
-  updateUndo();
-}
-
-export function updateUndo() {
-  const listNum = isCompare() ? state.lastEditedList : 1;
-  const undoBtn = document.getElementById('undoBtn');
-  const redoBtn = document.getElementById('redoBtn');
-  if (undoBtn) undoBtn.disabled = !state.canUndo(listNum);
-  if (redoBtn) redoBtn.disabled = !state.canRedo(listNum);
+  const wrap = document.getElementById('compareWrap');
+  if (wrap) wrap.classList.toggle('compare-active', compare);
 }

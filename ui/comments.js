@@ -14,8 +14,6 @@ import { unlockAchievement } from './achievements.js';
 let comments = [];
 let ctid = null;
 
-export function setCommentsTierlistId(id) { ctid = id; }
-
 export async function loadComments(id) {
   ctid = id;
   if (!id || !getDB()) {

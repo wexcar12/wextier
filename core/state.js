@@ -123,7 +123,6 @@ class StateManager {
     // по требованию пользователя. Firestore-правила и так разрешают запись в опубликованный
     // тир-лист только его автору, так что физически испортить чужие данные нельзя.
     this.ui = { editing: true, compare: false, activeTier: null, activeList: 1 };
-    this.lastEditedList = 1;
   }
   setUI(key, value) { this.ui[key] = value; eventBus.emit('ui:state:changed', { key, value, state: this.ui }); }
   _defaultData() {
@@ -142,7 +141,6 @@ class StateManager {
     command.execute(this);
     if (listNum === 1) this.index1 = history.length - 1; else this.index2 = history.length - 1;
     if (history.length > 50) { history.shift(); if (listNum === 1) this.index1--; else this.index2--; }
-    this.lastEditedList = listNum; // ФИКС: запоминаем, какой список редактировали последним — нужно для Undo
     eventBus.emit('state:changed', { listNum }); this._save();
   }
   undo(listNum = 1) {
@@ -163,7 +161,6 @@ class StateManager {
   }
   canUndo(listNum = 1) { return listNum === 1 ? this.index1 >= 0 : this.index2 >= 0; }
   canRedo(listNum = 1) { return listNum === 1 ? this.index1 < this.history1.length - 1 : this.index2 < this.history2.length - 1; }
-  getDefaultData() { return this._defaultData(); }
   setData(data, listNum = 1) {
     if (listNum === 1) this.data1 = structuredClone(data); else this.data2 = structuredClone(data);
     if (listNum === 1) { this.history1 = []; this.index1 = -1; } else { this.history2 = []; this.index2 = -1; }
@@ -172,6 +169,13 @@ class StateManager {
   _save() {
     if (this._saveTimer) return;
     this._saveTimer = setTimeout(() => { this._saveTimer = null; eventBus.emit('state:needsSave', { data1: this.data1, data2: this.data2 }); }, 100);
+  }
+  flushSave() {
+    if (this._saveTimer) {
+      clearTimeout(this._saveTimer);
+      this._saveTimer = null;
+      eventBus.emit('state:needsSave', { data1: this.data1, data2: this.data2 });
+    }
   }
 }
 

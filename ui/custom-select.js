@@ -113,5 +113,5 @@ export function enhanceSelect(select) {
 
 // Применить сразу ко всем select с классом sidebar-select / data-enhance
 export function enhanceAllSelects(root = document) {
-  root.querySelectorAll('select.sidebar-select, select[data-enhance]').forEach(enhanceSelect);
+  root.querySelectorAll('select.sidebar-select, select.header-select, select[data-enhance]').forEach(enhanceSelect);
 }

@@ -18,10 +18,18 @@ function getShowAdult() { return sg('show_adult_templates', false); }
 function setShowAdult(v) { ss('show_adult_templates', v); }
 
 async function autoFindImage(title) {
-  return await searchDuckDuckGo(title + ' photo')
-      || await searchDuckDuckGo(title)
-      || await searchWikiThumbnail(title)
-      || '';
+  const words = title.split(/\s+/);
+  const suffixes = [' photo', ' фото', ''];
+  for (let len = words.length; len >= Math.min(2, words.length); len--) {
+    const q = words.slice(0, len).join(' ');
+    for (const suffix of suffixes) {
+      const res = await searchDuckDuckGo(q + suffix);
+      if (res) return res;
+    }
+    const wiki = await searchWikiThumbnail(q);
+    if (wiki) return wiki;
+  }
+  return '';
 }
 
 export async function openCommunityTemplates() {
@@ -60,7 +68,7 @@ export async function openCommunityTemplates() {
       return;
     }
     grid.innerHTML = list.map(t => `
-      <div class="ct-card" data-id="${t.id}" style="background:var(--card-bg);border:1px solid var(--input-border);border-radius:12px;padding:10px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;text-align:center;position:relative;">
+      <div class="ct-card" data-id="${escapeHTML(t.id)}" style="background:var(--card-bg);border:1px solid var(--input-border);border-radius:12px;padding:10px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;text-align:center;position:relative;">
         ${t.isAdult ? '<span style="position:absolute;top:4px;right:6px;font-size:0.65rem;background:#ff4444;color:#fff;padding:1px 5px;border-radius:6px;">18+</span>' : ''}
         <div style="display:flex;gap:3px;justify-content:center;flex-wrap:nowrap;margin-bottom:8px;height:40px;overflow:hidden;">
           ${(t.items || []).slice(0, 4).map(i => (i.img && !i.img.startsWith('data:image/svg')) ? `<img src="${escapeHTML(i.img)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:6px;flex-shrink:0;font-size:0.9rem;">🖼</span>`).join('')}
@@ -123,31 +131,38 @@ function openCreateTemplate() {
   }
 
   const content = document.createElement('div');
-  content.style.maxWidth = '540px';
+  content.className = 'ct-create-modal';
   content.innerHTML = `
-    <h3 style="color:var(--gold);margin-bottom:16px;">Создать шаблон</h3>
-    <input type="text" id="ct-name" placeholder="Название шаблона (напр. «Хлеб», «Напитки»)" autocomplete="off"
-      style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:var(--text);margin-bottom:12px;">
-    <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;margin-bottom:14px;">
-      <input type="checkbox" id="ct-adult-flag" style="accent-color:#ff4444;">
-      Контент 18+ (скрыт по умолчанию)
+    <h3 class="ct-create-title">Создать шаблон</h3>
+
+    <input type="text" id="ct-name" class="ct-input" placeholder="Название шаблона (напр. «Хлеб», «Напитки»)" autocomplete="off">
+
+    <label class="ct-adult-label">
+      <input type="checkbox" id="ct-adult-flag">
+      Контент 18+
     </label>
-    <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">Элементы (<span id="ct-count">0</span>):</div>
-    <div id="ct-items-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;min-height:60px;padding:10px;background:rgba(255,255,255,0.02);border:1px dashed var(--input-border);border-radius:10px;margin-bottom:12px;max-height:220px;overflow-y:auto;"></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <input type="text" id="ct-item-title" placeholder="Название элемента" autocomplete="off"
-        style="flex:1;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:0.85rem;">
-      <button class="btn btn-secondary" id="ct-add-item" style="white-space:nowrap;">+ Добавить</button>
+
+    <div class="ct-section-header">
+      <span>Элементы</span>
+      <span class="ct-count-badge" id="ct-count">0</span>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:6px;">
-      <input type="text" id="ct-item-img" placeholder="URL картинки (необязательно)" autocomplete="off"
-        style="flex:1;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:0.8rem;">
-      <button class="btn btn-secondary" id="ct-autosearch" style="white-space:nowrap;">🔍 Найти</button>
+
+    <div id="ct-items-list" class="ct-items-grid"></div>
+
+    <div class="ct-add-row">
+      <input type="text" id="ct-item-title" class="ct-input ct-input-flex" placeholder="Название элемента" autocomplete="off">
+      <input type="text" id="ct-item-img" class="ct-input ct-input-img" placeholder="URL картинки" autocomplete="off">
+      <div class="ct-add-buttons">
+        <button class="btn btn-secondary ct-btn-icon" id="ct-autosearch" title="Найти картинку">🔍</button>
+        <button class="btn btn-primary ct-btn-add" id="ct-add-item">+ Добавить</button>
+      </div>
     </div>
-    <div id="ct-img-preview" style="display:none;margin-bottom:10px;text-align:center;">
-      <img id="ct-img-preview-img" style="max-height:80px;border-radius:8px;border:1px solid var(--input-border);" alt="">
+
+    <div id="ct-img-preview" class="ct-img-preview" style="display:none;">
+      <img id="ct-img-preview-img" alt="">
     </div>
-    <div class="modal-actions">
+
+    <div class="ct-actions">
       <button class="btn btn-secondary" id="ct-cancel">Отмена</button>
       <button class="btn btn-primary" id="ct-publish">Опубликовать</button>
     </div>
@@ -165,26 +180,26 @@ function openCreateTemplate() {
 
   itemImgInput.addEventListener('input', () => {
     const v = itemImgInput.value.trim();
-    if (v) { imgPreviewEl.src = v; imgPreviewWrap.style.display = 'block'; }
+    if (v) { imgPreviewEl.src = v; imgPreviewWrap.style.display = 'flex'; }
     else imgPreviewWrap.style.display = 'none';
   });
 
   function renderItems() {
     countEl.textContent = items.length;
     if (!items.length) {
-      itemsList.innerHTML = '<span style="color:var(--text-secondary);font-size:0.8rem;grid-column:1/-1;text-align:center;padding:16px 0;">Добавьте хотя бы 3 элемента</span>';
+      itemsList.innerHTML = '<div class="ct-items-empty">Добавьте хотя бы 3 элемента</div>';
       return;
     }
     itemsList.innerHTML = items.map((it, i) => `
-      <div style="position:relative;background:var(--input-bg);border-radius:10px;padding:6px;text-align:center;border:1px solid var(--input-border);">
-        <div style="width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;margin-bottom:4px;background:rgba(0,0,0,0.2);">
-          ${it.img && !it.img.startsWith('data:image/svg') ? `<img src="${escapeHTML(it.img)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'" alt="">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:1.5rem;">🖼</div>'}
+      <div class="ct-item-card">
+        <button class="ct-item-remove" data-idx="${i}">&times;</button>
+        <div class="ct-item-thumb">
+          ${it.img && !it.img.startsWith('data:image/svg') ? `<img src="${escapeHTML(it.img)}" onerror="this.style.display='none'" alt="">` : '<span class="ct-item-placeholder">🖼</span>'}
         </div>
-        <div style="font-size:0.72rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
-        <button data-idx="${i}" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);border:none;color:#ff6b6b;cursor:pointer;width:20px;height:20px;border-radius:50%;font-size:0.75rem;display:flex;align-items:center;justify-content:center;">&times;</button>
+        <div class="ct-item-name" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
       </div>
     `).join('');
-    itemsList.querySelectorAll('button[data-idx]').forEach(btn => {
+    itemsList.querySelectorAll('.ct-item-remove').forEach(btn => {
       btn.onclick = () => { items.splice(parseInt(btn.dataset.idx), 1); renderItems(); };
     });
   }
@@ -219,11 +234,11 @@ function openCreateTemplate() {
     const btn = content.querySelector('#ct-autosearch');
     btn.disabled = true; btn.textContent = '⏳';
     const found = await autoFindImage(title);
-    btn.disabled = false; btn.textContent = '🔍 Найти';
+    btn.disabled = false; btn.textContent = '🔍';
     if (found) {
       itemImgInput.value = found;
       imgPreviewEl.src = found;
-      imgPreviewWrap.style.display = 'block';
+      imgPreviewWrap.style.display = 'flex';
       eventBus.emit('toast:show', { text: 'Картинка найдена!', type: 'success' });
     } else {
       eventBus.emit('toast:show', { text: 'Не нашлось — вставьте URL вручную', type: 'error' });

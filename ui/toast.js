@@ -30,19 +30,4 @@ class ToastManager {
   }
 }
 
-// Глобальная функция для обратной совместимости
-window.toast = function(text) {
-  if (window._toastManager) {
-    window._toastManager.show(text, 'info');
-  } else {
-    // Fallback
-    const el = document.createElement('div');
-    el.className = 'toast';
-    el.textContent = text;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
-  }
-};
-
 export const toastManager = new ToastManager();
-window._toastManager = toastManager;

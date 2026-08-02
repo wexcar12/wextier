@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const query = req.query.q;
   if (!query) return res.status(400).json({ error: "Missing query parameter 'q'" });
 
-  const count = Math.min(parseInt(req.query.n) || 8, 20);
+  const count = Math.min(parseInt(req.query.n) || 12, 20);
 
   try {
     const token = await getVqd(query);
@@ -45,7 +45,7 @@ async function getVqd(query) {
 }
 
 async function fetchImages(query, vqd, count) {
-  const url = `https://duckduckgo.com/i.js?l=ru-ru&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&f=size:Medium,,,,,&p=1`;
+  const url = `https://duckduckgo.com/i.js?l=ru-ru&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&f=size:Medium,,,,,&p=-1`;
   const resp = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',

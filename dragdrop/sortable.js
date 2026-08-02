@@ -2,7 +2,7 @@
  * @module dragdrop/sortable
  */
 import { state, MoveItemCommand, MoveCrossListCommand, AddItemCommand, RemoveItemCommand, MoveTierCommand } from '../core/state.js';
-import { renderAll, isEditing } from '../ui/render.js';
+import { renderAll, isEditing, invalidateRenderCache } from '../ui/render.js';
 import { getPoolItems, renderTemplatePool } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
 
@@ -145,9 +145,12 @@ function refreshSortableInstances() {
 }
 
 export function initSortable() {
+  let sortableInitTimer = null;
   eventBus.on('render:after', () => {
     currentPoolItems = getPoolItems();
-    setTimeout(() => {
+    if (sortableInitTimer) clearTimeout(sortableInitTimer);
+    sortableInitTimer = setTimeout(() => {
+      sortableInitTimer = null;
       const disabled = !isEditing();
       document.querySelectorAll('.tier-items').forEach(el => {
         if (el._sortable) {
@@ -180,6 +183,10 @@ export function initSortable() {
               if (evt.oldIndex === evt.newIndex) return;
               const cmd = new MoveTierCommand(evt.oldIndex, evt.newIndex, listNum);
               state.executeCommand(cmd, listNum);
+              // Sortable уже физически переставил строку в DOM. Сбрасываем кэш
+              // диффа, иначе render() переиспользует .tier-items со старыми
+              // индексами и следующий перенос карточки уйдёт не в тот тир.
+              invalidateRenderCache();
               renderAll();
             }
           });

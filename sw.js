@@ -25,7 +25,6 @@ const STATIC_ASSETS = [
   './ui/custom-select.js',
   './ui/toast.js',
   './ui/version-history.js',
-  './ui/sidebar-anim.js',
   './ui/bottom-sheet.js',
   './ui/context-menu.js',
   './ui/community-templates.js',

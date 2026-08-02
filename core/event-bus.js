@@ -14,7 +14,7 @@ class EventBus {
   }
 
   once(event, callback) {
-    const wrapper = (...args) => { callback(...args); this.off(event, wrapper); };
+    const wrapper = (...args) => { try { callback(...args); } finally { this.off(event, wrapper); } };
     return this.on(event, wrapper);
   }
 

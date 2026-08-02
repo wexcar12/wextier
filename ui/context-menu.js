@@ -122,7 +122,17 @@ function openItemEditor({ tI, iI, listNum, itemData }) {
     if (!title) return;
     const btn = content.querySelector('#ie-search');
     btn.disabled = true; btn.textContent = '⏳';
-    const found = await searchDuckDuckGo(title + ' photo') || await searchDuckDuckGo(title) || await searchWikiThumbnail(title);
+    let found = null;
+    const words = title.split(/\s+/);
+    const suffixes = [' photo', ' фото', ''];
+    for (let len = words.length; !found && len >= Math.min(2, words.length); len--) {
+      const q = words.slice(0, len).join(' ');
+      for (const suffix of suffixes) {
+        found = await searchDuckDuckGo(q + suffix);
+        if (found) break;
+      }
+      if (!found) found = await searchWikiThumbnail(q);
+    }
     btn.disabled = false; btn.textContent = '🔍 Найти';
     if (found) { imgInput.value = found; previewImg.src = found; preview.style.display = 'block'; }
     else eventBus.emit('toast:show', { text: 'Не нашлось — вставьте URL вручную', type: 'error' });

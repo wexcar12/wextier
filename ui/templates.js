@@ -606,11 +606,6 @@ function imdbPosterMirror(link) {
   const id = imdbId(link);
   return id ? `https://live.metahub.space/poster/small/${id}/img` : null;
 }
-// Строка для атрибута onerror у <img>: используется только для НЕ-imdb карточек
-// (steam и т.д. — там достаточно одной заглушки, третий уровень им не нужен).
-function simpleOnErrorAttr(svc) {
-  return `this.onerror=null;this.src='${pImg(svc)}';`;
-}
 
 // Универсальный поиск картинки по тексту через серверную функцию (DuckDuckGo Images).
 let ddgApiAvailable = true;
@@ -627,7 +622,7 @@ export async function searchDuckDuckGo(query) {
     }
   }
   try {
-    const res = await fetch(`/api/image-search?q=${encodeURIComponent(query)}&n=8`);
+    const res = await fetch(`/api/image-search?q=${encodeURIComponent(query)}&n=12`);
     if (!res.ok) {
       if (res.status === 404) ddgApiAvailable = false;
       return null;
@@ -656,6 +651,36 @@ export async function searchDuckDuckGo(query) {
   }
 }
 
+export async function searchDuckDuckGoMulti(query, count = 6) {
+  if (!ddgApiAvailable) return [];
+  if (!query || query.length < 2) return [];
+  try {
+    const res = await fetch(`/api/image-search?q=${encodeURIComponent(query)}&n=${Math.min(count + 4, 20)}`);
+    if (!res.ok) {
+      if (res.status === 404) ddgApiAvailable = false;
+      return [];
+    }
+    let data;
+    try { data = await res.json(); } catch { ddgApiAvailable = false; return []; }
+    if (!data.results || !Array.isArray(data.results)) return [];
+    const seen = new Set();
+    const urls = [];
+    for (const r of data.results) {
+      const thumb = r.thumbnail || r.image;
+      const full = r.image || r.thumbnail;
+      if (!thumb || !full || thumb.startsWith('data:') || full.startsWith('data:')) continue;
+      const key = full.split('?')[0];
+      if (seen.has(key)) continue;
+      seen.add(key);
+      urls.push({ thumb, full });
+      if (urls.length >= count) break;
+    }
+    return urls;
+  } catch (e) {
+    return [];
+  }
+}
+
 // ФИКС КАРТИНОК (последние ~10%): поиск обложки через открытое Wikipedia API по НАЗВАНИЮ.
 // Используется как третья, последняя попытка для фильмов/сериалов, если оба CDN-зеркала
 // не ответили — а также для авто-поиска картинки, когда пользователь добавляет свой фильм.
@@ -666,14 +691,21 @@ export async function searchWikiThumbnail(title) {
   if (cached) return cached;
   const hasCyrillic = /[а-яёА-ЯЁ]/.test(title);
   const langs = hasCyrillic ? ['ru', 'en'] : ['en', 'ru'];
+  const queryWords = title.toLowerCase().replace(/[^a-zа-яёa-z0-9\s]/gi, '').split(/\s+/).filter(Boolean);
   for (const lang of langs) {
     try {
-      const searchRes = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=1&namespace=0&format=json&origin=*`);
+      const searchRes = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(title)}&limit=3&namespace=0&format=json&origin=*`);
       if (!searchRes.ok) continue;
       const searchData = await searchRes.json();
-      const pageTitle = searchData && searchData[1] && searchData[1][0];
-      if (!pageTitle) continue;
-      const sumRes = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
+      const titles = searchData && searchData[1];
+      if (!titles || !titles.length) continue;
+      const bestTitle = titles.find(t => {
+        const tw = t.toLowerCase().replace(/[^a-zа-яёa-z0-9\s]/gi, '').split(/\s+/).filter(Boolean);
+        const overlap = queryWords.filter(w => tw.some(tw2 => tw2.includes(w) || w.includes(tw2))).length;
+        return overlap >= Math.ceil(queryWords.length * 0.5);
+      }) || null;
+      if (!bestTitle) continue;
+      const sumRes = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`);
       if (!sumRes.ok) continue;
       const sumData = await sumRes.json();
       const url = (sumData.thumbnail && sumData.thumbnail.source) ? sumData.thumbnail.source : null;
@@ -828,6 +860,7 @@ function openCustomItemModal(type) {
     <input type="text" id="custom-title" placeholder="Название (мин. 3 символа для автопоиска)" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
     <input type="text" id="custom-url" placeholder="Ссылка" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text); margin-bottom:12px;" />
     <button class="btn btn-secondary" id="custom-find-img" style="width:100%;margin-bottom:12px;" type="button">Найти картинку по названию</button>
+    <div id="image-picker-grid" class="image-picker-grid" style="display:none;"></div>
     <input type="text" id="custom-img" placeholder="Ссылка на картинку (можно вставить свою)" autocomplete="off" style="width:100%; padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:10px; color:var(--text);" />
     <div id="custom-drop-zone" style="margin: 16px 0; text-align: center; border: 2px dashed transparent; border-radius: 14px; padding: 12px; transition: border-color 0.2s, background 0.2s; cursor:pointer;" title="Перетащите картинку сюда или нажмите Ctrl+V">
         <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">Превью (Ctrl+V или перетащите файл):</p>
@@ -846,16 +879,46 @@ function openCustomItemModal(type) {
   const preview = content.querySelector('#custom-preview');
   const findBtn = content.querySelector('#custom-find-img');
   const dropZone = content.querySelector('#custom-drop-zone');
+  const pickerGrid = content.querySelector('#image-picker-grid');
 
   let autoFoundImage = false;
   let searchVersion = 0;
+
+  function selectImage(url) {
+    imgInput.value = url;
+    preview.src = url;
+    autoFoundImage = true;
+    pickerGrid.querySelectorAll('.image-picker-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.url === url);
+    });
+  }
+
+  function showPickerGrid(urls) {
+    if (!urls || urls.length === 0) {
+      pickerGrid.style.display = 'none';
+      pickerGrid.innerHTML = '';
+      return;
+    }
+    pickerGrid.style.display = 'flex';
+    pickerGrid.innerHTML = '';
+    urls.forEach(item => {
+      const img = document.createElement('img');
+      img.className = 'image-picker-item';
+      img.src = item.thumb;
+      img.dataset.url = item.full;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onclick = () => selectImage(item.full);
+      img.onerror = () => img.remove();
+      pickerGrid.appendChild(img);
+    });
+  }
 
   imgInput.addEventListener('input', () => {
     autoFoundImage = false;
     preview.src = imgInput.value.trim() || pImg(type === 'games' ? 'steam' : 'imdb');
   });
 
-  // --- Plan Б: Ctrl+V вставка изображения из буфера ---
   function handleImageFile(file) {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
@@ -879,7 +942,6 @@ function openCustomItemModal(type) {
     }
   });
 
-  // --- Plan Б: Drag-and-Drop файла на превью ---
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropZone.style.borderColor = 'var(--gold)';
@@ -897,50 +959,79 @@ function openCustomItemModal(type) {
     if (file) handleImageFile(file);
   });
 
-  // ФИКС АВТО-ПОИСКА: раньше картинку для своего фильма/игры нужно было искать и вставлять
-  // вручную. Теперь стоит начать печатать название — и через секунду сайт сам попробует найти
-  // подходящую обложку (для игр — через поиск Steam, для фильмов — через Wikipedia). Кнопка
-  // "Найти картинку" и поле "Ссылка на картинку" остаются — можно исправить вручную в любой момент.
+  function getSuffixes() {
+    if (type === 'games') return [' game cover', ' game', ' обложка игры', ''];
+    if (type === 'movies' || type === 'anime') return [' poster', ' постер', ' фильм', ''];
+    return [' photo', ' фото', ''];
+  }
+
+  async function searchWithShortening(query, searchFn) {
+    const words = query.split(/\s+/);
+    for (let len = words.length; len >= Math.min(2, words.length); len--) {
+      const shortened = words.slice(0, len).join(' ');
+      const result = await searchFn(shortened);
+      if (result) return result;
+    }
+    return null;
+  }
+
   async function autoFindImage(showToastIfEmpty) {
     const title = titleInput.value.trim();
     if (!title) { if (showToastIfEmpty) eventBus.emit('toast:show', { text: 'Сначала введите название', type: 'info' }); return; }
     if (!showToastIfEmpty && title.length < 3) return;
-    // Пропускаем авто-поиск если пользователь ВРУЧНУЮ вставил/написал свою ссылку.
-    // Если картинка была найдена автоматически ранее — перезаписываем (чтобы при смене названия обновлялась).
     if (imgInput.value.trim() && !showToastIfEmpty && !autoFoundImage) return;
 
     const thisVersion = ++searchVersion;
     findBtn.disabled = true;
     findBtn.textContent = 'Ищу...';
-    let found = null;
+    showPickerGrid([]);
 
-    // Wikipedia — самый надёжный источник (работает без CORS/backend)
-    found = await searchWikiThumbnail(title);
+    let wikiFound = await searchWithShortening(title, searchWikiThumbnail);
     if (thisVersion !== searchVersion) return;
 
-    // Steam поиск для игр (может не работать из-за CORS без прокси, но пробуем)
-    if (!found && type === 'games') {
-      const game = await searchSteamGame(title);
+    if (!wikiFound && type === 'games') {
+      const game = await searchWithShortening(title, async (q) => {
+        const g = await searchSteamGame(q);
+        return g ? g : null;
+      });
       if (thisVersion !== searchVersion) return;
       if (game) {
-        found = game.img;
+        wikiFound = game.img;
         if (!urlInput.value.trim()) urlInput.value = game.url;
       }
     }
 
-    // DuckDuckGo Images — только если есть серверный API (Vercel)
-    if (!found) {
-      found = await searchDuckDuckGo(title + (type === 'games' ? ' game cover' : type === 'movies' ? ' poster' : ' photo'));
-      if (thisVersion !== searchVersion) return;
+    if (wikiFound) {
+      imgInput.value = wikiFound;
+      preview.src = wikiFound;
+      autoFoundImage = true;
     }
 
-    if (found) {
-      imgInput.value = found;
-      preview.src = found;
-      autoFoundImage = true;
-    } else if (showToastIfEmpty) {
-      eventBus.emit('toast:show', { text: 'Не нашлось. Вставьте картинку вручную (Ctrl+V или перетащите файл).', type: 'error' });
+    const suffixes = getSuffixes();
+    let multiResults = [];
+    const words = title.split(/\s+/);
+    for (let len = words.length; len >= Math.min(2, words.length); len--) {
+      const shortened = words.slice(0, len).join(' ');
+      for (const suffix of suffixes) {
+        if (thisVersion !== searchVersion) return;
+        multiResults = await searchDuckDuckGoMulti(shortened + suffix, 6);
+        if (multiResults.length > 0) break;
+      }
+      if (multiResults.length > 0) break;
     }
+    if (thisVersion !== searchVersion) return;
+
+    if (multiResults.length > 0) {
+      showPickerGrid(multiResults);
+      if (!wikiFound) {
+        selectImage(multiResults[0].full);
+      }
+    } else if (!wikiFound) {
+      if (showToastIfEmpty) {
+        eventBus.emit('toast:show', { text: 'Не нашлось. Вставьте картинку вручную (Ctrl+V или перетащите файл).', type: 'error' });
+      }
+    }
+
     findBtn.disabled = false;
     findBtn.textContent = 'Найти картинку по названию';
   }
@@ -970,7 +1061,7 @@ function openCustomItemModal(type) {
     const savedCustoms = sg(customStorageKey, []);
     savedCustoms.push(newItem);
     ss(customStorageKey, savedCustoms);
-    
+
     eventBus.emit('templates:renderPool');
     close();
   };

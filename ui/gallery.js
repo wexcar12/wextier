@@ -22,9 +22,6 @@ function applyForeignBanner(doc) {
   if (isForeign) showForeignBanner(); else hideForeignBanner();
 }
 
-export function getCurrentTierlistId() { return ctid; }
-export function setCurrentTierlistId(id) { ctid = id; }
-
 export async function openGallery() {
   if (!getDB()) {
     eventBus.emit('toast:show', { text: 'Галерея недоступна', type: 'error' });
@@ -149,7 +146,7 @@ export async function openGallery() {
         authorId: user ? user.uid : 'anonymous',
         // ФИКС: у объекта пользователя Firebase Auth нет поля "name" — только displayName.
         // Раньше имя автора всегда сохранялось пустым для залогиненных пользователей.
-        authorName: user ? (user.name || 'Без имени') : 'Аноним'
+        authorName: user ? (user.name || user.email || 'Без имени') : 'Аноним'
       });
       ctid = id;
       eventBus.emit('comments:load', id);
