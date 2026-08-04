@@ -1,4 +1,4 @@
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_NAME = 'wextier-v' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
@@ -24,13 +24,19 @@ const STATIC_ASSETS = [
   './ui/modal-manager.js',
   './ui/custom-select.js',
   './ui/toast.js',
-  './ui/version-history.js',
   './ui/bottom-sheet.js',
   './ui/context-menu.js',
   './ui/community-templates.js',
+  './ui/cover-search.js',
+  './ui/analytics.js',
+  './ui/onboarding.js',
   './dragdrop/sortable.js',
   './utils/storage.js',
   './utils/sanitizers.js',
+  './utils/placeholder.js',
+  './utils/translit.js',
+  './utils/image-resolve.js',
+  './utils/lazy-load.js',
   './api/auth.js',
   './api/firebase-init.js',
   './api/firestore.js'
@@ -39,7 +45,14 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
+      // Ф7-1: устойчивая установка. cache.addAll атомарен — один битый путь (404)
+      // ронял бы всю установку SW и кэш не создавался бы вовсе. Кэшируем каждый ассет
+      // независимо: отсутствующий файл лишь пропускается, остальное кэшируется.
+      .then(cache => Promise.all(
+        STATIC_ASSETS.map(url =>
+          cache.add(url).catch(err => console.warn('[SW] skip cache:', url, err && err.message))
+        )
+      ))
       .then(() => self.skipWaiting())
   );
 });

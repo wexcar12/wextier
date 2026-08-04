@@ -46,6 +46,7 @@ export async function addComment(text, parentId = null) {
     await api.addComment(ctid, text, parentId, getCurrentUser());
     await loadComments(ctid);
     updateCommentsDisplay();
+    eventBus.emit('analytics:event', 'comment');
   } catch (e) {
     eventBus.emit('toast:show', { text: 'Ошибка при отправке комментария', type: 'error' });
   }
@@ -70,31 +71,41 @@ export function updateCommentsDisplay() {
   if (!list) return;
 
   if (comments.length === 0) {
-    list.innerHTML = '<div style="color:#888;text-align:center;padding:10px;">Пока нет комментариев</div>';
+    list.innerHTML = '<div class="m-empty">Пока нет комментариев</div>';
     return;
   }
 
   // ФИКС 16: разбираем на верхнеуровневые комментарии + их ответы (один уровень вложенности)
-  const topLevel = comments.filter(c => !c.parentId);
-  const replies = comments.filter(c => c.parentId);
+  // Ф6-7: ответы группируем в Map по parentId за один проход — раньше для каждого
+  // верхнеуровневого делался replies.filter по всему массиву (O(n²) на длинных ветках).
+  const topLevel = [];
+  const repliesByParent = new Map();
+  for (const c of comments) {
+    if (c.parentId) {
+      const bucket = repliesByParent.get(c.parentId);
+      if (bucket) bucket.push(c); else repliesByParent.set(c.parentId, [c]);
+    } else {
+      topLevel.push(c);
+    }
+  }
 
   list.innerHTML = topLevel.map(c => {
-    const childReplies = replies.filter(r => r.parentId === c.id);
+    const childReplies = repliesByParent.get(c.id) || [];
     const authorLabel = c.authorName ? '<strong style="font-size:0.78rem;color:var(--gold);">' + escapeHTML(c.authorName) + '</strong> · ' : '';
     const repliesHTML = childReplies.map(r => {
       const replyAuthor = r.authorName ? '<strong style="font-size:0.72rem;color:var(--gold);">' + escapeHTML(r.authorName) + '</strong> · ' : '';
       return `
-      <div style="margin:6px 0 0 20px;padding:6px 8px;background:rgba(255,255,255,0.04);border-left:2px solid var(--gold);border-radius:4px;">
+      <div class="comment-reply">
         <div style="font-size:0.8rem;">${escapeHTML(r.text)}</div>
-        <div style="font-size:0.68rem;color:#888;margin-top:2px;">${replyAuthor}${formatDate(r)}</div>
+        <div style="font-size:0.68rem;color:var(--text-secondary);margin-top:2px;">${replyAuthor}${formatDate(r)}</div>
       </div>
     `;
     }).join('');
 
-    return '<div style="margin-bottom:8px;padding:8px;background:rgba(255,255,255,0.05);border-radius:6px;">' +
+    return '<div class="comment-card">' +
       '<div style="font-size:0.85rem;">' + escapeHTML(c.text) + '</div>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">' +
-      '<span style="font-size:0.7rem;color:#888;">' + authorLabel + formatDate(c) + '</span>' +
+      '<span style="font-size:0.7rem;color:var(--text-secondary);">' + authorLabel + formatDate(c) + '</span>' +
       '<span class="reply-toggle" data-target="' + c.id + '" style="font-size:0.72rem;color:var(--gold);cursor:pointer;">Ответить</span>' +
       '</div>' +
       repliesHTML +
@@ -130,9 +141,9 @@ export async function openCommentsModal() {
   const content = document.createElement('div');
   const notPublished = !ctid || !getDB();
   content.innerHTML = `
-    <h3 style="color:var(--gold);">Комментарии</h3>
-    ${notPublished ? '<div style="color:#f0a020;font-size:0.82rem;margin-bottom:10px;padding:8px;background:rgba(240,160,32,0.08);border-radius:8px;">Тир-лист не опубликован — комментарии видны только вам и пропадут после перезагрузки. Опубликуйте тир-лист, чтобы комментарии сохранялись и были видны другим.</div>' : ''}
-    <div id="commentsList" style="max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>
+    <h3 class="m-modal-title">Комментарии</h3>
+    ${notPublished ? '<div class="m-notice">Тир-лист не опубликован — комментарии видны только вам и пропадут после перезагрузки. Опубликуйте тир-лист, чтобы комментарии сохранялись и были видны другим.</div>' : ''}
+    <div id="commentsList" class="m-scroll" style="max-height:260px;margin-bottom:10px;"></div>
     <textarea id="newComment" placeholder="Оставьте комментарий..." style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:var(--text);outline:none;margin-bottom:12px;font-family:inherit;"></textarea>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="closeComments">Закрыть</button>

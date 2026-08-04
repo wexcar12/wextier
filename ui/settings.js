@@ -3,6 +3,7 @@
  * @description Тема, стиль, размер, фон.
  */
 import { sg, ss } from '../utils/storage.js';
+import { eventBus } from '../core/event-bus.js';
 
 const B = ['aurora', 'sunset', 'ocean', 'emerald', 'violet', 'graphite'];
 
@@ -54,6 +55,7 @@ export function toggleTheme() {
   document.body.classList.toggle('light-theme');
   const isLight = document.body.classList.contains('light-theme');
   ss('theme', isLight ? 'light' : 'dark');
+  eventBus.emit('theme:changed', { isLight });
 }
 
 function listenSystemTheme() {

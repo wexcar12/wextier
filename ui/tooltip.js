@@ -32,6 +32,10 @@ export function initTooltips() {
   const tip = ensureTip();
 
   document.addEventListener('mouseover', (e) => {
+    // ФИКС ЛАГОВ: во время перетаскивания карточки не показываем подсказку — иначе
+    // курсор "висит" над схваченной карточкой, currentTarget остаётся установленным,
+    // и на каждый кадр mousemove дёргается getBoundingClientRect (принудительный layout).
+    if (document.body.classList.contains('wex-dragging')) return;
     const target = e.target.closest('[data-tooltip]');
     if (!target || !target.dataset.tooltip) return;
     if (currentTarget === target) return;
@@ -43,6 +47,12 @@ export function initTooltips() {
   let moveRaf = null;
   document.addEventListener('mousemove', (e) => {
     if (!currentTarget) return;
+    // Во время drag прячем подсказку и не считаем позицию каждый кадр.
+    if (document.body.classList.contains('wex-dragging')) {
+      currentTarget = null;
+      tip.classList.remove('show');
+      return;
+    }
     if (moveRaf) return;
     moveRaf = requestAnimationFrame(() => { positionTip(e); moveRaf = null; });
   });

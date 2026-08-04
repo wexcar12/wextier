@@ -3,6 +3,7 @@
  * @description Неон-эффекты.
  */
 import { modalManager } from './modal-manager.js';
+import { enhanceAllSelects } from './custom-select.js';
 import { sg, ss } from '../utils/storage.js';
 
 let neonS = { enabled: false, color: 'rainbow', target: 'all' };
@@ -44,26 +45,39 @@ export function applyNeon() {
 export function openNeonModal() {
   const content = document.createElement('div');
   content.innerHTML = `
-    <h3 style="color:var(--gold);">Настройки неона</h3>
-    <label><input type="checkbox" id="neonToggle" ${neonS.enabled ? 'checked' : ''}> Включить неон</label><br><br>
-    <select id="neonColor">
+    <h3 class="m-modal-title">Настройки неона</h3>
+
+    <label class="switch-row">
+      <span class="switch">
+        <input type="checkbox" id="neonToggle" ${neonS.enabled ? 'checked' : ''}>
+        <span class="switch-track"></span>
+      </span>
+      <span class="switch-label">Включить неон</span>
+    </label>
+
+    <label class="field-label">Цвет</label>
+    <select id="neonColor" data-enhance>
       <option value="rainbow" ${neonS.color === 'rainbow' ? 'selected' : ''}>Радужный</option>
       <option value="gold" ${neonS.color === 'gold' ? 'selected' : ''}>Золотой</option>
       <option value="cyan" ${neonS.color === 'cyan' ? 'selected' : ''}>Голубой</option>
       <option value="magenta" ${neonS.color === 'magenta' ? 'selected' : ''}>Пурпурный</option>
-    </select><br><br>
-    <select id="neonTarget">
+    </select>
+
+    <label class="field-label">Применить к</label>
+    <select id="neonTarget" data-enhance>
       <option value="all" ${neonS.target === 'all' ? 'selected' : ''}>Всё</option>
       <option value="items" ${neonS.target === 'items' ? 'selected' : ''}>Обложки</option>
       <option value="tiers" ${neonS.target === 'tiers' ? 'selected' : ''}>Тиры</option>
       <option value="title" ${neonS.target === 'title' ? 'selected' : ''}>Заголовок</option>
     </select>
-    <div class="modal-actions" style="margin-top:12px;">
+
+    <div class="modal-actions" style="margin-top:16px;">
       <button class="btn btn-primary" id="closeNeon">Сохранить</button>
     </div>
   `;
 
   const close = modalManager.open(content);
+  enhanceAllSelects(content);
 
   content.querySelector('#closeNeon').onclick = () => {
     neonS.enabled = content.querySelector('#neonToggle').checked;

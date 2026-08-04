@@ -29,9 +29,15 @@ class ModalManager {
     container.style.zIndex = 1000 + this.stack.length * 10;
     container.appendChild(content);
 
+    // Прячем текущую верхнюю модалку, но НЕ удаляем из DOM — иначе отсоединение узла
+    // сбрасывает live-состояния (перезагрузка iframe, остановка media, потеря фокуса,
+    // позиция скролла, рестарт анимаций). Показываем только верхний контейнер стека.
+    if (this.stack.length > 0) {
+      this.stack[this.stack.length - 1].container.style.display = 'none';
+    }
+
     this.stack.push({ container, options, cleanup: content._cleanup || null, handleEscapeRef: null, handleTrapRef: null, trigger });
 
-    this.overlay.innerHTML = '';
     this.overlay.appendChild(container);
     this.overlay.style.display = 'flex';
     this.overlay.style.zIndex = 1000 + (this.stack.length - 1) * 10;
@@ -73,25 +79,27 @@ class ModalManager {
       const trigger = item.trigger;
       this.stack.splice(index, 1);
 
+      // Убираем из DOM только закрываемый контейнер (не трогаем остальные в стеке).
+      if (container.parentNode === this.overlay) this.overlay.removeChild(container);
+
       if (this.stack.length === 0) {
         this.overlay.style.display = 'none';
         document.body.style.overflow = '';
         if (trigger && trigger.focus) try { trigger.focus(); } catch {}
       } else {
-        const prev = this.stack[this.stack.length - 1];
-        this.overlay.innerHTML = '';
-        this.overlay.appendChild(prev.container);
+        // Показываем снова ставший верхним контейнер — он всё это время был в DOM
+        // (спрятан display:none), поэтому его live-состояние сохранилось.
+        this.stack[this.stack.length - 1].container.style.display = '';
       }
       return;
     }
 
+    if (container.parentNode === this.overlay) this.overlay.removeChild(container);
     if (this.stack.length === 0) {
       this.overlay.style.display = 'none';
       document.body.style.overflow = '';
     } else {
-      const prev = this.stack[this.stack.length - 1];
-      this.overlay.innerHTML = '';
-      this.overlay.appendChild(prev.container);
+      this.stack[this.stack.length - 1].container.style.display = '';
     }
   }
 

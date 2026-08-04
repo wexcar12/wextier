@@ -25,13 +25,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <!-- html2canvas грузится лениво в ui/export.js (Ф6-3) — только при первом экспорте PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" defer></script>
+    <!-- Ф6-1: defer — firebase-compat (~500 КБ) больше не блокирует парсинг HTML.
+         Все потребители (api/*, app.js) — ES-модули, тоже отложенные, и исполняются
+         строго после этих скриптов в порядке документа, так что глобаль firebase готова. -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
     <script src="https://unpkg.com/lucide@0.330.0/dist/umd/lucide.min.js" defer></script>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
@@ -44,7 +47,7 @@
 
     <header class="app-header" id="appHeader">
         <div class="header-left">
-            <div class="header-logo">WEX-TIER</div>
+            <button class="header-logo" id="headerLogo" type="button" title="Наверх">WEX-TIER</button>
         </div>
 
         <div class="header-center">
@@ -78,15 +81,31 @@
 
             <div class="header-divider"></div>
 
-            <button class="header-btn" id="shareBtn" title="Поделиться"><i data-lucide="link"></i></button>
+            <!-- Группа «Редактирование» -->
+            <button class="header-btn" id="undoBtn" title="Отменить (Ctrl+Z)"><i data-lucide="undo-2"></i></button>
+            <button class="header-btn" id="redoBtn" title="Вернуть (Ctrl+Y)"><i data-lucide="redo-2"></i></button>
+
+            <div class="header-divider"></div>
+
+            <!-- Группа «Вывод» -->
+            <button class="header-btn" id="shareBtn" title="Поделиться"><i data-lucide="share-2"></i></button>
             <button class="header-btn" id="pngBtn" title="Скачать PNG"><i data-lucide="download"></i></button>
             <button class="header-btn" id="galleryBtn" title="Галерея"><i data-lucide="image"></i></button>
+            <button class="header-btn header-btn-publish" id="publishBtn" title="Опубликовать"><i data-lucide="upload-cloud"></i> <span>Опубликовать</span></button>
         </div>
 
         <div class="header-right">
             <div class="header-dropdown-wrap">
                 <button class="header-btn header-dropdown-trigger" id="moreDropdownBtn" title="Ещё"><i data-lucide="more-horizontal"></i></button>
                 <div class="header-dropdown header-dropdown-right" id="moreDropdown">
+                    <!-- Ф5-1: на мобилке кнопки «вывода» из ленты шапки сворачиваются сюда -->
+                    <div class="more-mobile">
+                        <button class="header-dropdown-item" id="shareBtnM"><i data-lucide="share-2"></i> Поделиться</button>
+                        <button class="header-dropdown-item" id="pngBtnM"><i data-lucide="download"></i> Скачать PNG</button>
+                        <button class="header-dropdown-item" id="galleryBtnM"><i data-lucide="image"></i> Галерея</button>
+                        <button class="header-dropdown-item" id="publishBtnM"><i data-lucide="upload-cloud"></i> Опубликовать</button>
+                        <div class="header-dropdown-divider"></div>
+                    </div>
                     <button class="header-dropdown-item" id="exportBtn"><i data-lucide="save"></i> Экспорт JSON</button>
                     <button class="header-dropdown-item" id="importBtn"><i data-lucide="folder-open"></i> Импорт JSON</button>
                     <label class="sr-only" for="importFile">Импорт файла</label><input type="file" id="importFile" accept=".json" style="display:none;">
@@ -94,14 +113,12 @@
                     <button class="header-dropdown-item" id="compareBtn"><i data-lucide="columns"></i> Сравнение</button>
                     <div class="header-dropdown-divider"></div>
                     <button class="header-dropdown-item" id="achievementsBtn"><i data-lucide="trophy"></i> Достижения</button>
-                    <button class="header-dropdown-item" id="topBtn"><i data-lucide="medal"></i> Топ</button>
-                    <button class="header-dropdown-item" id="commentsBtn"><i data-lucide="message-square"></i> Комментарии</button>
-                    <button class="header-dropdown-item" id="profileDashboardBtn" style="display:none;"><i data-lucide="folder-open"></i> Мои тир-листы</button>
                 </div>
             </div>
 
             <div class="header-divider"></div>
 
+            <button class="header-btn" id="themeBtnHeader" title="Сменить тему"><i data-lucide="moon"></i></button>
             <button class="header-btn" id="settingsBtn" title="Настройки"><i data-lucide="settings"></i></button>
 
             <div id="authSection" class="header-auth">
@@ -111,6 +128,7 @@
                     <div class="header-dropdown header-dropdown-right header-user-dropdown" id="userDropdown">
                         <div id="userName" class="header-dropdown-name">Геймер</div>
                         <div class="header-dropdown-divider"></div>
+                        <button class="header-dropdown-item" id="profileDashboardBtn" style="display:none;"><i data-lucide="folder-open"></i> Мои тир-листы</button>
                         <button class="header-dropdown-item" id="logoutLink"><i data-lucide="log-out"></i> Выйти</button>
                     </div>
                 </div>
@@ -123,12 +141,43 @@
             <i data-lucide="eye"></i>
             <span>Ты смотришь чужой тир-лист — изменения можно перетаскивать для интереса, но они никуда не сохранятся.</span>
         </div>
+        <div class="tierlist-meta" id="tierlistMeta">
+            <div class="tierlist-title-row">
+                <input type="text" id="tierlistTitle" class="tierlist-title-input" maxlength="80" placeholder="Название тир-листа…" autocomplete="off">
+                <span class="save-indicator" id="saveIndicator" aria-live="polite"></span>
+            </div>
+            <textarea id="tierlistDesc" class="tierlist-desc-input" maxlength="300" rows="1" placeholder="Описание (необязательно)…"></textarea>
+        </div>
         <div class="top-bar" id="topBar">
             <label class="sr-only" for="searchInput">Поиск</label><input type="text" class="search-bar" id="searchInput" placeholder="🔎 Поиск по названию...">
         </div>
         <div class="compare-wrap" id="compareWrap">
-            <div class="column" id="col1"><div id="list1"></div></div>
-            <div class="column" id="col2" style="display:none;"><div id="list2"></div></div>
+            <div class="column" id="col1">
+                <div id="list1"></div>
+                <div class="tier-list-actions">
+                    <button class="add-tier-btn" data-list-num="1" type="button" aria-label="Добавить тир">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        <span>Добавить тир</span>
+                    </button>
+                    <button class="reset-tiers-btn" data-list-num="1" type="button" aria-label="Сбросить тиры">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        <span>Сбросить</span>
+                    </button>
+                </div>
+            </div>
+            <div class="column" id="col2" style="display:none;">
+                <div id="list2"></div>
+                <div class="tier-list-actions">
+                    <button class="add-tier-btn" data-list-num="2" type="button" aria-label="Добавить тир">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        <span>Добавить тир</span>
+                    </button>
+                    <button class="reset-tiers-btn" data-list-num="2" type="button" aria-label="Сбросить тиры">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        <span>Сбросить</span>
+                    </button>
+                </div>
+            </div>
         </div>
         <div id="templatePoolContainer" class="top-bar" style="margin-top: 30px; max-width: 1200px; display: none; flex-direction: column; gap: 12px; width: 100%;">
             <div class="bs-handle" id="bsHandle"></div>
@@ -155,7 +204,7 @@
                 </div>
                 <div style="display:flex;gap:6px;">
                     <select id="styleSelect" class="sidebar-select" title="Стиль карточек" style="flex:1;"><option value="gradient">Градиент</option><option value="shadow">Тень</option><option value="border">Рамка</option><option value="circle">Круглые</option></select>
-                    <select id="sizeSelect" class="sidebar-select" title="Размер карточек" style="flex:1;"><option value="60">Средние</option><option value="44">Мелкие</option><option value="76">Крупные</option></select>
+                    <select id="sizeSelect" class="sidebar-select" title="Размер карточек" style="flex:1;"><option value="44">Мелкие</option><option value="60">Средние</option><option value="76">Крупные</option></select>
                 </div>
             </div>
             <div class="bento-card">

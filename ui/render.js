@@ -2,16 +2,27 @@
  * @module ui/render
  * @description Рендер тир-листов.
  */
-import { state, MoveItemCommand, RemoveItemCommand } from '../core/state.js';
+import { state, MoveItemCommand, RemoveItemCommand, EditTierCommand, AddTierCommand, RemoveTierCommand, ResetTiersCommand, defaultTiers } from '../core/state.js';
 import { eventBus } from '../core/event-bus.js';
-import { escapeHTML } from '../utils/sanitizers.js';
-import { attachPosterFallback } from './templates.js';
+import { escapeHTML, safeUrl, safeHref } from '../utils/sanitizers.js';
+import { pImg } from '../utils/placeholder.js';
+import { returnItemsToPool } from './templates.js';
+import { attachPosterFallback } from '../utils/image-resolve.js';
+import { modalManager } from './modal-manager.js';
 
 const SVG_X = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 const SVG_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
 const SVG_TRASH = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>';
 
 const tierCache = new Map();
+
+// ФИКС ЛАГОВ: перенос одной карточки пересобирает целиком строки исходного и целевого
+// тира (дифф идёт по тиру, а не по карточке). Каждая пересозданная карточка получала класс
+// skeleton (шиммер), который снимается лишь по img.onload — а для картинки, уже загруженной
+// ранее, onload срабатывает на следующий кадр, из-за чего по обеим строкам пробегала волна
+// мерцания на КАЖДЫЙ дроп. Запоминаем уже загруженные URL и не вешаем skeleton повторно —
+// карточка со знакомой картинкой появляется сразу, без мигания.
+const loadedImages = new Set();
 
 // Сброс кэша диффа — нужен после операций, меняющих ПОРЯДОК строк-тиров в DOM
 // (перетаскивание тиров), чтобы render() пересобрал все .tier-items с верными
@@ -56,7 +67,7 @@ export function moveSelectedItemToTier(tierIndex) {
   const data = sel.listNum === 1 ? state.data1 : state.data2;
   if (!data[tierIndex] || sel.tierIndex === tierIndex) return false;
   const targetLength = data[tierIndex].items.length;
-  const command = new MoveItemCommand('item', sel.tierIndex, tierIndex, sel.itemIndex, targetLength, sel.listNum);
+  const command = new MoveItemCommand(sel.tierIndex, tierIndex, sel.itemIndex, targetLength, sel.listNum);
   state.executeCommand(command, sel.listNum);
   selectedItemKey = tierIndex + '-' + targetLength + '-' + sel.listNum;
   renderAll();
@@ -78,7 +89,34 @@ export function deleteSelectedItem() {
 export function renderAll() {
   render(1);
   if (isCompare()) render(2);
+  syncMetaFields();
+  updateHistoryButtons();
   eventBus.emit('render:after', { listNum: isCompare() ? 2 : 1 });
+}
+
+// Активность кнопок «Отменить/Вернуть». Раньше стояла только в updateUI(), который
+// вызывается не после каждого действия (drag, добавление и т.п. зовут лишь renderAll),
+// поэтому кнопки залипали в disabled и клик молчал, хотя Ctrl+Z работал.
+export function updateHistoryButtons() {
+  const activeList = isCompare() ? getActiveList() : 1;
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  if (undoBtn) undoBtn.disabled = !state.canUndo(activeList);
+  if (redoBtn) redoBtn.disabled = !state.canRedo(activeList);
+}
+
+// Заголовок и описание — единственное место, откуда они читаются в DOM.
+// Синхронизируем поля при каждом рендере, но не перезаписываем, пока поле в фокусе
+// (чтобы не стирать ввод при перерисовке в момент набора).
+export function syncMetaFields() {
+  const t = document.getElementById('tierlistTitle');
+  const d = document.getElementById('tierlistDesc');
+  if (t && document.activeElement !== t) t.value = state.title || '';
+  if (d && document.activeElement !== d) {
+    d.value = state.desc || '';
+    d.style.height = 'auto';
+    d.style.height = d.scrollHeight + 'px';
+  }
 }
 
 export function render(listNum) {
@@ -99,7 +137,7 @@ export function render(listNum) {
     t.items = t.items.filter(i => i && typeof i === 'object');
     if (t.items.length !== before) healed = true;
   }
-  if (healed) { tierCache.delete(cacheKey); state._save(); }
+  if (healed) { tierCache.delete(cacheKey); state.save(); }
 
   function tierFingerprint(t, ti) {
     return t.label + '|' + (t.color || '') + '|' + t.items.map(i => i.img + '|' + i.url + '|' + i.svc + '|' + (i.title || '')).join(';') + '|' + ti;
@@ -114,6 +152,7 @@ export function render(listNum) {
   }
 
   if (tierCountChanged) {
+    destroyRowSortables(el);
     el.innerHTML = '';
     const frag = document.createDocumentFragment();
     data.forEach((t, ti) => {
@@ -127,10 +166,31 @@ export function render(listNum) {
   data.forEach((t, ti) => {
     if (oldFingerprints[ti] !== newFingerprints[ti]) {
       const newRow = buildTierRow(t, ti, listNum);
+      // ФИКС ЛАГОВ/УТЕЧКИ: старая строка тира содержит .tier-items с живым экземпляром
+      // SortableJS. При replaceChild узел просто открепляется, но экземпляр Sortable со
+      // своими слушателями не уничтожается — на каждый дроп оставалось по 2 «осиротевших»
+      // Sortable. За сессию их накапливались сотни, и перетаскивание всё сильнее тормозило.
+      // Теперь перед заменой корректно уничтожаем Sortable снятой строки.
+      destroyRowSortables(el.children[ti]);
       el.replaceChild(newRow, el.children[ti]);
     }
   });
   tierCache.set(cacheKey, newFingerprints);
+}
+
+// Уничтожает все экземпляры SortableJS внутри переданного поддерева (или самого узла),
+// чтобы при пересборке строк тиров не копились неиспользуемые экземпляры со слушателями.
+function destroyRowSortables(rootEl) {
+  if (!rootEl) return;
+  const nodes = rootEl.classList && rootEl.classList.contains('tier-items')
+    ? [rootEl]
+    : rootEl.querySelectorAll ? rootEl.querySelectorAll('.tier-items') : [];
+  nodes.forEach(node => {
+    if (node._sortable) {
+      try { node._sortable.destroy(); } catch (e) { /* ignore */ }
+      node._sortable = null;
+    }
+  });
 }
 
 const TIER_PRESET_COLORS = ['#ff7f7f','#ffbf7f','#ffdf7f','#ffff7f','#bfff7f','#7fff7f','#7fffff','#7fbfff','#bf7fff','#ff7fbf','#ffffff','#888888'];
@@ -204,12 +264,25 @@ function openTierEditor(t, lbl) {
   const save = () => {
     if (saved) return;
     saved = true;
-    t.label = labelInput.value.trim() || t.label;
-    t.color = currentColor;
-    state._save();
-    eventBus.emit('achievements:check');
+    const newLabel = labelInput.value.trim() || t.label;
+    const newColor = currentColor;
     pop.remove();
     document.removeEventListener('mousedown', outside);
+    // Правку проводим через историю, только если что-то реально изменилось.
+    // Ищем тир по ссылке в обоих списках, чтобы знать индекс и номер списка.
+    if (newLabel !== t.label || newColor !== (t.color || '')) {
+      let listNum = 1;
+      let tierIndex = state.data1.indexOf(t);
+      if (tierIndex === -1) { tierIndex = state.data2.indexOf(t); listNum = 2; }
+      if (tierIndex !== -1) {
+        const cmd = new EditTierCommand(tierIndex, t.label, t.color, newLabel, newColor, listNum);
+        state.executeCommand(cmd, listNum);
+      } else {
+        // Тир не найден в состоянии (маловероятно) — правим напрямую, чтобы не потерять ввод.
+        t.label = newLabel; t.color = newColor; state.save();
+      }
+    }
+    eventBus.emit('achievements:check');
     renderAll();
   };
   const dismiss = () => {
@@ -255,7 +328,8 @@ function buildTierRow(t, ti, listNum) {
 
   t.items.forEach((item, ii) => {
     const div = document.createElement('div');
-    div.className = 'item skeleton';
+    const imgWasLoaded = item.img && loadedImages.has(item.img);
+    div.className = 'item' + (imgWasLoaded ? '' : ' skeleton');
     div.dataset.svc = item.svc;
     div.dataset.tierIndex = ti;
     div.dataset.itemIndex = ii;
@@ -264,16 +338,19 @@ function buildTierRow(t, ti, listNum) {
     if (item.title) div.dataset.tooltip = item.title;
 
     const a = document.createElement('a');
-    a.href = item.url;
+    a.href = safeHref(item.url || '#');
     a.target = '_blank';
     a.rel = 'noopener';
 
     const img = document.createElement('img');
-    img.src = item.img || pImg(item.svc);
+    img.src = safeUrl(item.img) || pImg(item.svc);
     img.alt = '';
     img.loading = 'lazy';
     img.decoding = 'async';
-    img.onload = () => div.classList.remove('skeleton');
+    img.onload = () => {
+      div.classList.remove('skeleton');
+      if (item.img) loadedImages.add(item.img);
+    };
     if (item.svc === 'imdb') {
       attachPosterFallback(img, item);
     } else {
@@ -306,29 +383,22 @@ function buildTierRow(t, ti, listNum) {
 
   row.appendChild(itemsDiv);
 
-  if (t.items.length === 0) {
-    const dt = document.createElement('button');
-    dt.className = 'del-btn del-btn--tier';
-    dt.innerHTML = SVG_TRASH;
-    dt.setAttribute('aria-label', 'Удалить тир');
-    dt.dataset.tierIndex = ti;
-    dt.dataset.listNum = listNum;
-    row.appendChild(dt);
-  }
+  // Кнопка удаления тира показывается всегда. Раньше она была только у пустого
+  // тира — из-за этого заполненный тир нельзя было убрать, не растащив карточки
+  // вручную. Теперь непустой тир удаляется с подтверждением (карточки вернутся в пул).
+  const dt = document.createElement('button');
+  dt.className = 'del-btn del-btn--tier';
+  dt.innerHTML = SVG_TRASH;
+  dt.setAttribute('aria-label', 'Удалить тир');
+  dt.dataset.tierIndex = ti;
+  dt.dataset.listNum = listNum;
+  row.appendChild(dt);
 
   return row;
 }
 
-function pImg(svc) {
-  const colors = { youtube: '#ff0000', spotify: '#1db954', apple: '#fc3c44', yandex: '#ffcc00', steam: '#171a21', imdb: '#f5c518' };
-  const icons = { youtube: '▶', spotify: '●', apple: '♫', yandex: '♪', steam: '🎮', imdb: '🎬' };
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="${colors[svc] || '#555'}" width="64" height="64" rx="8"/><text fill="white" x="32" y="36" text-anchor="middle" font-size="20">${icons[svc] || '?'}</text></svg>`;
-  return 'data:image/svg+xml,' + encodeURIComponent(svg);
-}
-
 export function updateUI() {
   const compare = isCompare();
-
   document.body.classList.add('editing');
 
   const col2 = document.getElementById('col2');
@@ -336,4 +406,143 @@ export function updateUI() {
 
   const wrap = document.getElementById('compareWrap');
   if (wrap) wrap.classList.toggle('compare-active', compare);
+
+  // Кнопки под списком показываем только когда соответствующая колонка видима
+  // (col2 скрыт вне режима сравнения, иначе кнопки второго списка видны зря).
+  document.querySelectorAll('.tier-list-actions').forEach(actions => {
+    const listNum = parseInt(actions.querySelector('[data-list-num]')?.dataset.listNum, 10);
+    actions.style.display = (compare || listNum === 1) ? '' : 'none';
+  });
+
+  // Кнопки истории: активный список зависит от режима сравнения (по умолчанию — 1).
+  updateHistoryButtons();
+}
+
+// --- УПРАВЛЕНИЕ ТИРАМИ -------------------------------------------------
+// Раньше тиры можно было только удалять (и то — пустые). Теперь: добавление,
+// сброс к стандартному набору и удаление любого тира — всё через историю команд,
+// чтобы работал Ctrl+Z/Ctrl+Y (раньше удаление стирало всю историю через setData).
+
+// Простой диалог подтверждения поверх modalManager.
+export function confirmDialog(text, confirmLabel = 'Удалить') {
+  return new Promise(resolve => {
+    const content = document.createElement('div');
+    content.innerHTML = `
+      <h3 class="m-modal-title">Подтверждение</h3>
+      <p style="margin:6px 0 18px;color:var(--text-secondary);font-size:0.92rem;line-height:1.5;">${escapeHTML(text)}</p>
+      <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-secondary" data-action="cancel">Отмена</button>
+        <button class="btn btn-primary" data-action="ok">${escapeHTML(confirmLabel)}</button>
+      </div>
+    `;
+    const close = modalManager.open(content, { closeOnEscape: true });
+    let settled = false;
+    const done = val => {
+      if (settled) return;
+      settled = true;
+      close();
+      resolve(val);
+    };
+    content.querySelector('[data-action="ok"]').onclick = () => done(true);
+    content.querySelector('[data-action="cancel"]').onclick = () => done(false);
+  });
+}
+
+// Модальный аналог prompt(): запрос строки. Возвращает введённую строку или null (отмена).
+export function promptDialog(text, defaultValue = '', { confirmLabel = 'OK', placeholder = '' } = {}) {
+  return new Promise(resolve => {
+    const content = document.createElement('div');
+    content.innerHTML = `
+      <h3 class="m-modal-title">Ввод</h3>
+      <p style="margin:6px 0 12px;color:var(--text-secondary);font-size:0.9rem;line-height:1.5;">${escapeHTML(text)}</p>
+      <input type="text" data-role="input" value="${escapeHTML(defaultValue)}" placeholder="${escapeHTML(placeholder)}"
+        style="width:100%;padding:10px 12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;color:var(--text);outline:none;">
+      <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn btn-secondary" data-action="cancel">Отмена</button>
+        <button class="btn btn-primary" data-action="ok">${escapeHTML(confirmLabel)}</button>
+      </div>
+    `;
+    const close = modalManager.open(content, { closeOnEscape: true });
+    const input = content.querySelector('[data-role="input"]');
+    if (input) { input.focus(); input.select(); }
+    let settled = false;
+    const done = val => { if (settled) return; settled = true; close(); resolve(val); };
+    content.querySelector('[data-action="ok"]').onclick = () => done(input ? input.value : '');
+    content.querySelector('[data-action="cancel"]').onclick = () => done(null);
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); done(input.value); } });
+  });
+}
+
+// Автоназвание нового тира: следующая свободная буква (S, A, B, C → D → E...;
+// после исчерпания — «Новый N»). Цвет берётся из палитры по кругу.
+export function createDefaultTier(listNum = 1) {
+  const data = listNum === 1 ? state.data1 : state.data2;
+  const existing = new Set(data.map(t => (t.label || '').trim().toUpperCase()));
+  let label = null;
+  const letters = ['S','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','T','U','V','W','X','Y','Z'];
+  for (const L of letters) { if (!existing.has(L)) { label = L; break; } }
+  if (!label) {
+    let n = 1;
+    while (existing.has(('НОВЫЙ ' + n))) n++;
+    label = 'Новый ' + n;
+  }
+  const color = TIER_PRESET_COLORS[data.length % TIER_PRESET_COLORS.length] || '#ff7f7f';
+  return { tier: label, label, color, items: [] };
+}
+
+// Добавить тир в конец списка.
+export function addTier(listNum) {
+  const cmd = new AddTierCommand(createDefaultTier(listNum), listNum);
+  state.executeCommand(cmd, listNum);
+  eventBus.emit('achievements:check');
+  renderAll();
+}
+
+// Сброс набора тиров к стандартному (S/A/B/C). Непустые тиры сбрасываются только
+// после подтверждения, карточки при этом не теряются — возвращаются в пул.
+export function resetTiers(listNum) {
+  const data = listNum === 1 ? state.data1 : state.data2;
+  const oldTiers = data.map(t => structuredClone(t));
+  const newTiers = defaultTiers();
+  const nonEmpty = oldTiers.filter(t => t.items && t.items.length > 0);
+  // Если карточки уходят в пул — снимок для отмены хранит тиры ПУСТЫМИ, иначе
+  // Ctrl+Z вернул бы их второй раз (дубликаты: те же карточки уже в пуле).
+  const apply = (toPool) => {
+    const snapshot = toPool ? oldTiers.map(t => ({ ...t, items: [] })) : oldTiers;
+    const cmd = new ResetTiersCommand(snapshot, newTiers, listNum);
+    state.executeCommand(cmd, listNum);
+    eventBus.emit('achievements:check');
+    eventBus.emit('analytics:event', 'reset_tiers');
+    renderAll();
+  };
+  if (nonEmpty.length > 0) {
+    confirmDialog(`В ${nonEmpty.length} тир(ах) есть карточки — они вернутся в пул. Сбросить тиры к S/A/B/C?`, 'Сбросить')
+      .then(ok => { if (ok) { returnItemsToPool(nonEmpty.flatMap(t => t.items)); apply(true); } });
+  } else {
+    apply(false);
+  }
+}
+
+// Удаление тира: пустой — сразу, непустой — после подтверждения, а карточки
+// возвращаются в пул (чтобы ничего не потерять). Само удаление идёт через
+// RemoveTierCommand, поэтому Ctrl+Z восстановит тир (карточки останутся в пуле).
+export function deleteTier(tierIndex, listNum) {
+  const data = listNum === 1 ? state.data1 : state.data2;
+  const tier = data[tierIndex];
+  if (!tier) return;
+  // При возврате карточек в пул снимок для отмены хранится без items — undo
+  // вернёт пустой тир, карточки останутся в пуле (без дублирования).
+  const remove = (toPool) => {
+    const snapshot = toPool ? { ...tier, items: [] } : tier;
+    const cmd = new RemoveTierCommand(tierIndex, snapshot, listNum);
+    state.executeCommand(cmd, listNum);
+    eventBus.emit('achievements:check');
+    renderAll();
+  };
+  if (tier.items.length > 0) {
+    confirmDialog(`Удалить тир «${tier.label}»? Его карточки (${tier.items.length}) вернутся в пул.`, 'Удалить')
+      .then(ok => { if (ok) { returnItemsToPool(tier.items); remove(true); } });
+  } else {
+    remove(false);
+  }
 }

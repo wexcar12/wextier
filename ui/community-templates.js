@@ -6,41 +6,26 @@ import { api } from '../api/firestore.js';
 import { getCurrentUser } from '../api/auth.js';
 import { modalManager } from './modal-manager.js';
 import { eventBus } from '../core/event-bus.js';
-import { escapeHTML } from '../utils/sanitizers.js';
+import { escapeHTML, safeUrl } from '../utils/sanitizers.js';
 import { getDB } from '../api/firebase-init.js';
-import { searchDuckDuckGo, searchWikiThumbnail } from './templates.js';
-
-const P = 'wt_';
-function sg(k, f) { try { const r = localStorage.getItem(P + k); return r !== null ? JSON.parse(r) : f; } catch (e) { return f; } }
-function ss(k, v) { try { localStorage.setItem(P + k, JSON.stringify(v)); } catch (e) {} }
+import { findImageByTitle } from '../utils/image-resolve.js';
+import { sg, ss } from '../utils/storage.js';
 
 function getShowAdult() { return sg('show_adult_templates', false); }
 function setShowAdult(v) { ss('show_adult_templates', v); }
 
-async function autoFindImage(title) {
-  const words = title.split(/\s+/);
-  const suffixes = [' photo', ' фото', ''];
-  for (let len = words.length; len >= Math.min(2, words.length); len--) {
-    const q = words.slice(0, len).join(' ');
-    for (const suffix of suffixes) {
-      const res = await searchDuckDuckGo(q + suffix);
-      if (res) return res;
-    }
-    const wiki = await searchWikiThumbnail(q);
-    if (wiki) return wiki;
-  }
-  return '';
-}
+const autoFindImage = findImageByTitle;
 
 export async function openCommunityTemplates() {
   if (!getDB()) {
     eventBus.emit('toast:show', { text: 'Firebase недоступен', type: 'error' });
     return;
   }
+  eventBus.emit('analytics:event', 'community_open');
 
   const content = document.createElement('div');
   content.innerHTML = `
-    <h3 style="color:var(--gold);margin-bottom:16px;">Шаблоны сообщества</h3>
+    <h3 class="m-modal-title">Шаблоны сообщества</h3>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
       <input type="text" id="ct-search" placeholder="🔎 Поиск шаблона..."
         style="flex:1;min-width:130px;padding:8px 12px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:0.85rem;outline:none;">
@@ -64,14 +49,14 @@ export async function openCommunityTemplates() {
 
   function renderGrid(list) {
     if (!list.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-secondary);">Ничего не найдено</div>';
+      grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">Ничего не найдено</div>';
       return;
     }
     grid.innerHTML = list.map(t => `
       <div class="ct-card" data-id="${escapeHTML(t.id)}" style="background:var(--card-bg);border:1px solid var(--input-border);border-radius:12px;padding:10px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;text-align:center;position:relative;">
         ${t.isAdult ? '<span style="position:absolute;top:4px;right:6px;font-size:0.65rem;background:#ff4444;color:#fff;padding:1px 5px;border-radius:6px;">18+</span>' : ''}
         <div style="display:flex;gap:3px;justify-content:center;flex-wrap:nowrap;margin-bottom:8px;height:40px;overflow:hidden;">
-          ${(t.items || []).slice(0, 4).map(i => (i.img && !i.img.startsWith('data:image/svg')) ? `<img src="${escapeHTML(i.img)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:6px;flex-shrink:0;font-size:0.9rem;">🖼</span>`).join('')}
+          ${(t.items || []).slice(0, 4).map(i => (i.img && !i.img.startsWith('data:image/svg') && safeUrl(i.img)) ? `<img src="${safeUrl(i.img)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:6px;flex-shrink:0;font-size:0.9rem;">🖼</span>`).join('')}
         </div>
         <div style="font-size:0.78rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(t.name)}</div>
         <div style="font-size:0.65rem;color:var(--text-secondary);margin-top:2px;">${t.items ? t.items.length : 0} элем.${t.authorName ? ' · ' + escapeHTML(t.authorName) : ''}</div>
@@ -85,7 +70,7 @@ export async function openCommunityTemplates() {
   }
 
   async function loadTemplates() {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-secondary);">Загрузка...</div>';
+    grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">Загрузка...</div>';
     allTemplates = await api.fetchCommunityTemplates(getShowAdult());
     filterAndRender();
   }
@@ -94,7 +79,7 @@ export async function openCommunityTemplates() {
     const q = searchInput.value.trim().toLowerCase();
     const filtered = q ? allTemplates.filter(t => t.name.toLowerCase().includes(q)) : allTemplates;
     if (!filtered.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-secondary);">' + (allTemplates.length ? 'Ничего не найдено' : 'Пока нет шаблонов. Будьте первым!') + '</div>';
+      grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">' + (allTemplates.length ? 'Ничего не найдено' : 'Пока нет шаблонов. Будьте первым!') + '</div>';
       return;
     }
     renderGrid(filtered);
@@ -191,10 +176,14 @@ function openCreateTemplate() {
       return;
     }
     itemsList.innerHTML = items.map((it, i) => `
-      <div class="ct-item-card">
+      <div class="ct-item-card${it.loading ? ' ct-item-card-loading' : ''}">
         <button class="ct-item-remove" data-idx="${i}">&times;</button>
         <div class="ct-item-thumb">
-          ${it.img && !it.img.startsWith('data:image/svg') ? `<img src="${escapeHTML(it.img)}" onerror="this.style.display='none'" alt="">` : '<span class="ct-item-placeholder">🖼</span>'}
+          ${it.loading
+            ? '<span class="ct-item-placeholder ct-spin">⏳</span>'
+            : (it.img && !it.img.startsWith('data:image/svg')
+                ? `<img src="${safeUrl(it.img)}" onerror="this.style.display='none'" alt="">`
+                : '<span class="ct-item-placeholder">🖼</span>')}
         </div>
         <div class="ct-item-name" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
       </div>
@@ -213,16 +202,19 @@ function openCreateTemplate() {
     itemImgInput.value = '';
     imgPreviewWrap.style.display = 'none';
 
-    addBtn.disabled = true;
-    addBtn.textContent = '⏳';
-
-    const img = manualImg || await autoFindImage(title);
-
-    addBtn.disabled = false;
-    addBtn.textContent = '+ Добавить';
-    items.push({ title, img, url: '#' });
+    const itemObj = { title, img: manualImg || '', url: '#', loading: !manualImg };
+    items.push(itemObj);
     renderItems();
     itemTitleInput.focus();
+
+    if (!manualImg) {
+      const found = await autoFindImage(title);
+      if (items.includes(itemObj)) {
+        itemObj.img = found;
+        itemObj.loading = false;
+        renderItems();
+      }
+    }
   }
 
   addBtn.onclick = addItem;

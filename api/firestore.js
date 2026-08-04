@@ -14,10 +14,10 @@ export const api = {
     if (!db) return 0;
     let likedIds;
     try { likedIds = new Set(JSON.parse(localStorage.getItem('wt_liked_lists') || '[]')); } catch { likedIds = new Set(); }
+    // Один лайк на список (per-list) — этого достаточно от накрутки. Раньше был ещё
+    // глобальный троттл 5 сек на ВСЕ списки: лайкнул один — 5 сек не мог лайкнуть другой.
+    // Убран — от даблклика по одному списку защищает likedIds + disabled на кнопке.
     if (likedIds.has(tierlistId)) return 0;
-    const lastLike = parseInt(localStorage.getItem('wt_last_like') || '0', 10);
-    if (Date.now() - lastLike < 5000) return 0;
-    localStorage.setItem('wt_last_like', String(Date.now()));
     const ref = db.collection('tierlists').doc(tierlistId);
     await ref.update({ likesCount: firebase.firestore.FieldValue.increment(1) });
     const doc = await ref.get();
@@ -48,31 +48,11 @@ export const api = {
     }
   },
 
-  async fetchTopTierlists(limit = 20) {
-    const db = getDB();
-    if (!db) return [];
-
-    try {
-      const snap = await db.collection('tierlists')
-        .where('visibility', '==', 'public')
-        .orderBy('likesCount', 'desc')
-        .limit(limit)
-        .get();
-
-      const items = [];
-      snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-      return items;
-    } catch (e) {
-      console.error('fetchTopTierlists failed:', e);
-      return [];
-    }
-  },
-
   async publishTierlist(data) {
     const db = getDB();
     if (!db) throw new Error('Firebase not available');
 
-    const allowed = { name: data.name, templateType: data.templateType, data: data.data, trackCount: data.trackCount, wins: data.wins || 0, likes: data.likes || [], likesCount: data.likesCount || 0, visibility: data.visibility || 'public', authorId: data.authorId, authorName: data.authorName };
+    const allowed = { name: data.name, description: (data.description || '').slice(0, 300), templateType: data.templateType, data: data.data, trackCount: data.trackCount, likes: data.likes || [], likesCount: data.likesCount || 0, visibility: data.visibility || 'public', authorId: data.authorId, authorName: data.authorName };
     const docRef = await db.collection('tierlists').add({
       ...allowed,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()

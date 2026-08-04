@@ -17,7 +17,6 @@ const ACH = [
   { id: 'first_publish', icon: 'globe', name: 'Публичная персона', desc: 'Опубликовать тир-лист в галерее' },
   { id: 'commented', icon: 'message-circle', name: 'Есть мнение', desc: 'Оставить комментарий' },
   { id: 'liked_list', icon: 'heart', name: 'Доброе сердце', desc: 'Поставить лайк чужому тир-листу' },
-  { id: 'randomizer_used', icon: 'shuffle', name: 'Доверяю судьбе', desc: 'Использовать случайную раскладку' },
   { id: 'ten_tiers', icon: 'layers', name: 'Архитектор', desc: 'Создать 10 и более тиров' },
   { id: 'night_owl', icon: 'moon-star', name: 'Полуночник', desc: 'Редактировать тир-лист после полуночи' }
 ];
@@ -68,9 +67,9 @@ export function checkAchievements(editing) {
 export function openAchievementsModal() {
   const content = document.createElement('div');
   content.innerHTML = `
-    <h3 style="color:var(--gold);">Достижения</h3>
+    <h3 class="m-modal-title">Достижения</h3>
     <div id="achProgress" style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;"></div>
-    <div id="achievementsList"></div>
+    <div id="achievementsList" class="m-scroll"></div>
     <div class="modal-actions" style="margin-top:12px;">
       <button class="btn btn-secondary" id="closeAchievements">Закрыть</button>
     </div>
@@ -83,7 +82,7 @@ export function openAchievementsModal() {
   const list = content.querySelector('#achievementsList');
   list.innerHTML = ACH.map(a => {
     const u = unlocked.includes(a.id);
-    return '<div style="padding:10px;margin-bottom:6px;background:rgba(255,255,255,0.05);border-radius:8px;opacity:' + (u ? '1' : '0.4') + ';display:flex;align-items:center;gap:10px;">' +
+    return '<div class="ach-row' + (u ? '' : ' ach-locked') + '">' +
       '<i data-lucide="' + (u ? a.icon : 'lock') + '"></i>' +
       '<div><strong>' + (u ? a.name : '???') + '</strong><br><small>' + (u ? a.desc : 'Ещё не открыто') + '</small></div>' +
       '</div>';

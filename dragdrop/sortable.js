@@ -6,7 +6,11 @@ import { renderAll, isEditing, invalidateRenderCache } from '../ui/render.js';
 import { getPoolItems, renderTemplatePool } from '../ui/templates.js';
 import { eventBus } from '../core/event-bus.js';
 
-let currentPoolItems = [];
+// Единый источник правды для пула — модуль ui/templates.js. Раньше здесь была
+// собственная копия currentPoolItems, обновляемая лишь на render:after; после смены
+// типа шаблона (updatePoolItems переприсваивает массив, renderAll не зовётся) ссылка
+// устаревала и первый drag молча откатывался. Теперь читаем getPoolItems() в момент
+// использования — всегда актуальный массив, splice мутирует его же in-place.
 let lastHighlighted = null;
 
 // ФИКС 4 (визуальный отклик): помечаем body классом на всё время перетаскивания —
@@ -38,7 +42,7 @@ function clearDragHighlight() {
 
 // ФИКС 3: маленький салют из конфетти, когда весь пул шаблонов разобран по тирам
 function fireConfettiIfPoolEmpty() {
-  if (currentPoolItems.length !== 0) return;
+  if (getPoolItems().length !== 0) return;
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const colors = ['#f5c542', '#ff6b6b', '#4d96ff', '#6bffb8', '#c56bff'];
     const frag = document.createDocumentFragment();
@@ -65,14 +69,15 @@ function handleSortableMove(evt) {
 
   // Из пула -> В тир
   if (isFromPool) {
+    const pool = getPoolItems();
     const poolId = evt.item.dataset.poolId || '';
-    const realIndex = currentPoolItems.findIndex(i => i.id === poolId);
+    const realIndex = pool.findIndex(i => i.id === poolId);
     if (realIndex === -1) {
       renderAll();
       renderTemplatePool();
       return;
     }
-    const item = currentPoolItems.splice(realIndex, 1)[0];
+    const item = pool.splice(realIndex, 1)[0];
     if (!isToPool) {
       const toTier = parseInt(evt.to.dataset.tierIndex, 10);
       const listNum = parseInt(evt.to.dataset.listNum, 10) || 1;
@@ -81,7 +86,7 @@ function handleSortableMove(evt) {
       state.executeCommand(command, listNum);
       fireConfettiIfPoolEmpty();
     } else {
-      currentPoolItems.splice(evt.newIndex, 0, item);
+      pool.splice(evt.newIndex, 0, item);
     }
     if (typeof gsap !== 'undefined') gsap.fromTo(evt.item, { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.7)' });
     eventBus.emit('achievements:check');
@@ -105,7 +110,7 @@ function handleSortableMove(evt) {
     const command = new RemoveItemCommand(fromTier, evt.oldIndex, item, fromList);
     state.executeCommand(command, fromList);
 
-    currentPoolItems.splice(evt.newIndex, 0, { id: crypto.randomUUID(), img: item.img, url: item.url, svc: item.svc, title: item.title || '' });
+    getPoolItems().splice(evt.newIndex, 0, { id: crypto.randomUUID(), img: item.img, url: item.url, svc: item.svc, title: item.title || '' });
     eventBus.emit('achievements:check');
     renderAll();
     renderTemplatePool();
@@ -119,7 +124,7 @@ function handleSortableMove(evt) {
   const toList = parseInt(evt.to.dataset.listNum, 10) || 1;
 
   if (fromList === toList) {
-    const command = new MoveItemCommand('item', fromTier, toTier, evt.oldIndex, evt.newIndex, fromList);
+    const command = new MoveItemCommand(fromTier, toTier, evt.oldIndex, evt.newIndex, fromList);
     state.executeCommand(command, fromList);
   } else {
     // ФИКС: перенос между разными списками логируется в историю списка НАЗНАЧЕНИЯ,
@@ -147,7 +152,6 @@ function refreshSortableInstances() {
 export function initSortable() {
   let sortableInitTimer = null;
   eventBus.on('render:after', () => {
-    currentPoolItems = getPoolItems();
     if (sortableInitTimer) clearTimeout(sortableInitTimer);
     sortableInitTimer = setTimeout(() => {
       sortableInitTimer = null;

@@ -54,6 +54,7 @@ export async function shareTierlist() {
 
     if (url) {
       const ok = await copyToClipboard(url);
+      if (ok) eventBus.emit('analytics:event', 'share');
       eventBus.emit('toast:show', { text: ok ? 'Ссылка скопирована!' : 'Не удалось скопировать', type: ok ? 'success' : 'error' });
     } else {
       eventBus.emit('toast:show', { text: 'Не удалось создать ссылку', type: 'error' });
@@ -96,6 +97,9 @@ export async function loadFromURL() {
   }
 
   if (loaded) {
+    // У share-ссылки нет отдельного названия/описания — сбрасываем meta текущего
+    // черновика, чтобы на загруженной доске не отображался чужой заголовок.
+    state.setMeta('', '');
     history.replaceState({}, '', location.pathname);
   }
 

@@ -2,7 +2,8 @@ import { state, AddItemCommand, RemoveItemCommand, MoveItemCommand } from '../co
 import { renderAll } from './render.js';
 import { eventBus } from '../core/event-bus.js';
 import { isEditing } from './render.js';
-import { searchDuckDuckGo, searchWikiThumbnail } from './templates.js';
+import { findImageByTitle } from '../utils/image-resolve.js';
+import { escapeAttr, safeUrl } from '../utils/sanitizers.js';
 import { modalManager } from './modal-manager.js';
 
 let menu = null;
@@ -52,7 +53,7 @@ function show(x, y, item) {
       if (idx === tI) return;
       addAction(`➡️ В тир ${tier.label}`, () => {
         const targetIndex = data[idx].items.length;
-        const cmd = new MoveItemCommand('item', tI, idx, iI, targetIndex, listNum);
+        const cmd = new MoveItemCommand(tI, idx, iI, targetIndex, listNum);
         state.executeCommand(cmd, listNum);
         renderAll();
       });
@@ -90,16 +91,16 @@ function openItemEditor({ tI, iI, listNum, itemData }) {
   const content = document.createElement('div');
   content.style.minWidth = '300px';
   content.innerHTML = `
-    <h3 style="color:var(--gold);margin-bottom:14px;">Редактировать элемент</h3>
-    <input type="text" id="ie-title" placeholder="Название" value="${itemData.title ? itemData.title.replace(/"/g,'&quot;') : ''}"
+    <h3 class="m-modal-title" style="margin-bottom:14px;">Редактировать элемент</h3>
+    <input type="text" id="ie-title" placeholder="Название" value="${escapeAttr(itemData.title || '')}"
       style="width:100%;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);margin-bottom:10px;">
     <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <input type="text" id="ie-img" placeholder="URL картинки" value="${(itemData.img||'').replace(/"/g,'&quot;')}"
+      <input type="text" id="ie-img" placeholder="URL картинки" value="${escapeAttr(itemData.img || '')}"
         style="flex:1;padding:10px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:8px;color:var(--text);font-size:0.85rem;">
       <button class="btn btn-secondary" id="ie-search" style="white-space:nowrap;">🔍 Найти</button>
     </div>
     <div id="ie-preview" style="${itemData.img ? '' : 'display:none;'}margin-bottom:10px;text-align:center;">
-      <img id="ie-preview-img" src="${itemData.img||''}" style="max-height:80px;border-radius:8px;border:1px solid var(--input-border);" alt="">
+      <img id="ie-preview-img" src="${safeUrl(itemData.img || '')}" style="max-height:80px;border-radius:8px;border:1px solid var(--input-border);" alt="">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" id="ie-cancel">Отмена</button>
@@ -122,17 +123,7 @@ function openItemEditor({ tI, iI, listNum, itemData }) {
     if (!title) return;
     const btn = content.querySelector('#ie-search');
     btn.disabled = true; btn.textContent = '⏳';
-    let found = null;
-    const words = title.split(/\s+/);
-    const suffixes = [' photo', ' фото', ''];
-    for (let len = words.length; !found && len >= Math.min(2, words.length); len--) {
-      const q = words.slice(0, len).join(' ');
-      for (const suffix of suffixes) {
-        found = await searchDuckDuckGo(q + suffix);
-        if (found) break;
-      }
-      if (!found) found = await searchWikiThumbnail(q);
-    }
+    const found = await findImageByTitle(title);
     btn.disabled = false; btn.textContent = '🔍 Найти';
     if (found) { imgInput.value = found; previewImg.src = found; preview.style.display = 'block'; }
     else eventBus.emit('toast:show', { text: 'Не нашлось — вставьте URL вручную', type: 'error' });
@@ -147,7 +138,7 @@ function openItemEditor({ tI, iI, listNum, itemData }) {
     const newImg = imgInput.value.trim();
     if (newTitle) item.title = newTitle;
     if (newImg) item.img = newImg;
-    state._save();
+    state.save();
     eventBus.emit('achievements:check');
     renderAll();
     close();

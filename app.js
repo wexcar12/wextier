@@ -8,9 +8,8 @@ import { state, AddItemCommand, RemoveItemCommand } from './core/state.js';
 import { initFB } from './api/firebase-init.js';
 import { initAuthObserver, loginWithGoogle, logout } from './api/auth.js';
 
-import { renderAll, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, getSelectedItem, clearSelectedItem, moveSelectedItemToTier, deleteSelectedItem, setSelectedItemKey, getSelectedItemKey } from './ui/render.js';
-import { openGallery, openTop, openUserDashboard } from './ui/gallery.js';
-import { openCommentsModal } from './ui/comments.js';
+import { renderAll, isCompare, setCompare, getActiveTier, getActiveList, setActiveTier, updateUI, getSelectedItem, clearSelectedItem, moveSelectedItemToTier, deleteSelectedItem, setSelectedItemKey, getSelectedItemKey, addTier, resetTiers, deleteTier } from './ui/render.js';
+import { openGallery, openUserDashboard, publishCurrent } from './ui/gallery.js';
 import { loadAchievements, checkAchievements, openAchievementsModal } from './ui/achievements.js';
 import { loadNeon, openNeonModal } from './ui/neon.js';
 import { loadParallax, toggleParallax, initParallaxMouse, setParallaxBg } from './ui/parallax.js';
@@ -18,16 +17,18 @@ import { loadDrafts, createNewDraft, renderDraftsSidebar } from './ui/drafts.js'
 import { exportPNG, exportJSON, importJSON } from './ui/export.js';
 import { shareTierlist, loadFromURL } from './ui/share.js';
 import { setupSearch } from './ui/search.js';
-import { loadSettings, setupSettingsEvents } from './ui/settings.js';
+import { setupCoverSearch } from './ui/cover-search.js';
+import { loadSettings, setupSettingsEvents, toggleTheme } from './ui/settings.js';
 import { initSortable } from './dragdrop/sortable.js';
 import { setupPlayer } from './ui/player.js';
 import { initTooltips } from './ui/tooltip.js';
-import { maybeTakeSnapshot } from './ui/version-history.js';
 import { modalManager } from './ui/modal-manager.js';
 import { enhanceAllSelects } from './ui/custom-select.js';
 import { initBottomSheet } from './ui/bottom-sheet.js';
 import { initContextMenu } from './ui/context-menu.js';
 import { initCommunityTemplates } from './ui/community-templates.js';
+import { initAnalytics } from './ui/analytics.js';
+import { maybeShowOnboarding } from './ui/onboarding.js';
 import './ui/toast.js';
 
 function safeCreateIcons() {
@@ -39,6 +40,8 @@ async function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW registration failed:', e));
   }
+
+  try { initAnalytics(); } catch (e) { console.warn('initAnalytics failed:', e); }
 
   let fbReady = false;
   try { fbReady = initFB(); } catch (e) { console.warn('Firebase init failed:', e); }
@@ -64,7 +67,9 @@ async function init() {
 
   if (fbReady) try { initAuthObserver(); } catch (e) { console.warn('initAuthObserver failed:', e); }
 
-  try { await loadFromURL(); } catch (e) { console.warn('loadFromURL failed:', e); }
+  let urlLoaded = false;
+  try { urlLoaded = await loadFromURL(); } catch (e) { console.warn('loadFromURL failed:', e); }
+  try { maybeShowOnboarding(urlLoaded); } catch (e) { console.warn('onboarding failed:', e); }
   renderAll();
   try { renderDraftsSidebar(); } catch (e) { console.warn('renderDraftsSidebar failed:', e); }
 
@@ -72,6 +77,7 @@ async function init() {
 
   bindEvents();
   updateUI();
+  syncCompareIndicator();
 }
 
 function initHeaderDropdowns() {
@@ -113,8 +119,64 @@ function closeAllDropdowns() {
   document.querySelectorAll('.header-dropdown-trigger.active').forEach(t => t.classList.remove('active'));
 }
 
+// Ф4-12: иконка кнопки темы отражает, КУДА переключит клик наглядно — при светлой
+// теме рисуем «moon» (клик → тёмная), при тёмной «sun» (клик → светлая). Обе кнопки
+// (в шапке и в настройках) синхронизируются здесь.
+function syncThemeIcon() {
+  const isLight = document.body.classList.contains('light-theme');
+  const iconName = isLight ? 'moon' : 'sun';
+  ['themeBtnHeader', 'themeBtn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const i = btn.querySelector('[data-lucide], svg');
+    // Кнопка в настройках содержит подпись <span>Тема</span> — её сохраняем.
+    if (i) { const fresh = document.createElement('i'); fresh.setAttribute('data-lucide', iconName); i.replaceWith(fresh); }
+  });
+  safeCreateIcons();
+}
+eventBus.on('theme:changed', syncThemeIcon);
+
+// Ф4-9: наглядный индикатор активного режима сравнения — класс на body (для CSS-бейджа
+// и подсветки активной кнопки «Сравнение») + пометка самой кнопки в меню «Ещё».
+function syncCompareIndicator() {
+  const on = isCompare();
+  document.body.classList.toggle('compare-mode', on);
+  const btn = document.getElementById('compareBtn');
+  if (btn) btn.classList.toggle('active', on);
+}
+
+// Ф4-14: индикатор автосохранения у названия. На каждый needsSave показываем «Сохранение…»,
+// затем через короткую паузу — «Сохранено ✓». Событие уже дебаунсится в state (100 мс).
+let saveIndicatorTimer = null;
+function flashSaveIndicator() {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  el.textContent = 'Сохранение…';
+  el.classList.add('saving');
+  el.classList.remove('saved');
+  clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer = setTimeout(() => {
+    el.textContent = 'Сохранено ✓';
+    el.classList.remove('saving');
+    el.classList.add('saved');
+  }, 400);
+}
+eventBus.on('state:needsSave', flashSaveIndicator);
+
 function bindEvents() {
   initHeaderDropdowns();
+
+  // Ф4-6: клик по логотипу — плавный скролл наверх страницы.
+  document.getElementById('headerLogo')?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Ф4-2 + Ф4-12: переключатель темы прямо в шапке; иконка синхронна теме
+  // (при светлой теме показываем солнце — клик уведёт в тёмную, и наоборот).
+  // Обновление иконки висит на событии theme:changed, поэтому синхронно и при
+  // переключении из настроек (кнопка themeBtn в модалке зовёт тот же toggleTheme).
+  syncThemeIcon();
+  document.getElementById('themeBtnHeader')?.addEventListener('click', toggleTheme);
 
   document.getElementById('settingsBtn')?.addEventListener('click', () => {
     const panel = document.getElementById('settingsPanel');
@@ -141,10 +203,16 @@ function bindEvents() {
     eventBus.emit('toast:show', { text: 'Эта картинка не загрузилась (возможно, сайт-источник недоступен в твоей сети). Оставлен обычный фон.', type: 'error' });
   });
 
-  // Автосохранение — snapshot при каждом сохранении
-  eventBus.on('save:done', () => { maybeTakeSnapshot(); });
-
   document.addEventListener('keydown', (e) => {
+    // Undo/Redo работают всегда (кроме ввода в поля), даже без выделенной карточки.
+    const tag0 = (e.target.tagName || '').toLowerCase();
+    const typing = tag0 === 'input' || tag0 === 'textarea' || e.target.isContentEditable;
+    if (!typing && (e.ctrlKey || e.metaKey)) {
+      const k = e.key.toLowerCase();
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); return; }
+      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); doRedo(); return; }
+    }
+
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
     if (!getSelectedItem()) return;
@@ -160,13 +228,31 @@ function bindEvents() {
     }
   });
 
+  document.getElementById('undoBtn')?.addEventListener('click', doUndo);
+  document.getElementById('redoBtn')?.addEventListener('click', doRedo);
+
+  // Название и описание тир-листа: пишем в state на каждый ввод (state сам дебаунсит запись).
+  const titleInput = document.getElementById('tierlistTitle');
+  const descInput = document.getElementById('tierlistDesc');
+  const autoGrow = (el) => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
+  const pushMeta = () => state.setMeta(titleInput?.value || '', descInput?.value || '');
+  titleInput?.addEventListener('input', pushMeta);
+  descInput?.addEventListener('input', () => { autoGrow(descInput); pushMeta(); });
+  // Enter в заголовке — уводим фокус в описание, а не переносим строку (это input, но пусть даст ожидаемое поведение)
+  titleInput?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); descInput?.focus(); } });
+
   document.getElementById('galleryBtn')?.addEventListener('click', openGallery);
-  document.getElementById('topBtn')?.addEventListener('click', openTop);
   document.getElementById('achievementsBtn')?.addEventListener('click', openAchievementsModal);
-  document.getElementById('commentsBtn')?.addEventListener('click', openCommentsModal);
+  document.getElementById('publishBtn')?.addEventListener('click', () => { publishCurrent(); closeAllDropdowns(); });
 
   document.getElementById('shareBtn')?.addEventListener('click', shareTierlist);
   document.getElementById('pngBtn')?.addEventListener('click', exportPNG);
+
+  // Ф5-1: мобильные дубли кнопок «вывода» в дропдауне «Ещё» — те же действия, закрываем меню.
+  document.getElementById('shareBtnM')?.addEventListener('click', () => { shareTierlist(); closeAllDropdowns(); });
+  document.getElementById('pngBtnM')?.addEventListener('click', () => { exportPNG(); closeAllDropdowns(); });
+  document.getElementById('galleryBtnM')?.addEventListener('click', () => { openGallery(); closeAllDropdowns(); });
+  document.getElementById('publishBtnM')?.addEventListener('click', () => { publishCurrent(); closeAllDropdowns(); });
   document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
   document.getElementById('importBtn')?.addEventListener('click', () => document.getElementById('importFile')?.click());
   document.getElementById('importFile')?.addEventListener('change', function () { if (this.files[0]) importJSON(this.files[0]); this.value = ''; });
@@ -178,17 +264,31 @@ function bindEvents() {
   document.getElementById('logoutLink')?.addEventListener('click', () => { logout(); closeAllDropdowns(); });
   document.getElementById('profileDashboardBtn')?.addEventListener('click', openUserDashboard);
 
-  document.getElementById('newDraftBtnSidebar')?.addEventListener('click', createNewDraft);
+  document.getElementById('newDraftBtnSidebar')?.addEventListener('click', () => { createNewDraft(); eventBus.emit('analytics:event', 'draft_new'); });
 
   document.getElementById('compareBtn')?.addEventListener('click', () => {
     setCompare(!isCompare());
     if (isCompare()) state.setData(JSON.parse(JSON.stringify(state.data1)), 2);
     renderAll();
     updateUI();
+    syncCompareIndicator();
+    eventBus.emit('analytics:event', 'compare_toggle');
     closeAllDropdowns();
   });
 
-  document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); });
+  // Кнопки под списками: «Добавить тир» и «Сбросить» (управление тирами).
+  document.querySelectorAll('.add-tier-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addTier(parseInt(btn.dataset.listNum, 10) || 1);
+    });
+  });
+  document.querySelectorAll('.reset-tiers-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      resetTiers(parseInt(btn.dataset.listNum, 10) || 1);
+    });
+  });
+
+  document.getElementById('templateSelect')?.addEventListener('change', function () { eventBus.emit('templates:changed', this.value); eventBus.emit('analytics:event', 'template_select'); });
 
   const compareWrap = document.getElementById('compareWrap');
   if (compareWrap) {
@@ -198,11 +298,7 @@ function bindEvents() {
         e.stopPropagation(); e.preventDefault();
         const tI = parseInt(delBtn.dataset.tierIndex, 10); const iI = parseInt(delBtn.dataset.itemIndex, 10); const listN = parseInt(delBtn.dataset.listNum, 10);
         if (delBtn.classList.contains('del-btn--tier') && !isNaN(tI) && !isNaN(listN)) {
-          const data = listN === 1 ? state.data1 : state.data2;
-          if (data[tI] && data[tI].items.length === 0) {
-            data.splice(tI, 1);
-            state.setData(data, listN); renderAll();
-          }
+          deleteTier(tI, listN);
           return;
         }
         if (!isNaN(tI) && !isNaN(iI) && !isNaN(listN)) {
@@ -272,65 +368,8 @@ function bindEvents() {
     });
   }
 
-  async function fetchCoverForTrack(svc, url) {
-    if (!url) return null;
-    if (svc === 'youtube') {
-      const m = url.match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
-      return m ? 'https://img.youtube.com/vi/' + m[1] + '/mqdefault.jpg' : null;
-    }
-    if (svc === 'spotify') {
-      try {
-        const res = await fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(url));
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.thumbnail_url || null;
-      } catch (e) { return null; }
-    }
-    return null;
-  }
-
-  async function runCoverAutoSearch(showErrorToast) {
-    const svc = document.getElementById('svc')?.value || 'youtube';
-    const url = document.getElementById('trackUrl')?.value.trim();
-    const coverInput = document.getElementById('coverUrl');
-    const preview = document.getElementById('coverPreview');
-    if (!url) { if (showErrorToast) eventBus.emit('toast:show', { text: 'Вставьте ссылку', type: 'info' }); return; }
-    if (!coverInput) return;
-    if (coverInput.value.trim() && coverInput.dataset.source === 'manual') return;
-
-    const fetchBtn = document.getElementById('fetchCoverBtn');
-    if (fetchBtn) fetchBtn.disabled = true;
-    const cover = await fetchCoverForTrack(svc, url);
-    if (cover) {
-      coverInput.value = cover;
-      coverInput.dataset.source = 'auto';
-      if (preview) { preview.src = cover; preview.style.display = 'block'; }
-    } else if (showErrorToast) {
-      eventBus.emit('toast:show', { text: 'Не удалось найти обложку автоматически. Вставьте ссылку на картинку вручную.', type: 'error' });
-    }
-    if (fetchBtn) fetchBtn.disabled = false;
-  }
-
-  document.getElementById('coverUrl')?.addEventListener('input', (e) => { e.target.dataset.source = 'manual'; });
-
-  document.getElementById('fetchCoverBtn')?.addEventListener('click', () => {
-    const coverInput = document.getElementById('coverUrl');
-    if (!coverInput) return;
-    coverInput.value = ''; coverInput.dataset.source = '';
-    runCoverAutoSearch(true);
-  });
-
-  let coverAutoSearchTimer = null;
-  document.getElementById('trackUrl')?.addEventListener('input', () => {
-    clearTimeout(coverAutoSearchTimer);
-    coverAutoSearchTimer = setTimeout(() => runCoverAutoSearch(false), 700);
-  });
-  document.getElementById('svc')?.addEventListener('change', () => {
-    const coverInput = document.getElementById('coverUrl');
-    if (!coverInput) return;
-    coverInput.value = ''; coverInput.dataset.source = '';
-    runCoverAutoSearch(false);
-  });
+  // Авто-поиск обложки трека вынесен в ui/cover-search.js
+  setupCoverSearch();
 
   document.getElementById('cancelAdd')?.addEventListener('click', () => { document.getElementById('addModal')?.classList.remove('open'); });
 
@@ -357,6 +396,26 @@ function bindEvents() {
     document.getElementById('addModal')?.classList.remove('open');
     checkAchievements(true); renderAll();
   });
+}
+
+// Отмена/возврат действий через историю команд. Вне сравнения — список 1.
+// В сравнении истории двух списков независимы, а кросс-списочный перенос логируется
+// только в один из них, поэтому выбираем список по времени команды (state.undoList/redoList),
+// а не по активной колонке — иначе отмена откатывала бы чужую команду.
+function doUndo() {
+  const activeList = isCompare() ? state.undoList() : 1;
+  if (activeList == null || !state.canUndo(activeList)) return;
+  state.undo(activeList);
+  renderAll();
+  updateUI();
+}
+
+function doRedo() {
+  const activeList = isCompare() ? state.redoList() : 1;
+  if (activeList == null || !state.canRedo(activeList)) return;
+  state.redo(activeList);
+  renderAll();
+  updateUI();
 }
 
 eventBus.on('auth:changed', (user) => {

@@ -8,6 +8,7 @@
  */
 
 import { sg, ss } from '../utils/storage.js';
+import { promptDialog } from './render.js';
 
 let parallaxOn = false;
 
@@ -27,11 +28,17 @@ function applyPhotoLayer(mode) {
   const videoEl = document.getElementById('parallaxVideo');
   if (!photoEl || !videoEl) return;
 
+  // ФИКС: сбрасываем висящие обработчики от предыдущей картинки/видео — иначе поздний
+  // onerror от уже неактуального src мог выстрелить ложным parallax:load-failed после
+  // переключения на «тему» или другой пресет.
+  photoEl.onerror = null; photoEl.onload = null;
+  videoEl.onerror = null;
+
   photoEl.classList.remove('show');
   videoEl.classList.remove('show');
   videoEl.pause();
 
-  if (mode === 'theme') return; // только градиентные слои — самый надёжный вариант
+  if (mode === 'theme') { photoEl.removeAttribute('src'); videoEl.removeAttribute('src'); return; } // только градиентные слои — самый надёжный вариант
 
   if (mode === 'custom') {
     const url = sg('parallax_custom_url', '');
@@ -95,9 +102,13 @@ export function toggleParallax(on) {
 }
 
 // Вызывается при выборе фона в выпадающем списке рядом с кнопкой "Параллакс"
-export function setParallaxBg(mode) {
+export async function setParallaxBg(mode) {
   if (mode === 'custom') {
-    const url = prompt('Вставь ПРЯМУЮ ссылку на файл картинки или видео (должна заканчиваться на .jpg/.png/.mp4 и т.п., а не на страницу сайта):', sg('parallax_custom_url', ''));
+    const url = await promptDialog(
+      'Вставь ПРЯМУЮ ссылку на файл картинки или видео (должна заканчиваться на .jpg/.png/.mp4 и т.п., а не на страницу сайта):',
+      sg('parallax_custom_url', ''),
+      { confirmLabel: 'Применить', placeholder: 'https://…/image.jpg' }
+    );
     if (url === null) return;
     const trimmed = url.trim();
     if (trimmed && !/^https?:\/\//i.test(trimmed)) {
